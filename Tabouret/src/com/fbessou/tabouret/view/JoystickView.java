@@ -34,7 +34,15 @@ public class JoystickView extends View {
 		mCenterPos[1] = h/2 + mStickRadius;
 		setLayoutParams(lp);
 	}
-	
+
+	/** Returns the X position of the joystick; returns 0 if the joystick is released **/
+	public float getJoystickX() {
+		return mStickRelPos[0];
+	}
+	/** Returns the Y position of the joystick; returns 0 if the joystick is released **/
+	public float getJoystickY() {
+		return mStickRelPos[1];
+	}
 	
 	private boolean mIsTouched = false;
 	private float mCenterPos[] = {0,0};
@@ -42,6 +50,7 @@ public class JoystickView extends View {
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 		float x = event.getX(), y = event.getY();
+		/// Check if this touch event is destinated for this koystick
 		boolean isOut = false;
 		if(mStickRadius > x) {
 			y = y + (mCenterPos[1]-y) * (mStickRadius-x)/(mCenterPos[0]-x);
@@ -61,12 +70,14 @@ public class JoystickView extends View {
 			y = mUserHeight+mStickRadius;
 			isOut = true;
 		}
+		
 		switch(event.getAction()) {
 		case MotionEvent.ACTION_DOWN:
 			if(!isOut) {
 				mIsTouched = true;
 				mCenterPos[0] = x;
 				mCenterPos[1] = y;
+				return false;
 			}
 			break;
 		case MotionEvent.ACTION_MOVE:
@@ -123,6 +134,8 @@ public class JoystickView extends View {
 				break;
 			mStickRelPos[0] = 0;
 			mStickRelPos[1] = 0;
+			if(mPosChangedListener != null)
+				mPosChangedListener.positionChanged(mStickRelPos[0], -mStickRelPos[1]);
 			mIsTouched = false;
 			break;
 		}
