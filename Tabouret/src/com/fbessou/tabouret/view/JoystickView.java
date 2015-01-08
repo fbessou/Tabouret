@@ -16,7 +16,7 @@ public class JoystickView extends View {
 	private int mBoundRadius = 150;
 	private int mUserWidth, mUserHeight;
 	private int mStickRadius = 0;
-	private boolean mSmartStick = true;
+	private Position mCenterPosition = Position.DYNAMIC;
 	private OnPositionChangedListener mPosChangedListener;
 	
 	
@@ -30,8 +30,7 @@ public class JoystickView extends View {
 		/// Sets layout margins with radius
 		RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(w + mStickRadius*2, h + mStickRadius*2);
 		lp.setMargins(-mStickRadius, -mStickRadius, mStickRadius, mStickRadius);
-		mCenterPos[0] = w/2 + mStickRadius;
-		mCenterPos[1] = h/2 + mStickRadius;
+		setCenterPosition(Position.DYNAMIC);
 		setLayoutParams(lp);
 	}
 
@@ -75,8 +74,10 @@ public class JoystickView extends View {
 		case MotionEvent.ACTION_DOWN:
 			if(!isOut) {
 				mIsTouched = true;
-				mCenterPos[0] = x;
-				mCenterPos[1] = y;
+				if(mCenterPosition == Position.DYNAMIC || mCenterPosition == Position.FOLLOW) {
+					mCenterPos[0] = x;
+					mCenterPos[1] = y;
+				}
 			}
 			else 
 				return false;
@@ -91,9 +92,9 @@ public class JoystickView extends View {
 				if(d > 0) {
 					// The center is too far of the stick -> it follows its friend;
 					if(d > mBoundRadius) {
-						if(mSmartStick) {
+						if(mCenterPosition == Position.FOLLOW) {
 							float reduceDist = mBoundRadius / d;
-							// move the centerm
+							// move the center
 							mCenterPos[0] = x*(1-reduceDist) + mCenterPos[0]*reduceDist;//x+(c-x)*r
 							mCenterPos[1] = y*(1-reduceDist) + mCenterPos[1]*reduceDist;//y+(c-y)*r
 						}
@@ -109,7 +110,7 @@ public class JoystickView extends View {
 				if(Math.abs(dx) > mBoundRadius) {
 					dx = (dx > 0 ? 1 : -1);
 					// The center is too far of the stick -> it follows its friend;
-					if(mSmartStick)
+					if(mCenterPosition == Position.FOLLOW)
 						mCenterPos[0] = -dx * mBoundRadius + x;
 				} else {
 					dx /= mBoundRadius;
@@ -117,7 +118,7 @@ public class JoystickView extends View {
 				if(Math.abs(dy) > mBoundRadius) {
 					dy = (dy > 0 ? 1 : -1);
 					// The center is too far of the stick -> it follows its friend;
-					if(mSmartStick)
+					if(mCenterPosition == Position.FOLLOW)
 						mCenterPos[1] = -dy * mBoundRadius + y;
 				} else {
 					dy /= mBoundRadius;
@@ -172,9 +173,20 @@ public class JoystickView extends View {
 		
 	}
 	
-	/** Enable smart stick : the center of the stick follows the stick if it goes too far **/
-	public void enableSmartStick(boolean smartstick) {
-		mSmartStick = smartstick;
+	public enum Position {
+		/** The center is fixed and the user cannot move it **/
+		FIXED,
+		/** The center appears at the finger's position and does not move until the next touch **/
+		DYNAMIC,
+		/** The center appears at the finger's position and follows the finger if it move too far away **/
+		FOLLOW
+	};
+	
+	public void setCenterPosition(Position pos) {
+		mCenterPosition = pos;
+		///Reset the center coordinate
+		mCenterPos[0] = mUserWidth/2 + mStickRadius;
+		mCenterPos[1] = mUserHeight/2 + mStickRadius;
 	}
 	
 	public enum BoundShape {CIRCLE, RECT};
