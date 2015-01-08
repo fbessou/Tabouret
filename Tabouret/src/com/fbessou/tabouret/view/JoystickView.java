@@ -77,8 +77,9 @@ public class JoystickView extends View {
 				mIsTouched = true;
 				mCenterPos[0] = x;
 				mCenterPos[1] = y;
-				return false;
 			}
+			else 
+				return false;
 			break;
 		case MotionEvent.ACTION_MOVE:
 			if(!mIsTouched)

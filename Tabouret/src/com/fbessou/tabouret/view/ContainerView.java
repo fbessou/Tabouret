@@ -7,7 +7,7 @@ public class ContainerView extends RelativeLayout {
 
 	public ContainerView(Context context) {
 		super(context);
-		// TODO Auto-generated constructor stub
+
 	}
 
 }
