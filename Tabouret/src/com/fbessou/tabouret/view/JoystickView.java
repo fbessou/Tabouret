@@ -1,37 +1,48 @@
 package com.fbessou.tabouret.view;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.RelativeLayout;
 
 
 public class JoystickView extends View {
+	/** Bitmap image of the stick and thr center; width must be equal to height **/
 	private Bitmap mStickBmp, mCenterBmp;
+	/** Parameters of the bound that define the constraints of the relative stick position **/
 	private BoundShape mBoundShape = BoundShape.CIRCLE;
 	private int mBoundRadius = 150;
-	private int mUserWidth, mUserHeight;
-	private int mStickRadius = 0;
+	/** Width and height of the touchable surface **/
+	private final int mUserWidth, mUserHeight;
+	/** Radius of the stick; Automatically set when setStickImage() is called **/
+	private final int mStickRadius;
+	/** Type of positioning of the joystick center (see enum Position) **/
 	private Position mCenterPosition = Position.DYNAMIC;
+	/** Listener used when the position of the stick is changed (see onTouchEvent()) **/
 	private OnPositionChangedListener mPosChangedListener;
+	/** Position (X,Y) of the center of the joystick **/
+	private float mCenterPos[] = {0,0};
+	/** Position (X,Y) of the stick relatively to the center; With -1.0f <= X,Y <= 1.0f **/ 
+	private float mStickRelPos[] = {0,0};
 	
 	
 	public JoystickView(Context context, int w, int h, Bitmap stickBmp) {
 		super(context);
-		// Sets the stick's bitmap and radius
-		setStickImage(stickBmp);
-		/// Sets the touchable surface's dimensions
+		// Set the stick's bitmap and radius
+		mStickRadius = setStickImage(stickBmp);
+		// Set the touchable surface's dimensions
 		mUserWidth = w;
 		mUserHeight = h;
-		/// Sets layout margins with radius
+		// Set layout margins with radius
 		RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(w + mStickRadius*2, h + mStickRadius*2);
 		lp.setMargins(-mStickRadius, -mStickRadius, mStickRadius, mStickRadius);
-		setCenterPosition(Position.DYNAMIC);
 		setLayoutParams(lp);
+		// Set a default positioning
+		setCenterPosition(Position.DYNAMIC);
 	}
 
 	/** Returns the X position of the joystick; returns 0 if the joystick is released **/
@@ -44,13 +55,15 @@ public class JoystickView extends View {
 	}
 	
 	private boolean mIsTouched = false;
-	private float mCenterPos[] = {0,0};
-	private float mStickRelPos[] = {0,0};
+	@SuppressLint("ClickableViewAccessibility") // Doesn't matter! :P
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 		float x = event.getX(), y = event.getY();
-		/// Check if this touch event is destinated for this koystick
+		
+		// Check if this touch event is inside the user-defined surface.
+		// If it is not the case, project the touch position.
 		boolean isOut = false;
+		// Check for X axis
 		if(mStickRadius > x) {
 			y = y + (mCenterPos[1]-y) * (mStickRadius-x)/(mCenterPos[0]-x);
 			x = mStickRadius;
@@ -60,6 +73,7 @@ public class JoystickView extends View {
 			x = mUserWidth+mStickRadius;
 			isOut = true;
 		}
+		// Check for Y axis
 		if(mStickRadius > y) {
 			x = x + (mCenterPos[0]-x) * (mStickRadius-y)/(mCenterPos[1]-y);
 			y = mStickRadius;
@@ -73,18 +87,23 @@ public class JoystickView extends View {
 		switch(event.getAction()) {
 		case MotionEvent.ACTION_DOWN:
 			if(!isOut) {
+				// Start moving the stick
 				mIsTouched = true;
 				if(mCenterPosition == Position.DYNAMIC || mCenterPosition == Position.FOLLOW) {
 					mCenterPos[0] = x;
 					mCenterPos[1] = y;
 				}
 			}
-			else 
+			else {
+				// The event is not used by this view
 				return false;
+			}
 			break;
 		case MotionEvent.ACTION_MOVE:
 			if(!mIsTouched)
 				break;
+			
+			// Get the relative stick position and apply the constraint of the bound shape
 			float dx = x - mCenterPos[0], dy = y - mCenterPos[1];
 			switch(mBoundShape) {
 			case CIRCLE:
@@ -125,8 +144,10 @@ public class JoystickView extends View {
 				}
 				break;
 			}
+			
 			mStickRelPos[0] = dx;
 			mStickRelPos[1] = dy;
+			// If a listener is existing, call the positionChanged() method.
 			if(mPosChangedListener != null)
 				mPosChangedListener.positionChanged(mStickRelPos[0], -mStickRelPos[1]);
 			break;
@@ -134,40 +155,54 @@ public class JoystickView extends View {
 		case MotionEvent.ACTION_UP:
 			if(!mIsTouched)
 				break;
+			// Clear the stick position
 			mStickRelPos[0] = 0;
 			mStickRelPos[1] = 0;
+			// If a listener is existing, call the positionChanged() method
 			if(mPosChangedListener != null)
 				mPosChangedListener.positionChanged(mStickRelPos[0], -mStickRelPos[1]);
 			mIsTouched = false;
 			break;
 		}
+		
+		// Ask for an update of the view
 		invalidate();
+		
 		return true;
 	}
 	
+	/** Paint used to draw **/
+	private final Paint mPaint = new Paint();
 	@Override
 	protected void onDraw(Canvas canvas) {
 		super.onDraw(canvas);
-		Log.i("###", "onDraw");
-		Paint paint = new Paint();
-		paint.setColor(0xff00ff00);
-		canvas.drawARGB(0, 0,0,255);
+
+		// Fill the background with a transparent color
+		canvas.drawARGB(0, 0, 0, 0);
+
+		// The default color is grey
+		mPaint.setColor(0xff808080);
+		
 		canvas.save();
 		canvas.translate(mCenterPos[0], mCenterPos[1]);
 		
 		if(mIsTouched) {
+			// Draw the center of the joystick; If there is no bitmap defined, draw a circle
 			if(mCenterBmp != null)
 				canvas.drawBitmap(mCenterBmp, -mCenterBmp.getWidth()/2, -mCenterBmp.getHeight()/2, null);
 			else
-				canvas.drawCircle(0,0, 20, paint);
+				canvas.drawCircle(0,0, 20, mPaint);
 		}
-		else
-			paint.setAlpha(128);
+		else {
+			// Reduce opacity of the stick when it is released
+			mPaint.setAlpha(128);
+		}
 		
+		// Draw the stick; If there is no bitmap defined, draw a circle
 		if(mStickBmp != null)
-			canvas.drawBitmap(mStickBmp, mStickRelPos[0]*mBoundRadius - mStickRadius, mStickRelPos[1]*mBoundRadius - mStickRadius, paint);
+			canvas.drawBitmap(mStickBmp, mStickRelPos[0]*mBoundRadius - mStickRadius, mStickRelPos[1]*mBoundRadius - mStickRadius, mPaint);
 		else
-			canvas.drawCircle(mStickRelPos[0]*mBoundRadius, mStickRelPos[1]*mBoundRadius, mStickRadius, paint);
+			canvas.drawCircle(mStickRelPos[0]*mBoundRadius, mStickRelPos[1]*mBoundRadius, mStickRadius, mPaint);
 		
 		canvas.restore();
 		
@@ -182,9 +217,10 @@ public class JoystickView extends View {
 		FOLLOW
 	};
 	
+	/** Sets the type of positioning of the center **/
 	public void setCenterPosition(Position pos) {
 		mCenterPosition = pos;
-		///Reset the center coordinate
+		// Reset the center coordinate
 		mCenterPos[0] = mUserWidth/2 + mStickRadius;
 		mCenterPos[1] = mUserHeight/2 + mStickRadius;
 	}
@@ -197,15 +233,16 @@ public class JoystickView extends View {
 		mBoundRadius = radius;
 	}
 	
-	/** Sets the stick image; width must be equal to height; if null, a simple circle will be displayed **/
-	private void setStickImage(Bitmap bitmap) {
+	/** Sets the stick image; width must be equal to height; if null, a simple circle will be displayed.
+	 * Returns the radius of the stick corresponding to the butmap or a default value if bitmap is invalid or nulll **/
+	private int setStickImage(Bitmap bitmap) {
 		if(bitmap != null && bitmap.getWidth() == bitmap.getHeight()) {
 			mStickBmp = bitmap;
-			mStickRadius = bitmap.getWidth()/2;
+			return bitmap.getWidth()/2;
 		}
 		else {
 			mStickBmp = null;
-			mStickRadius = 60;
+			return 60;
 		}
 			 
 	}
