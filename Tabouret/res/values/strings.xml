@@ -4,5 +4,7 @@
     <string name="app_name">Tabouret</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="err_filenotfound">File &quot;%s&quot; cannot be found.</string>
+    <string name="title_activity_game_pad_list">GamePadListActivity</string>
 
 </resources>

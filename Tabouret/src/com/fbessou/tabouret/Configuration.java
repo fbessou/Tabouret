@@ -13,7 +13,7 @@ public class Configuration {
 	private Editor mEditor;
 	private final static String APP_DIR = "app_directory";
 	private final static String LAYOUT_DIR = "layout_directory";
-	private final static String RES_DIR = "layout_directory";
+	private final static String RES_DIR = "resources_directory";
 
 	public Configuration(Context context) {
 		//p.

@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.StringReader;
 
 import com.fbessou.tabouret.view.JoystickView;
 import com.fbessou.tabouret.view.JoystickView.OnPositionChangedListener;
@@ -36,7 +37,7 @@ public class MainActivity extends Activity {
 		JoystickView jv = new JoystickView(this, 700, 1000, null);
 		jv.setOnPositionChangedListener(new OnPositionChangedListener() {
 			@Override
-			public void positionChanged(float px, float py) {
+			public void positionChanged(JoystickView joystick, float px, float py) {
 				Log.i("###", ""+px+ " "+py);
 			}
 		});
@@ -46,6 +47,16 @@ public class MainActivity extends Activity {
 				| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
 				| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
 				| View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+		GamePadLoader gpload = new GamePadLoader(this, "Coucou");
+		
+		gpload.parseXML(new StringReader(
+				"<?xml version=\"1.0\"?>"
+				+ "<gamepad>"
+				+ "<information><name>Zelda Macaroni</name><version>1.5</version><description>Testing version</description></information>"
+				+ "<layout>"
+				+ "</layout>"
+				+ "</gamepad>"));
+		
 		loadLayout("test");
 		saveLayout("testFrankRae");
 	}
