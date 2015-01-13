@@ -26,7 +26,6 @@ public class GamePadListActivity extends Activity{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_game_pad_list);
 		View v = findViewById(R.id.list_activity_layout);
-		v.setBackgroundColor(Color.parseColor("#22313F"));
 		mList = new GamePadListView(this);
 		((ScrollView)findViewById(R.id.scrollView)).addView(mList);
 		//getActionBar().setDisplayHomeAsUpEnabled(true);

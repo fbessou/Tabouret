@@ -8,13 +8,18 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FilenameFilter;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.os.Handler;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -80,10 +85,10 @@ public class GamePadListView extends TableLayout {
 						View ruler = new View(getContext());
 						ruler.setBackgroundColor(Color.parseColor("#101822"));
 						addView(ruler, new TableLayout.LayoutParams(
-								ViewGroup.LayoutParams.MATCH_PARENT, 4));
+								ViewGroup.LayoutParams.MATCH_PARENT, 2));
 						ruler = new View(getContext());
 						addView(ruler, new TableLayout.LayoutParams(
-								ViewGroup.LayoutParams.MATCH_PARENT, 2));
+								ViewGroup.LayoutParams.MATCH_PARENT, 4));
 						
 					} catch (FileNotFoundException e) {
 						Log.e("GamePadListView", "Can't read file " + f.getName());
@@ -99,7 +104,7 @@ public class GamePadListView extends TableLayout {
 	 * 
 	 * @author Frank Bessou An item of the GamePadListView table.
 	 */
-	class GamePadListItem extends TableRow implements OnTouchListener {
+	class GamePadListItem extends TableRow implements OnTouchListener , OnClickListener {
 		/**
 		 * Construct a row using
 		 */
@@ -123,7 +128,7 @@ public class GamePadListView extends TableLayout {
 
 			// Add a padding for a better look
 			setPadding(10, 5, 10, 5);
-			setBackgroundColor(Color.parseColor("#2d3647"));
+			setBackgroundColor(Color.parseColor("#384356"));
 			// Add the icon to the row
 			ImageView icon = new ImageView(this.getContext());
 
@@ -141,7 +146,10 @@ public class GamePadListView extends TableLayout {
 				// use default image
 				icon.setImageResource(R.drawable.controller_default);
 			}
-			this.addView(icon);
+			TableRow.LayoutParams lp = new TableRow.LayoutParams();
+			lp.gravity=Gravity.CENTER_VERTICAL;
+
+			this.addView(icon,lp);
 
 			// Add the text describing the gamepad to the row
 
@@ -155,17 +163,20 @@ public class GamePadListView extends TableLayout {
 
 			// By expanding the description, the icon and the arrow are aligned
 			// with borders
-			TableRow.LayoutParams lp = new TableRow.LayoutParams(
-					TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.MATCH_PARENT, 1.f);
-			tv.setLayoutParams(lp);
+			TableRow.LayoutParams lpDescr = new TableRow.LayoutParams(
+					TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.WRAP_CONTENT, 1.f);
+			tv.setLayoutParams(lpDescr);
 
 			this.addView(tv);
 
 			// Arrow to indicate the user can click
 			ImageView arrow = new ImageView(context);
 			arrow.setImageResource(R.drawable.arrow);
-			this.addView(arrow);
+			this.addView(arrow,lp);
+			
+			// Listeners
 			this.setOnTouchListener(this);
+			this.setOnClickListener(this);
 
 		}
 
@@ -173,6 +184,23 @@ public class GamePadListView extends TableLayout {
 			return mFile;
 		}
 
+
+		
+		final Handler mLongPressHandler = new Handler();
+		boolean mLongPressDetected = false;
+		Runnable mLongPressDetector = new Runnable() {
+		    public void run() {
+		    	mLongPressDetected=true;
+		       AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+		       //TODO add link to website
+		       //TODO add delete
+		       //TODO add use
+		       builder.setMessage("Coucou").setTitle("Ahaha");
+		       builder.create().show();
+		    }   
+		};
+		
+		boolean mCancelClick=false;
 		/*
 		 * (non-Javadoc)
 		 * 
@@ -185,17 +213,43 @@ public class GamePadListView extends TableLayout {
 			switch (event.getAction()) {
 			case MotionEvent.ACTION_DOWN:
 				setBackgroundColor(Color.parseColor("#34495e"));
+				mLongPressHandler.postDelayed(mLongPressDetector, 1000);
+				mCancelClick=false;
+				break;
+			case MotionEvent.ACTION_MOVE:
+				mCancelClick=true;
 				break;
 			case MotionEvent.ACTION_CANCEL:
+				mCancelClick=true;
+				setBackgroundColor(Color.parseColor("#384356"));
+				mLongPressHandler.removeCallbacks(mLongPressDetector);
+				break;
 			case MotionEvent.ACTION_UP:
-				setBackgroundColor(Color.parseColor("#2d3647"));
+				setBackgroundColor(Color.parseColor("#384356"));
+				if(!mLongPressDetected || !mCancelClick){
+					mLongPressHandler.removeCallbacks(mLongPressDetector);
+					v.performClick();
+					
+				}
+				else
+					mLongPressDetected=false;
 				break;
 			default:
 				break;
 			}
 			return true;
 		}
+		
+		/* (non-Javadoc)
+		 * @see android.view.View.OnClickListener#onClick(android.view.View)
+		 */
+		@Override
+		public void onClick(View v) {
+			Intent intent = new Intent(getContext(),MainActivity.class);
+			getContext().startActivity(intent);
+		}
+		
+		
+	}// class GamePadListItem
 
-	}
-
-}
+}// class GamePadListView
