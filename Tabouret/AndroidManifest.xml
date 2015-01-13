@@ -14,11 +14,13 @@
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@android:style/Theme.NoTitleBar" >
+        android:theme="@android:style/Theme.Holo"
+         >
         
         <activity
             android:name=".MainActivity"
-            android:label="@string/app_name" >
+            android:label="@string/app_name"
+            android:theme="@android:style/Theme.NoTitleBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -28,7 +30,9 @@
         
         <activity
             android:name=".GamePadListActivity"
-            android:label="@string/title_activity_game_pad_list" >
+            android:label="@string/gamepad_list_title"
+            android:theme="@android:style/Theme.Holo"
+            android:logo="@drawable/controller_default">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
