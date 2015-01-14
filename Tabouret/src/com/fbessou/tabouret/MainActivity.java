@@ -11,6 +11,7 @@ import com.fbessou.tabouret.view.JoystickView;
 import com.fbessou.tabouret.view.JoystickView.OnPositionChangedListener;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Environment;
@@ -29,8 +30,12 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		// If we are starting this activity from the gamepadChooser,
+		//TODO load the gamepad
+		Intent intent = getIntent();
+		if(intent.hasExtra("gamepad_path"))
+			Log.i("MainActivity",intent.getStringExtra("gamepad_path"));
 		mConfig=new Configuration(this);
-		
 		setContentView(R.layout.activity_main);
 		mainLayout = (RelativeLayout) findViewById(R.id.rootNode);
 

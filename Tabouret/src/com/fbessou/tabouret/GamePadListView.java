@@ -8,16 +8,18 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FilenameFilter;
 
-import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Handler;
+import android.os.Vibrator;
 import android.text.Html;
-import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -59,7 +61,7 @@ public class GamePadListView extends TableLayout {
 
 			// Search for layouts in all sub directories of the layout directory
 			if (dir.isDirectory()) {
-				Log.i("GamePadListView", "Scanning " + dir.getName() + " directory");
+				//Log.i("GamePadListView", "Scanning " + dir.getName() + " directory");
 				// Find the file with the correct name ( ${dir_name}+".xml" )
 				File files[] = dir.listFiles(new FilenameFilter() {
 
@@ -77,7 +79,7 @@ public class GamePadListView extends TableLayout {
 					File f = files[0];
 					GamePadInformation gpInfo;
 					try {
-						Log.i("GamePadListView", "Found xml file. Parsing...");
+						Log.i("GamePadListView", "Found xml file"+f.getName()+". Parsing...");
 						gpInfo = gploader.parseInfoFromReader(new FileReader(f));
 						GamePadListItem listItem = new GamePadListItem(getContext(), gpInfo, f);
 						addView(listItem);
@@ -85,10 +87,10 @@ public class GamePadListView extends TableLayout {
 						View ruler = new View(getContext());
 						ruler.setBackgroundColor(Color.parseColor("#101822"));
 						addView(ruler, new TableLayout.LayoutParams(
-								ViewGroup.LayoutParams.MATCH_PARENT, 2));
+								ViewGroup.LayoutParams.MATCH_PARENT, 4));
 						ruler = new View(getContext());
 						addView(ruler, new TableLayout.LayoutParams(
-								ViewGroup.LayoutParams.MATCH_PARENT, 4));
+								ViewGroup.LayoutParams.MATCH_PARENT, 15));
 						
 					} catch (FileNotFoundException e) {
 						Log.e("GamePadListView", "Can't read file " + f.getName());
@@ -110,7 +112,8 @@ public class GamePadListView extends TableLayout {
 		 */
 		private GamePadInformation mInfo;
 		private File mFile;
-
+		private Drawable mIconDrawable;
+		
 		/**
 		 * Create a list item describing a gamepad, and launching the
 		 * corresponding gamepad on click
@@ -138,14 +141,18 @@ public class GamePadListView extends TableLayout {
 				Bitmap bmp = BitmapFactory.decodeFile(file.getParent() + "/" + info.icon);
 				if (bmp != null) {
 					icon.setImageBitmap(bmp);
+					mIconDrawable = new BitmapDrawable(getResources(),bmp);
 				} else {
 					// fall back on default image
 					icon.setImageResource(R.drawable.controller_default);
+
 				}
 			} else {
 				// use default image
 				icon.setImageResource(R.drawable.controller_default);
 			}
+			mIconDrawable = icon.getDrawable();
+			
 			TableRow.LayoutParams lp = new TableRow.LayoutParams();
 			lp.gravity=Gravity.CENTER_VERTICAL;
 
@@ -153,7 +160,7 @@ public class GamePadListView extends TableLayout {
 
 			// Add the text describing the gamepad to the row
 
-			String mainContent = "<big>" + info.name + "</big> <i>v" + info.getVersion()
+			String mainContent = "<big><b>" + info.name + "</b></big> <i>v" + info.getVersion()
 					+ "</i><br><i>" + info.description + "</i><br>";
 			if (info.url != null)
 				mainContent += "<a href=\"" + info.url + "\">" + info.url + "</a>";
@@ -186,7 +193,7 @@ public class GamePadListView extends TableLayout {
 
 
 		
-		final Handler mLongPressHandler = new Handler();
+		private final Handler mClickEventHandler = new Handler();
 		boolean mLongPressDetected = false;
 		Runnable mLongPressDetector = new Runnable() {
 		    public void run() {
@@ -195,12 +202,36 @@ public class GamePadListView extends TableLayout {
 		       //TODO add link to website
 		       //TODO add delete
 		       //TODO add use
-		       builder.setMessage("Coucou").setTitle("Ahaha");
-		       builder.create().show();
+		       builder.setIcon(mIconDrawable)
+		       		  .setTitle(mInfo.name);
+		       AlertDialog dialog= builder.create();
+		       dialog.setCanceledOnTouchOutside(true);
+		       dialog.show();
+
+		       //Add a haptic effect
+		       ((Vibrator)getContext().getSystemService(Service.VIBRATOR_SERVICE)).vibrate(new long[]{0,80,50,50},-1);
+
 		    }   
 		};
+
 		
 		boolean mCancelClick=false;
+		
+		/**
+		 * Wait a little before changing the background
+		 * to avoid a too sensitive feeling
+		 */
+		Runnable clickNotifier = new Runnable() {
+			@Override
+			public void run() {
+				if(!mLongPressDetected || !mCancelClick){
+					setBackgroundColor(Color.parseColor("#18577c"));
+					((Vibrator)getContext().getSystemService(Service.VIBRATOR_SERVICE)).vibrate(50);
+				}
+				
+			}
+		};
+		
 		/*
 		 * (non-Javadoc)
 		 * 
@@ -212,8 +243,9 @@ public class GamePadListView extends TableLayout {
 
 			switch (event.getAction()) {
 			case MotionEvent.ACTION_DOWN:
-				setBackgroundColor(Color.parseColor("#34495e"));
-				mLongPressHandler.postDelayed(mLongPressDetector, 1000);
+				mClickEventHandler.postDelayed(clickNotifier, 60);
+				mClickEventHandler.postDelayed(mLongPressDetector, 1000);
+				
 				mCancelClick=false;
 				break;
 			case MotionEvent.ACTION_MOVE:
@@ -222,14 +254,17 @@ public class GamePadListView extends TableLayout {
 			case MotionEvent.ACTION_CANCEL:
 				mCancelClick=true;
 				setBackgroundColor(Color.parseColor("#384356"));
-				mLongPressHandler.removeCallbacks(mLongPressDetector);
+				mClickEventHandler.removeCallbacks(mLongPressDetector);
+				mClickEventHandler.removeCallbacks(clickNotifier);
+
 				break;
 			case MotionEvent.ACTION_UP:
 				setBackgroundColor(Color.parseColor("#384356"));
 				if(!mLongPressDetected || !mCancelClick){
-					mLongPressHandler.removeCallbacks(mLongPressDetector);
+					mClickEventHandler.removeCallbacks(clickNotifier);
+					mClickEventHandler.removeCallbacks(mLongPressDetector);
+
 					v.performClick();
-					
 				}
 				else
 					mLongPressDetected=false;
@@ -246,6 +281,7 @@ public class GamePadListView extends TableLayout {
 		@Override
 		public void onClick(View v) {
 			Intent intent = new Intent(getContext(),MainActivity.class);
+			intent.putExtra("gamepad_path", getFile().getName());
 			getContext().startActivity(intent);
 		}
 		

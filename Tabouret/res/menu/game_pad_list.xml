@@ -1,11 +1,36 @@
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.fbessou.tabouret.GamePadListActivity" >
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
 
+    <!-- Search, should appear as action button -->
+    <item
+        android:id="@+id/action_search"
+        android:icon="@drawable/ic_menu_refresh"
+        android:showAsAction="ifRoom"
+        android:title="@string/action_refresh"/>
+    <item
+        android:id="@+id/action_search2"
+        android:icon="@drawable/ic_menu_refresh"
+        android:showAsAction="ifRoom"
+        android:title="@string/action_refresh"/>
+    <item
+        android:id="@+id/action_search3"
+        android:icon="@drawable/ic_menu_refresh"
+        android:showAsAction="ifRoom"
+        android:title="@string/action_refresh"/>
+    <item
+        android:id="@+id/action_search4"
+        android:icon="@drawable/ic_menu_refresh"
+        android:showAsAction="ifRoom"
+        android:title="@string/action_refresh"/>
+    <item
+        android:id="@+id/action_search5"
+        android:icon="@drawable/ic_menu_refresh"
+        android:showAsAction="ifRoom"
+        android:title="@string/action_refresh"/>
+    <!-- Settings, should always be in the overflow -->
     <item
         android:id="@+id/action_settings"
-        android:orderInCategory="100"
+        android:icon="@drawable/ic_menu_moreoverflow"
+        android:showAsAction="always"
         android:title="@string/action_settings"/>
 
 </menu>
