@@ -1,12 +1,18 @@
 /**
  * 
  */
-package com.fbessou.tabouret;
+package com.fbessou.tabouret.view;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FilenameFilter;
+
+import com.fbessou.tabouret.Configuration;
+import com.fbessou.tabouret.GamePadInformation;
+import com.fbessou.tabouret.GamePadLoader;
+import com.fbessou.tabouret.GamePadActivity;
+import com.fbessou.tabouret.R;
 
 import android.app.AlertDialog;
 import android.app.Service;
@@ -67,7 +73,6 @@ public class GamePadListView extends TableLayout {
 
 					@Override
 					public boolean accept(File dir, String filename) {
-						Log.w("azaea", filename);
 						if (filename.equals(dir.getName() + ".xml"))
 							return true;
 						return false;
@@ -280,11 +285,10 @@ public class GamePadListView extends TableLayout {
 		 */
 		@Override
 		public void onClick(View v) {
-			Intent intent = new Intent(getContext(),MainActivity.class);
-			intent.putExtra("gamepad_path", getFile().getName());
+			Intent intent = new Intent(getContext(),GamePadActivity.class);
+			intent.putExtra("gamepad_path", getFile().getAbsolutePath());
 			getContext().startActivity(intent);
 		}
-		
 		
 	}// class GamePadListItem
 

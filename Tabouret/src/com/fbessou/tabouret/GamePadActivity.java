@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringReader;
 
+import com.fbessou.tabouret.view.GamePadLayout;
 import com.fbessou.tabouret.view.JoystickView;
 import com.fbessou.tabouret.view.JoystickView.OnPositionChangedListener;
 
@@ -18,12 +19,13 @@ import android.os.Environment;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.OrientationEventListener;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
-public class MainActivity extends Activity {
+public class GamePadActivity extends Activity {
 	Configuration mConfig;
 	RelativeLayout mainLayout;
 
@@ -33,39 +35,20 @@ public class MainActivity extends Activity {
 		// If we are starting this activity from the gamepadChooser,
 		//TODO load the gamepad
 		Intent intent = getIntent();
-		if(intent.hasExtra("gamepad_path"))
+		if(intent.hasExtra("gamepad_path")){
 			Log.i("MainActivity",intent.getStringExtra("gamepad_path"));
-		mConfig=new Configuration(this);
-		setContentView(R.layout.activity_main);
-		mainLayout = (RelativeLayout) findViewById(R.id.rootNode);
-
-		JoystickView jv = new JoystickView(this, 700, 1000, null);
-		jv.setOnPositionChangedListener(new OnPositionChangedListener() {
-			@Override
-			public void positionChanged(JoystickView joystick, float px, float py) {
-				Log.i("###", ""+px+ " "+py);
-			}
-		});
-		mainLayout.addView(jv);
-		
-		mainLayout.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-				| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-				| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-				| View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-		GamePadLoader gpload = new GamePadLoader(this, "Coucou");
-		
-		gpload.parseXML(new StringReader(
-				"<?xml version=\"1.0\"?>"
-				+ "<gamepad>"
-				+ "<information><name>Zelda Macaroni</name><version>1.5</version><description>Testing version</description></information>"
-				+ "<layout>"
-				+ "</layout>"
-				+ "</gamepad>"));
-		
-		loadLayout("test");
-		saveLayout("testFrankRae");
+			GamePadLoader gpload = new GamePadLoader(this, "Coucou");
+			GamePadLayout layout= gpload.parseFile(intent.getStringExtra("gamepad_path"));
+			layout.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+					| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+					| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+					| View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+			setContentView(layout);
+			setRequestedOrientation(layout.getOrientation());
+		}
+		Toast.makeText(this, "How did you", 100).show();
 	}
-
+	
 	void loadLayout(String xmlLayoutName) {
 		mainLayout.setBackgroundColor(Color.parseColor("red"));
 	}

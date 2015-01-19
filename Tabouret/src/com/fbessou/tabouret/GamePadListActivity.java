@@ -1,5 +1,7 @@
 package com.fbessou.tabouret;
 
+import com.fbessou.tabouret.view.GamePadListView;
+
 import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;

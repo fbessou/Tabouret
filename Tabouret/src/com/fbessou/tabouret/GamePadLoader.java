@@ -29,6 +29,7 @@ public class GamePadLoader {
 	private XmlPullParser mXmlParser;
 	private Context mContext;
 	private Schema mSchema;
+	private String mResourceDir;
 
 	public GamePadLoader(Context context, String xsdFile) {
 		mContext = context;
@@ -86,14 +87,16 @@ public class GamePadLoader {
 	 * @param fileName
 	 *            is the file containing the gamepad information
 	 */
-	public void parseFile(String fileName) {
+	public GamePadLayout parseFile(String fileName) {
 		try {
 			File f = new File(fileName);
-			parseXML(new FileReader(f));
+			mResourceDir = f.getParent();
+			return parseXML(new FileReader(f));
 		} catch (FileNotFoundException e) {
 			Log.e("LayoutLoader",
 					mContext.getResources().getString(R.string.err_filenotfound, fileName));
 		}
+		return null;
 	}
 
 	/**
@@ -131,16 +134,16 @@ public class GamePadLoader {
 		return layout;
 	}
 
-	public GamePadInformation parseInfoFromFile(String fileName){
-		try{
+	public GamePadInformation parseInfoFromFile(String fileName) {
+		try {
 			return parseInfoFromReader(new FileReader(new File(fileName)));
-		} catch(FileNotFoundException e){
+		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			return null;
 		}
-		
-		
+
 	}
+
 	/**
 	 * 
 	 * @param reader
@@ -155,10 +158,10 @@ public class GamePadLoader {
 				mXmlParser.next();
 				switch (mXmlParser.getEventType()) {
 				case XmlPullParser.START_TAG:
-					if (mXmlParser.getName().equalsIgnoreCase("information")){
+					if (mXmlParser.getName().equalsIgnoreCase("information")) {
 						return GamePadInformation.parseXML(mXmlParser);
-						}
-						break;
+					}
+					break;
 				case XmlPullParser.END_DOCUMENT:
 					return null;
 				default:
@@ -170,7 +173,6 @@ public class GamePadLoader {
 			return null;
 		}
 	}
-	
 
 	GamePadLayout parseGamePadElement() throws XmlPullParserException, IOException {
 		GamePadInformation info = null;
@@ -184,7 +186,7 @@ public class GamePadLoader {
 					info = GamePadInformation.parseXML(mXmlParser);
 					Log.i("TEST", "" + info);
 				} else if (mXmlParser.getName().equalsIgnoreCase("layout")) {
-
+					layout = (GamePadLayout) new GamePadLayout.Parser(mXmlParser, mContext,mResourceDir).parse();
 				}
 				break;
 			case XmlPullParser.END_TAG:

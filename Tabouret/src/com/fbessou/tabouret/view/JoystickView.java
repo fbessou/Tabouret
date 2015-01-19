@@ -1,15 +1,22 @@
 package com.fbessou.tabouret.view;
 
+import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
+
+import com.fbessou.tabouret.NodeParser;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.drawable.BitmapDrawable;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.RelativeLayout;
+import android.widget.RelativeLayout.LayoutParams;
 
 /**
  * 
@@ -23,9 +30,9 @@ public class JoystickView extends View {
 	private BoundShape mBoundShape = BoundShape.CIRCLE;
 	private int mBoundRadius = 150;
 	/** Width and height of the touchable surface **/
-	private final int mUserWidth, mUserHeight;
+	private int mUserWidth=400, mUserHeight=400;
 	/** Radius of the stick; Automatically set when setStickImage() is called **/
-	private final int mStickRadius;
+	private int mStickRadius=60;
 	/** Type of positioning of the joystick center (see enum Position) **/
 	private Position mCenterPosition = Position.DYNAMIC;
 	/** Listener used when the position of the stick is changed (see onTouchEvent()) **/
@@ -37,18 +44,21 @@ public class JoystickView extends View {
 
 	public JoystickView(Context context, int w, int h, Bitmap stickBmp) {
 		super(context);
-		// Set the stick's bitmap and radius
-		mStickRadius = setStickImage(stickBmp);
+
 		// Set the touchable surface's dimensions
 		mUserWidth = w;
 		mUserHeight = h;
+		// Set the stick's bitmap and radius
+		setStickImage(stickBmp);
 
-		// Set layout margins with radius
-		RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(w + mStickRadius*2, h + mStickRadius*2);
-		lp.setMargins(-mStickRadius, -mStickRadius, mStickRadius, mStickRadius);
-		setLayoutParams(lp);
-		// Set a default positioning
-		setCenterPosition(Position.FIXED);
+	}
+	
+	/**
+	 * 
+	 */
+	public JoystickView(Context context) {
+		super(context);
+		setStickImage(null);
 	}
 
 	/**
@@ -81,9 +91,9 @@ public class JoystickView extends View {
 			y = y + (mCenterPos[1] - y) * (mStickRadius - x) / (mCenterPos[0] - x);
 			x = mStickRadius;
 			isOut = true;
-		} else if (x > mUserWidth + mStickRadius) {
-			y = y + (mCenterPos[1] - y) * (mUserWidth + mStickRadius - x) / (mCenterPos[0] - x);
-			x = mUserWidth + mStickRadius;
+		} else if (x > mUserWidth/* - mStickRadius*/) {
+			y = y + (mCenterPos[1] - y) * (mUserWidth/* - mStickRadius*/ - x) / (mCenterPos[0] - x);
+			x = mUserWidth /*- mStickRadius*/;
 			isOut = true;
 		}
 		// Check for Y axis
@@ -91,9 +101,9 @@ public class JoystickView extends View {
 			x = x + (mCenterPos[0] - x) * (mStickRadius - y) / (mCenterPos[1] - y);
 			y = mStickRadius;
 			isOut = true;
-		} else if (y > mUserHeight + mStickRadius) {
-			x = x + (mCenterPos[0] - x) * (mUserHeight + mStickRadius - y) / (mCenterPos[1] - y);
-			y = mUserHeight + mStickRadius;
+		} else if (y > mUserHeight /*- mStickRadius*/) {
+			x = x + (mCenterPos[0] - x) * (mUserHeight /*- mStickRadius*/ - y) / (mCenterPos[1] - y);
+			y = mUserHeight /* - mStickRadius*/;
 			isOut = true;
 		}
 
@@ -260,15 +270,20 @@ public class JoystickView extends View {
 
 	/** Sets the stick image; width must be equal to height; if null, a simple circle will be displayed.
 	 * Returns the radius of the stick corresponding to the butmap or a default value if bitmap is invalid or nulll **/
-	private int setStickImage(Bitmap bitmap) {
+	private void setStickImage(Bitmap bitmap) {
 		if (bitmap != null && bitmap.getWidth() == bitmap.getHeight()) {
 			mStickBmp = bitmap;
-			return bitmap.getWidth()/2;
+			mStickRadius= bitmap.getWidth()/2;
 		}
 		else {
 			mStickBmp = null;
-			return 60;
+			mStickRadius=60;
 		}
+		
+		// Set layout margins with radius
+		RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(mUserWidth + mStickRadius*2, mUserHeight + mStickRadius*2);
+		//lp.setMargins(-mStickRadius, -mStickRadius, -mStickRadius, -mStickRadius);
+		setLayoutParams(lp);
 
 	}
 
@@ -288,13 +303,72 @@ public class JoystickView extends View {
 	public interface OnPositionChangedListener {
 		void positionChanged(JoystickView joystick,float px, float py);
 	}
-
-	/**
-	 * 
-	 * @author Frank Bessou
-	 */
-	static public JoystickView parseXML(Context context, String xml) throws XmlPullParserException{
+	
+	public static class Parser extends Container.Parser{
+		/**
+		 * @param parentParser parser from which is called this one
+		 */
+		public Parser(NodeParser parentParser) {
+			super("joystick",parentParser);
+		}
 		
-		return new JoystickView(context,20,20,null);
+		/* (non-Javadoc)
+		 * @see com.fbessou.tabouret.view.Container.Parser#parse()
+		 */
+		@Override
+		public View parse() {
+			JoystickView joystick = new JoystickView(getContext());
+			mLayoutParams=(LayoutParams) joystick.getLayoutParams();
+			setView(joystick);
+			try {
+				parseAttributes();
+				parseChildren();
+				applyLayout();
+			} catch (XmlPullParserException e ) {
+				e.printStackTrace();
+			}
+
+			return joystick;
+			
+		}
+		
+		/* (non-Javadoc)
+		 * @see com.fbessou.tabouret.NodeParser#parseAttribute(java.lang.String, java.lang.String)
+		 */
+		@Override
+		protected void parseAttribute(String key, String val) {
+			if(getView()!=null){
+				switch (key.toLowerCase()) {
+				case "position":
+					switch (val.toLowerCase()) {
+					case "fixed":
+						((JoystickView)getView()).setCenterPosition(Position.FIXED);
+						break;
+					case "dynamic":
+						((JoystickView)getView()).setCenterPosition(Position.DYNAMIC);
+						break;
+					case "follow":
+						((JoystickView)getView()).setCenterPosition(Position.FOLLOW);
+						break;
+					default:
+						Log.e("JoystickView.Parser","Unrecognised position value : \""+val+"\". Allowed values are \"fixed\", \"follow\" and \"dynamic\"");
+						break;
+					}
+					break;
+				case "stick-image":
+					((JoystickView)getView()).setStickImage(BitmapFactory
+								.decodeFile(mResourceDir + "/" + val));;
+					break;
+				case "margin-left":
+				case "margin-right":
+				case "margin-top":
+				case "margin-bottom":
+					break;
+				default:
+					super.parseAttribute(key, val);
+					break;
+				}
+			}
+		}
 	}
 }
