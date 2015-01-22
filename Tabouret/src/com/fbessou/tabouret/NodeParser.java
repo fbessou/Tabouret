@@ -4,15 +4,19 @@
 package com.fbessou.tabouret;
 
 import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.View;
 import android.widget.RelativeLayout;
 import android.widget.RelativeLayout.LayoutParams;
@@ -22,6 +26,7 @@ import android.widget.RelativeLayout.LayoutParams;
  *
  */
 public class NodeParser {
+	static final Pattern dimensionPattern = Pattern.compile("([0-9]+)(dp|px)?");
 
 	private Context mContext; // Context used to create views
 	private final String mTagName; // tag currently parsed
@@ -170,10 +175,16 @@ public class NodeParser {
 								.decodeFile(mResourceDir + "/" + val)));
 				break;
 			case "width":
-				getLayouParams().width = Integer.parseInt(val);
+				if(val.equalsIgnoreCase("fill"))
+					getLayouParams().width=LayoutParams.MATCH_PARENT;
+				else
+					getLayouParams().width = parseDimension(val);
 				break;
 			case "height":
-				getLayouParams().height = Integer.parseInt(val);
+				if(val.equalsIgnoreCase("fill"))
+					getLayouParams().height=LayoutParams.MATCH_PARENT;
+				else
+					getLayouParams().height = parseDimension(val);
 				break;
 			case "v-align":
 				switch (val.toLowerCase()) {
@@ -207,16 +218,16 @@ public class NodeParser {
 				}
 				break;
 			case "margin-top" :
-				getLayouParams().topMargin = Integer.parseInt(val);
+				getLayouParams().topMargin = parseDimension(val);
 				break;
 			case "margin-right" :
-				getLayouParams().rightMargin = Integer.parseInt(val);
+				getLayouParams().rightMargin = parseDimension(val);
 				break;
 			case "margin-bottom" :
-				getLayouParams().bottomMargin = Integer.parseInt(val);
+				getLayouParams().bottomMargin = parseDimension(val);
 				break;
 			case "margin-left" :
-				getLayouParams().leftMargin = Integer.parseInt(val);
+				getLayouParams().leftMargin = parseDimension(val);
 				break;
 			default:
 				Log.w("NodeParser(" + mTagName + ")", "Unrecognized attribute " + key);
@@ -250,6 +261,49 @@ public class NodeParser {
 		} catch (XmlPullParserException e) {
 			return false;
 		}
+	}
+	
+	/**
+	 * 
+	 * @param dimension a String in the form "1234unit" ex : "10dp"
+	 * @return dimension in pixel
+	 */
+	protected int parseDimension(String dimension){
+		int dim = 100;
+		Log.i("NodeParser",dimension);
+
+		Matcher matcher = dimensionPattern.matcher(dimension);
+		if(matcher.matches()){
+			String dimS = matcher.group(1);
+			try {
+				dim = Integer.parseInt(dimS);
+				if(matcher.groupCount()>2){
+					String unit = matcher.group(2);
+					switch (unit) {
+					case "dp":
+						dim = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dim, mContext.getResources().getDisplayMetrics());
+						break;
+					case "px":
+					default:
+						break;
+					}
+				}
+			} catch (NumberFormatException e) {
+				e.printStackTrace();
+			}
+		}
+		return dim;
+	
+	}
+	
+	/**
+	 * 
+	 * @return dimension in pixels
+	 */
+	protected int sPixelsFromDps(int dp){
+	Resources r = mContext.getResources();
+	return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,dp, r.getDisplayMetrics());
+	
 	}
 
 }

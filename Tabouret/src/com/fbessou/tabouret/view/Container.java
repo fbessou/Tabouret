@@ -23,7 +23,7 @@ public class Container extends RelativeLayout {
 	 */
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
-		return true;
+		return false;
 	}
 
 	public static class Parser extends NodeParser {

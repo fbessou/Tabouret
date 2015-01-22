@@ -1,9 +1,6 @@
 package com.fbessou.tabouret.view;
 
-import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
-
-import com.fbessou.tabouret.NodeParser;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -11,12 +8,12 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.drawable.BitmapDrawable;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.RelativeLayout;
-import android.widget.RelativeLayout.LayoutParams;
+
+import com.fbessou.tabouret.NodeParser;
 
 /**
  * 
@@ -29,8 +26,6 @@ public class JoystickView extends View {
 	/** Parameters of the bound that define the constraints of the relative stick position **/
 	private BoundShape mBoundShape = BoundShape.CIRCLE;
 	private int mBoundRadius = 150;
-	/** Width and height of the touchable surface **/
-	private int mUserWidth=400, mUserHeight=400;
 	/** Radius of the stick; Automatically set when setStickImage() is called **/
 	private int mStickRadius=60;
 	/** Type of positioning of the joystick center (see enum Position) **/
@@ -41,18 +36,25 @@ public class JoystickView extends View {
 	private float mCenterPos[] = {0,0};
 	/** Position (X,Y) of the stick relatively to the center; With -1.0f <= X,Y <= 1.0f **/ 
 	private float mStickRelPos[] = {0,0};
-
+	
+	private int mStoredSize[] = {500,500};
 	public JoystickView(Context context, int w, int h, Bitmap stickBmp) {
 		super(context);
-
-		// Set the touchable surface's dimensions
-		mUserWidth = w;
-		mUserHeight = h;
 		// Set the stick's bitmap and radius
 		setStickImage(stickBmp);
+		
 
 	}
-	
+	/* (non-Javadoc)
+	 * @see android.view.View#onSizeChanged(int, int, int, int)
+	 */
+	@Override
+	protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+		super.onSizeChanged(w, h, oldw, oldh);
+		mStoredSize[0]=w;
+		mStoredSize[1]=h;
+		centerStick();
+	}
 	/**
 	 * 
 	 */
@@ -91,9 +93,9 @@ public class JoystickView extends View {
 			y = y + (mCenterPos[1] - y) * (mStickRadius - x) / (mCenterPos[0] - x);
 			x = mStickRadius;
 			isOut = true;
-		} else if (x > mUserWidth/* - mStickRadius*/) {
-			y = y + (mCenterPos[1] - y) * (mUserWidth/* - mStickRadius*/ - x) / (mCenterPos[0] - x);
-			x = mUserWidth /*- mStickRadius*/;
+		} else if (x > mStoredSize[0] - mStickRadius) {
+			y = y + (mCenterPos[1] - y) * (mStoredSize[0] - mStickRadius - x) / (mCenterPos[0] - x);
+			x = mStoredSize[0] - mStickRadius;
 			isOut = true;
 		}
 		// Check for Y axis
@@ -101,9 +103,9 @@ public class JoystickView extends View {
 			x = x + (mCenterPos[0] - x) * (mStickRadius - y) / (mCenterPos[1] - y);
 			y = mStickRadius;
 			isOut = true;
-		} else if (y > mUserHeight /*- mStickRadius*/) {
-			x = x + (mCenterPos[0] - x) * (mUserHeight /*- mStickRadius*/ - y) / (mCenterPos[1] - y);
-			y = mUserHeight /* - mStickRadius*/;
+		} else if (y > mStoredSize[1] - mStickRadius) {
+			x = x + (mCenterPos[0] - x) * (mStoredSize[1] - mStickRadius - y) / (mCenterPos[1] - y);
+			y = mStoredSize[1]  - mStickRadius;
 			isOut = true;
 		}
 
@@ -221,7 +223,7 @@ public class JoystickView extends View {
 		}
 		else {
 			// Reduce opacity of the stick when it is released
-			mPaint.setAlpha(128);
+			mPaint.setAlpha(125);
 		}
 
 		// Draw the stick; If there is no bitmap defined, draw a circle
@@ -252,10 +254,6 @@ public class JoystickView extends View {
 	/** Sets the type of positioning of the center **/
 	public void setCenterPosition(Position pos) {
 		mCenterPosition = pos;
-
-		// Reset the center coordinate
-		mCenterPos[0] = mUserWidth/2 + mStickRadius;
-		mCenterPos[1] = mUserHeight/2 + mStickRadius;
 	}
 
 	public enum BoundShape {
@@ -281,7 +279,7 @@ public class JoystickView extends View {
 		}
 		
 		// Set layout margins with radius
-		RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(mUserWidth + mStickRadius*2, mUserHeight + mStickRadius*2);
+		RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(mStoredSize[0] + mStickRadius*2, mStoredSize[1] + mStickRadius*2);
 		//lp.setMargins(-mStickRadius, -mStickRadius, -mStickRadius, -mStickRadius);
 		setLayoutParams(lp);
 
@@ -294,7 +292,15 @@ public class JoystickView extends View {
 	public void setCenterImage(Bitmap bitmap) {
 		mStickBmp = bitmap;
 	}
-
+	
+	/**
+	 * Move the stick to the center of the view.
+	 */
+	protected void centerStick(){
+		// Reset the center coordinate
+		mCenterPos[0] = mStoredSize[0]/2;
+		mCenterPos[1] = mStoredSize[1]/2;
+	}
 	/** Sets the listener called when the joystick's position changed **/
 	public void setOnPositionChangedListener(OnPositionChangedListener listener) {
 		mPosChangedListener = listener;
@@ -317,8 +323,11 @@ public class JoystickView extends View {
 		 */
 		@Override
 		public View parse() {
+			/*
+			 *  njghjjbfgg
+			 * 
+			 */
 			JoystickView joystick = new JoystickView(getContext());
-			mLayoutParams=(LayoutParams) joystick.getLayoutParams();
 			setView(joystick);
 			try {
 				parseAttributes();
@@ -359,11 +368,11 @@ public class JoystickView extends View {
 					((JoystickView)getView()).setStickImage(BitmapFactory
 								.decodeFile(mResourceDir + "/" + val));;
 					break;
-				case "margin-left":
+				/*case "margin-left":
 				case "margin-right":
 				case "margin-top":
 				case "margin-bottom":
-					break;
+					break;*/
 				default:
 					super.parseAttribute(key, val);
 					break;
