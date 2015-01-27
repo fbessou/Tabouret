@@ -2,19 +2,26 @@ package com.fbessou.tabouret.view;
 
 import org.xmlpull.v1.XmlPullParserException;
 
-import com.fbessou.tabouret.NodeParser;
-
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.StateListDrawable;
+import android.util.StateSet;
 import android.view.MotionEvent;
 import android.view.View;
 
-public class ButtonView extends View {
+import com.fbessou.tabouret.NodeParser;
 
+public class ButtonView extends View {
+	/** Buttons images, null if not defined **/
+	StateListDrawable mDrawable;
+	
 	ButtonView(Context context) {
 		super(context);
 	}
-
+	
+	/** To remember is the button was pressed at the last touch event **/
 	private boolean mWasPressed = false;
 
 	@SuppressLint("ClickableViewAccessibility")
@@ -25,11 +32,39 @@ public class ButtonView extends View {
 
 		boolean pressed = isPressed();
 		if (mWasPressed != pressed) {
-			mStateChangedListener.onStateChanged(pressed);
+			// Send the event to the listener
+			if(mStateChangedListener != null)
+				mStateChangedListener.onStateChanged(pressed);
 			mWasPressed = pressed;
 		}
 
 		return handled;
+	}
+
+	/** Sets the released button image; should be call only once
+	 * @see to android.graphics.drawable.Drawable.createFromPath(pathName) **/
+	void setReleasedImage(Drawable released) {
+		if(mDrawable == null)
+			mDrawable = new StateListDrawable();
+		
+		// Add the pressed state and its image
+		mDrawable.addState(new int[] { android.R.attr.state_active }, released);
+		
+		// Update the view's background
+		setBackground(mDrawable);
+	}
+	
+	/** Sets the pressed button image; should be call only once
+	 * @see to android.graphics.drawable.Drawable.createFromPath(pathName) **/
+	void setPressedImage(Drawable pressed) {
+		if(mDrawable == null)
+			mDrawable = new StateListDrawable();
+		
+		// Add the pressed state and its image
+		mDrawable.addState(new int[] { android.R.attr.state_pressed }, pressed);
+		
+		// Update the view's background
+		setBackground(mDrawable);
 	}
 
 	private OnStateChangeListener mStateChangedListener;
