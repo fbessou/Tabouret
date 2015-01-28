@@ -105,15 +105,16 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 	private void registerGame(Socket gameSocket) {
 		// If the game socket is already defined don't
 		// close newly created socket.
-		if (mGameSocket != null) {
-			if (gameSocket != null)
+		/*if (mGameSocket != null) {
+			if (gameSocket != null){
 				try {
 					gameSocket.close();
 					Log.i("GameIOProxy","Abort connection");
 				} catch (IOException e) {
 					Log.w("GameIOProxy", "Error on invalid game socket's closing.");
 				}
-		} else { // We are accepting a game
+			}
+		} else*/ { // We are accepting a game
 			if(gameSocket!=null){
 				mGameSocket = gameSocket;
 				mGameSender= new StringSender(mGameSocket);
@@ -228,8 +229,11 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 					Vibrator v1 = (Vibrator) getSystemService(VIBRATOR_SERVICE);
 					v1.vibrate(100);
 					break;
+				case "inputevent":
+					mGameSender.send(s+"\n");
+					break;
 				default:
-
+					Log.i("On envoie",s);
 					mGameSender.send(s+"\n");
 				}
 

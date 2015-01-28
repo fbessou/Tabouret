@@ -89,8 +89,11 @@ public class GameBinder extends Fragment implements Sensor.Listener, StringRecei
 				// check we are connected to a server
 				if (mSocket != null) {
 					try {
-						mSocket.getOutputStream().write(getJson(evt).getBytes());
-					} catch (IOException e) {
+						JSONObject obj = new JSONObject();
+						obj.put("type","inputevent");
+						obj.put("event",getJson(evt) );
+						mSocket.getOutputStream().write((obj.toString()+"\n").getBytes());
+					} catch (IOException | JSONException e) {
 						e.printStackTrace();
 					}
 				}
@@ -103,11 +106,11 @@ public class GameBinder extends Fragment implements Sensor.Listener, StringRecei
 		sensor.setListener(this);
 	}
 
-	String getJson(InputEvent evt) {
+	JSONObject getJson(InputEvent evt) {
 		JSONObject eventJ = new JSONObject();
 		try {
-			eventJ.put("inputId", evt.inputId);
-			eventJ.put("padId", evt.padId);
+			eventJ.put("input", evt.inputId);
+			eventJ.put("pad", evt.padId);
 			switch (evt.eventType) {
 			case MOTION_3D:
 				eventJ.put("type", "motion3d");
@@ -140,7 +143,7 @@ public class GameBinder extends Fragment implements Sensor.Listener, StringRecei
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
-		return eventJ.toString() + "\n";
+		return eventJ;
 	}
 
 	/*
