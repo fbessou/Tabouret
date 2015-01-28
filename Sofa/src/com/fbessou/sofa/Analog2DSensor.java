@@ -3,7 +3,6 @@
  */
 package com.fbessou.sofa;
 
-import com.fbessou.sofa.Sensor.SensorType;
 
 /**
  * @author Frank Bessou
@@ -26,7 +25,7 @@ public class Analog2DSensor extends Sensor {
 		mValueY = Math.max(-1, Math.min(1,y));
 		if(changed){
 			InputEvent evt = new InputEvent(InputEvent.EventType.MOTION_2D);
-			evt.sourceId = getId();
+			evt.inputId = getId();
 			evt.x = mValueX;
 			evt.y = mValueY;
 			triggerEvent(evt);

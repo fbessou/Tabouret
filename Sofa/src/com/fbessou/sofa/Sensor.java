@@ -3,7 +3,6 @@
  */
 package com.fbessou.sofa;
 
-import android.hardware.TriggerEvent;
 
 /**
  * @author Frank Bessou

@@ -3,17 +3,12 @@
  */
 package com.fbessou.sofa;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import android.util.Log;
-
-import com.fbessou.sofa.StringReceiver.Listener;
 
 /**
  * @author Frank Bessou
