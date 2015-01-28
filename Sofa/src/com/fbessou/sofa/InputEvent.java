@@ -45,16 +45,16 @@ public class InputEvent{
 		case "key_down":
 			eventType = EventType.KEY_DOWN;
 			break;
-		case "motion1D":
+		case "motion1d":
 			eventType = EventType.MOTION_1D;
 			x = (float) jo.getDouble("x");
 			break;
-		case "motion2D":
+		case "motion2d":
 			eventType = EventType.MOTION_2D;
 			x = (float) jo.getDouble("x");
 			y = (float) jo.getDouble("y");
 			break;
-		case "motion3D":
+		case "motion3d":
 			eventType = EventType.MOTION_3D;
 			x = (float) jo.getDouble("x");
 			y = (float) jo.getDouble("y");
@@ -64,6 +64,8 @@ public class InputEvent{
 			eventType = EventType.TEXT_SENT;
 			text = jo.getString("text");
 			break;
+		default:
+			throw new JSONException("Invalid input event type");
 		}
 	}
 	/* (non-Javadoc)
