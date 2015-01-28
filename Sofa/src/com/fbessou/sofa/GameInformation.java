@@ -3,8 +3,6 @@
  */
 package com.fbessou.sofa;
 
-import java.util.ArrayList;
-import java.util.Map;
 
 /**
  * @author Frank Bessou

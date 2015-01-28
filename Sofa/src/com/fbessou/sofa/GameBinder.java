@@ -4,44 +4,18 @@
 package com.fbessou.sofa;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.lang.reflect.Array;
-import java.net.Inet4Address;
-import java.net.InetAddress;
 import java.net.Socket;
-import java.net.SocketAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.UUID;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.fbessou.sofa.ProxyConnector.OnConnectedListener;
-
-import android.R.string;
 import android.app.Fragment;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.IntentSender.SendIntentException;
-import android.net.NetworkInfo;
-import android.net.wifi.WifiConfiguration;
-import android.net.wifi.p2p.WifiP2pGroup;
-import android.net.wifi.p2p.WifiP2pInfo;
-import android.net.wifi.p2p.WifiP2pManager;
-import android.net.wifi.p2p.WifiP2pManager.Channel;
-import android.net.wifi.p2p.WifiP2pManager.ConnectionInfoListener;
-import android.net.wifi.p2p.WifiP2pManager.GroupInfoListener;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.support.v4.content.LocalBroadcastManager;
-import android.text.TextUtils.StringSplitter;
 import android.util.Log;
+
+import com.fbessou.sofa.ProxyConnector.OnConnectedListener;
 
 /**
  * @author Frank Bessou
@@ -132,7 +106,8 @@ public class GameBinder extends Fragment implements Sensor.Listener, StringRecei
 	String getJson(InputEvent evt) {
 		JSONObject eventJ = new JSONObject();
 		try {
-			eventJ.put("inputId", evt.sourceId);
+			eventJ.put("inputId", evt.inputId);
+			eventJ.put("padId", evt.padId);
 			switch (evt.eventType) {
 			case MOTION_3D:
 				eventJ.put("type", "motion3d");
@@ -146,8 +121,18 @@ public class GameBinder extends Fragment implements Sensor.Listener, StringRecei
 				eventJ.put("y", evt.y);
 				break;
 			case MOTION_1D:
-				eventJ.put("type", "motion2d");
+				eventJ.put("type", "motion1d");
 				eventJ.put("x", evt.x);
+				break;
+			case KEY_DOWN:
+				eventJ.put("type", "key_down");
+				break;
+			case KEY_UP:
+				eventJ.put("type", "key_up");
+				break;
+			case TEXT_SENT:
+				eventJ.put("type", "text");
+				eventJ.put("text", evt.text);
 				break;
 			default:
 				break;
