@@ -16,7 +16,6 @@ import android.util.Log;
  */
 public class StringReceiver implements Runnable {
 	public Socket socket; // Socket to receive from
-	LinkedBlockingQueue<String> mStrings = new LinkedBlockingQueue<String>();
 	public interface Listener{
 		void onStringReceived(String s);
 	}
@@ -36,14 +35,14 @@ public class StringReceiver implements Runnable {
 			String s = null;
 
 			while ((s = reader.readLine()) != null) {
-				mStrings.add(s);
 				if(mListener!=null){
 					mListener.onStringReceived(s);
 				}
+				else
+					
 				Log.d("StringReceiver",s);
 			}
 			
-			mStrings.add("EOF");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

@@ -15,10 +15,8 @@ import org.json.JSONObject;
 
 import android.app.Service;
 import android.content.Intent;
-import android.content.IntentSender.SendIntentException;
 import android.os.IBinder;
 import android.os.Vibrator;
-import android.text.TextUtils.StringSplitter;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -76,6 +74,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		mUUIDToId = new HashMap<UUID, Integer>();
 		mGamePads = new SparseArray<Socket>();
 		mBlockedGamePads = new ArrayList<Socket>();
+		Log.i("GameIOProxy","Running");
 	}
 
 	/**
@@ -110,6 +109,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			if (gameSocket != null)
 				try {
 					gameSocket.close();
+					Log.i("GameIOProxy","Abort connection");
 				} catch (IOException e) {
 					Log.w("GameIOProxy", "Error on invalid game socket's closing.");
 				}
