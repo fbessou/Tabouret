@@ -12,8 +12,8 @@ import org.json.JSONObject;
  */
 public class InputEvent{
 
-	public int inputId;
-	public int padId;
+	public int inputId=0;
+	public int padId=0;
 	//Content description
 	public EventType eventType;
 	public float x=0;

@@ -4,21 +4,27 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.StateListDrawable;
-import android.util.StateSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+
+import com.fbessou.sofa.KeySensor;
 
 import com.fbessou.tabouret.NodeParser;
 
 public class ButtonView extends View {
 	/** Buttons images, null if not defined **/
 	StateListDrawable mDrawable;
+	KeySensor sensor;
 	
 	ButtonView(Context context) {
 		super(context);
+		setClickable(true);
+		sensor = new KeySensor(false);
 	}
 	
 	/** To remember is the button was pressed at the last touch event **/
@@ -28,17 +34,35 @@ public class ButtonView extends View {
 	// Doesn't matter! :P
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
+
 		boolean handled = super.onTouchEvent(event);
 
 		boolean pressed = isPressed();
+		switch (event.getAction()) {
+		case MotionEvent.ACTION_DOWN:
+			pressed=true;
+			sensor.setValue(true);
+			break;
+		case MotionEvent.ACTION_CANCEL:
+		case MotionEvent.ACTION_UP:
+			pressed=false;
+			sensor.setValue(false);
+
+			break;
+		default:
+			break;
+		}
+		
 		if (mWasPressed != pressed) {
+			Log.i("Test",mDrawable.getState().toString());
+			
 			// Send the event to the listener
 			if(mStateChangedListener != null)
 				mStateChangedListener.onStateChanged(pressed);
 			mWasPressed = pressed;
 		}
 
-		return handled;
+		return true;
 	}
 
 	/** Sets the released button image; should be call only once
@@ -48,8 +72,7 @@ public class ButtonView extends View {
 			mDrawable = new StateListDrawable();
 		
 		// Add the pressed state and its image
-		mDrawable.addState(new int[] { android.R.attr.state_active }, released);
-		
+		mDrawable.addState(new int[] { -android.R.attr.state_pressed}, released);
 		// Update the view's background
 		setBackground(mDrawable);
 	}
@@ -108,6 +131,7 @@ public class ButtonView extends View {
 			} catch (XmlPullParserException e) {
 				e.printStackTrace();
 			}
+			mGamePad.getGameBinder().addSensor(button.sensor);
 
 			return button;
 		}
@@ -122,6 +146,16 @@ public class ButtonView extends View {
 		protected void parseAttribute(String key, String val) {
 			if (getView() != null) {
 				switch (key.toLowerCase()) {
+				case "background-image":
+					Log.i("Yeaakk","azeaze");
+					((ButtonView)getView()).setReleasedImage(
+							new BitmapDrawable(getContext().getResources(), BitmapFactory
+									.decodeFile(mResourceDir + "/" + val)));
+					String pressedName= val.replaceFirst("(.*)\\.([^.]+)$", "$1_.$2");
+					((ButtonView)getView()).setPressedImage(
+							new BitmapDrawable(getContext().getResources(), BitmapFactory
+									.decodeFile(mResourceDir + "/" + pressedName)));
+					break;
 				/*
 				 * case "mode": if(val.equalsIgnoreCase("togglable"))
 				 * ((ButtonView)getView()).setTogglable(true);

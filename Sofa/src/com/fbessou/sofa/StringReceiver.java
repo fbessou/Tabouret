@@ -42,6 +42,9 @@ public class StringReceiver implements Runnable {
 					
 				Log.d("StringReceiver",s);
 			}
+			if(mListener!=null){
+				mListener.onStringReceived(null);
+			}
 			
 		} catch (IOException e) {
 			e.printStackTrace();

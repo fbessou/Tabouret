@@ -15,15 +15,15 @@ public class Sensor {
 	}
 	
 	public enum SensorType {
-		ANALOG_1D, ANALOG_2D, ANALOG_3D, BOOLEAN, TEXT;
+		ANALOG_1D, ANALOG_2D, ANALOG_3D, KEY, TEXT;
 
 		public Character getFootprint() {
 			switch (this) {
 			case ANALOG_1D:
 				return 'l';
 			case ANALOG_2D:
-				return 'l';
-			case BOOLEAN:
+				return '+';
+			case KEY:
 				return 'l';
 			case TEXT:
 				return 't';

@@ -67,6 +67,7 @@ public class ClientAccepter implements Runnable {
 			try {
 				while (continueAccepting) {
 					Socket socket = mServerSocket.accept();
+					socket.setTcpNoDelay(true);
 					continueAccepting = mListener.onClientAccepted(socket, mPort);
 				}
 				//If we exited normally, don't forget to close the sockets.
