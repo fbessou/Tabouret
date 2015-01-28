@@ -17,16 +17,16 @@ public class GameMessageReceiver implements StringReceiver.Listener {
 	private LinkedBlockingQueue<InputEvent> mInputEventQueue = new LinkedBlockingQueue<>();
 	//private LinkedBlockingQueue<PadEvent> mPadEventQueue = new LinkedBlockingQueue<>();
 	
-	void setGamePadEventListener(PadEventListener listener) {
+	public void setGamePadEventListener(PadEventListener listener) {
 		mPadEventListener = listener;
 	}
-	void setInputEventListener(InputEventListener listener) {
+	public void setInputEventListener(InputEventListener listener) {
 		mInputEventListener = listener;
 	}
 	/* TODO PadEvent */void pollPadEvent() {
 		
 	}
-	InputEvent pollInputEvent() {
+	public InputEvent pollInputEvent() {
 		if(mInputEventQueue.isEmpty())
 			return null;
 		
