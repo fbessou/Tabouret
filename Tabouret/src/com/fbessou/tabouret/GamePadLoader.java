@@ -27,12 +27,11 @@ import com.fbessou.tabouret.view.GamePadLayout;
  */
 public class GamePadLoader {
 	private XmlPullParser mXmlParser;
-	private Context mContext;
+	private GamePadActivity mGamePad;
 	private Schema mSchema;
 	private String mResourceDir;
 
-	public GamePadLoader(Context context, String xsdFile) {
-		mContext = context;
+	public GamePadLoader(String xsdFile) {
 		// TODO see if valdation can be done
 		/*
 		 * SchemaFactory schemaFactory =
@@ -87,14 +86,14 @@ public class GamePadLoader {
 	 * @param fileName
 	 *            is the file containing the gamepad information
 	 */
-	public GamePadLayout parseFile(String fileName) {
+	public GamePadLayout parseFile(GamePadActivity gamepad,String fileName) {
 		try {
 			File f = new File(fileName);
 			mResourceDir = f.getParent();
-			return parseXML(new FileReader(f));
+			return parseXML(gamepad,new FileReader(f));
 		} catch (FileNotFoundException e) {
 			Log.e("LayoutLoader",
-					mContext.getResources().getString(R.string.err_filenotfound, fileName));
+					gamepad.getResources().getString(R.string.err_filenotfound, fileName));
 		}
 		return null;
 	}
@@ -105,7 +104,8 @@ public class GamePadLoader {
 	 * @param listener
 	 *            Listener called when the d
 	 */
-	public GamePadLayout parseXML(Reader reader) {
+	public GamePadLayout parseXML(GamePadActivity gamepad, Reader reader) {
+		mGamePad = gamepad;
 		GamePadLayout layout = null;
 
 		try {
@@ -186,7 +186,7 @@ public class GamePadLoader {
 					info = GamePadInformation.parseXML(mXmlParser);
 					Log.i("TEST", "" + info);
 				} else if (mXmlParser.getName().equalsIgnoreCase("layout")) {
-					layout = (GamePadLayout) new GamePadLayout.Parser(mXmlParser, mContext,mResourceDir).parse();
+					layout = (GamePadLayout) new GamePadLayout.Parser(mXmlParser, mGamePad,mResourceDir).parse();
 				}
 				break;
 			case XmlPullParser.END_TAG:

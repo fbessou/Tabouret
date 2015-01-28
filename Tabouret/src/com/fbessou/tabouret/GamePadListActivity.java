@@ -1,10 +1,14 @@
 package com.fbessou.tabouret;
 
+import com.fbessou.sofa.GameIOProxy;
 import com.fbessou.tabouret.view.GamePadListView;
 
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
@@ -21,10 +25,6 @@ public class GamePadListActivity extends Activity{
 	private GamePadListView mList;
 	Configuration mConf;
 
-	/**
-	 * Allow detection of click
-	 */
-
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -33,7 +33,11 @@ public class GamePadListActivity extends Activity{
 		v.setBackgroundColor(Color.parseColor("#053856"));
 		mList = new GamePadListView(this);
 		((ScrollView)findViewById(R.id.scrollView)).addView(mList);
-		//getActionBar().setDisplayHomeAsUpEnabled(true);
+		
+		// As we don't know if we are connected to a Network,
+		// we assume that this device is the Group Owner.
+		// So, we start a proxy that will handle redirection
+		getApplicationContext().startService(new Intent(this,GameIOProxy.class));
 	}
 	
 	@Override

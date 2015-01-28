@@ -3,15 +3,11 @@ package com.fbessou.tabouret;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.StringReader;
-
-import com.fbessou.tabouret.view.GamePadLayout;
-import com.fbessou.tabouret.view.JoystickView;
-import com.fbessou.tabouret.view.JoystickView.OnPositionChangedListener;
 
 import android.app.Activity;
+import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -19,26 +15,45 @@ import android.os.Environment;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.OrientationEventListener;
-import android.view.SurfaceView;
 import android.view.View;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
+import com.fbessou.sofa.GameBinder;
+import com.fbessou.tabouret.view.GamePadLayout;
+
 public class GamePadActivity extends Activity {
+	//Configuration contains paths for layout/resource directory
 	Configuration mConfig;
 	RelativeLayout mainLayout;
+	
+	private GameBinder mGameBinder;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		
+		//call parent's constructor
 		super.onCreate(savedInstanceState);
-		// If we are starting this activity from the gamepadChooser,
-		//TODO load the gamepad
+		
+		// Initialize or retrieve the GameBinder fragment.
+		FragmentManager fm = getFragmentManager();
+		if((mGameBinder=(GameBinder) fm.findFragmentByTag("gameBinder"))==null){
+			//This is the first time the activity is launched
+			//we have to create a new GameBinder
+			mGameBinder=new GameBinder();
+			
+			//register the newly created GameBinder in the fragment manager for
+			// future usage
+			fm.beginTransaction().add(mGameBinder, "gameBinder").commit();
+		}
+		
 		Intent intent = getIntent();
 		if(intent.hasExtra("gamepad_path")){
 			Log.i("MainActivity",intent.getStringExtra("gamepad_path"));
-			GamePadLoader gpload = new GamePadLoader(this, "Coucou");
-			GamePadLayout layout= gpload.parseFile(intent.getStringExtra("gamepad_path"));
+			GamePadLoader gpload = new GamePadLoader("Coucou");
+			GamePadLayout layout= gpload.parseFile(this,intent.getStringExtra("gamepad_path"));
+			
+			// Enable full-screen for this activity
 			layout.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
 					| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
 					| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
@@ -46,27 +61,8 @@ public class GamePadActivity extends Activity {
 			setContentView(layout);
 			setRequestedOrientation(layout.getOrientation());
 		}
-		Toast.makeText(this, "How did you", 100).show();
-	}
-	
-	void loadLayout(String xmlLayoutName) {
-		mainLayout.setBackgroundColor(Color.parseColor("red"));
-	}
 
-	void saveLayout(String fileName) {
-		try {
-			String dir = Environment.getExternalStorageDirectory().getAbsolutePath();
-			Toast.makeText(this, dir,Toast.LENGTH_SHORT).show();
-			File myDir = new File(dir+"/Tabouret");
-			myDir.mkdir();
-			File f = new File(myDir, fileName);
-			OutputStreamWriter o = new OutputStreamWriter(new FileOutputStream(f));
-			o.write("Test");
-			o.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-			Log.i(getPackageName(), "Can't write to external storage");
-		}
+	
 	}
 
 	@Override
@@ -87,4 +83,18 @@ public class GamePadActivity extends Activity {
 		}
 		return super.onOptionsItemSelected(item);
 	}
+	
+	public GameBinder getGameBinder(){
+		return mGameBinder;
+	}
+	
+	/* (non-Javadoc)
+	 * @see android.app.Activity#onDestroy()
+	 */
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+	}
+	
+
 }

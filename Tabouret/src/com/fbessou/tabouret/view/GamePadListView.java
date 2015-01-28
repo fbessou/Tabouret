@@ -38,25 +38,30 @@ import android.widget.TextView;
 
 /**
  * @author Frank Bessou
- *
+ * A view containing a list of gamepad descriptions.
+ * On click on an item, the clicked gamepad opens.
  */
 public class GamePadListView extends TableLayout {
-
+	/**
+	 * Configuration of the program (resource diretories...)
+	 */
 	private Configuration mConf;
 
 	/**
-	 * @param context
+	 * @param context Used to instantiate this view
 	 */
 	public GamePadListView(Context context) {
 		super(context);
 		mConf = new Configuration(context);
 		refresh();
 	}
-
+	/**
+	 * List files again
+	 */
 	public void refresh() {
 
 		// Create a loader to parse the GamePads information
-		GamePadLoader gploader = new GamePadLoader(getContext(), "NONE");
+		GamePadLoader gploader = new GamePadLoader("NONE");
 		File path = new File(mConf.getLayoutDirectory());
 		Log.i("Test", path.getAbsolutePath());
 
@@ -197,9 +202,26 @@ public class GamePadListView extends TableLayout {
 		}
 
 
-		
+		/**
+		 * Handler for detecting 
+		 */
 		private final Handler mClickEventHandler = new Handler();
-		boolean mLongPressDetected = false;
+		
+		/**
+		 * When true, indicate a long click has been detected and
+		 * the onTouch musn't detect detect ACTION_UP.
+		 */
+		private boolean mLongPressDetected = false;
+		/**
+		 * When true, indicate a long click has been detected and
+		 * the onTouch musn't detect detect ACTION_UP.
+		 */
+		private boolean mCancelClick=false;
+
+		/**
+		 * Runnable called on a long click on an item.
+		 * Build up an AlertDialog containing more information
+		 */
 		Runnable mLongPressDetector = new Runnable() {
 		    public void run() {
 		    	mLongPressDetected=true;
@@ -220,10 +242,8 @@ public class GamePadListView extends TableLayout {
 		};
 
 		
-		boolean mCancelClick=false;
-		
 		/**
-		 * Wait a little before changing the background
+		 * Wait a little before changing the background and launching vibration
 		 * to avoid a too sensitive feeling
 		 */
 		Runnable clickNotifier = new Runnable() {

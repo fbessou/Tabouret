@@ -13,6 +13,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.RelativeLayout;
 
+import com.fbessou.sofa.Analog2DSensor;
 import com.fbessou.tabouret.NodeParser;
 
 /**
@@ -21,7 +22,9 @@ import com.fbessou.tabouret.NodeParser;
  *
  */
 public class JoystickView extends View {
-	/** Bitmap image of the stick and thr center; width must be equal to height **/
+	/** Sensor associated with this joystick **/
+	private final Analog2DSensor sensor=new Analog2DSensor();
+	/** Bitmap image of the stick and the center; width must be equal to height **/
 	private Bitmap mStickBmp, mCenterBmp;
 	/** Parameters of the bound that define the constraints of the relative stick position **/
 	private BoundShape mBoundShape = BoundShape.CIRCLE;
@@ -187,12 +190,14 @@ public class JoystickView extends View {
 			mStickRelPos[0] = 0;
 			mStickRelPos[1] = 0;
 			// If a listener is existing, call the positionChanged() method
-			if (mPosChangedListener != null)
+			if (mPosChangedListener != null){
 				mPosChangedListener.positionChanged(this,mStickRelPos[0], -mStickRelPos[1]);
+			}
+
 			mIsTouched = false;
 			break;
 		}
-		
+		sensor.setValue(mStickRelPos[0],-mStickRelPos[1]);
 		// Ask for an update of the view
 		invalidate();
 		
@@ -323,10 +328,7 @@ public class JoystickView extends View {
 		 */
 		@Override
 		public View parse() {
-			/*
-			 *  njghjjbfgg
-			 * 
-			 */
+
 			JoystickView joystick = new JoystickView(getContext());
 			setView(joystick);
 			try {
@@ -336,7 +338,7 @@ public class JoystickView extends View {
 			} catch (XmlPullParserException e ) {
 				e.printStackTrace();
 			}
-
+			mGamePad.getGameBinder().addSensor(joystick.sensor);
 			return joystick;
 			
 		}

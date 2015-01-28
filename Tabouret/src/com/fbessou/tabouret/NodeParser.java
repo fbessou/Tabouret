@@ -28,31 +28,30 @@ import android.widget.RelativeLayout.LayoutParams;
 public class NodeParser {
 	static final Pattern dimensionPattern = Pattern.compile("([0-9]+)(dp|px)?");
 
-	private Context mContext; // Context used to create views
 	private final String mTagName; // tag currently parsed
 	protected View mView; // view currently created
 	protected XmlPullParser mParser; // parser used to read stream
 	protected RelativeLayout.LayoutParams mLayoutParams;
-	protected final String mResourceDir; // Directory where are located image,
-											// sounds and other resources.
+	protected final String mResourceDir; // Directory where are located image, sounds and other resources.
+	protected final GamePadActivity mGamePad;
 
 	/**
 	 * @param context
 	 */
-	public NodeParser(String tagName, XmlPullParser parser, Context context, String resourceDir) {
+	public NodeParser(String tagName, XmlPullParser parser, GamePadActivity gamepad, String resourceDir) {
 		mTagName = tagName;
-		mContext = context;
 		mParser = parser;
 		mResourceDir = resourceDir;
 		mLayoutParams = new RelativeLayout.LayoutParams(1, 1);
+		mGamePad = gamepad;
 	}
 
 	public NodeParser(String tagName, NodeParser parentParser) {
 		mTagName = tagName;
-		mContext = parentParser.getContext();
 		mParser = parentParser.getParser();
 		mResourceDir = parentParser.getResourceDir();
 		mLayoutParams = new RelativeLayout.LayoutParams(1, 1);
+		mGamePad = parentParser.getGamePad();
 	}
 
 	public View parse() {
@@ -154,7 +153,7 @@ public class NodeParser {
 				String key = getParser().getAttributeName(i);
 				String val = getParser().getAttributeValue(i);
 				parseAttribute(key,val);
-				Log.i("NodeParser", "Parsing attribute "+key+" : "+val);
+				//Log.i("NodeParser", "Parsing attribute "+key+" : "+val);
 			}
 		} else {
 			Log.e("NodeParser(" + mTagName + ")", "Calling parseAttributes on an invalid tag");
@@ -171,7 +170,7 @@ public class NodeParser {
 				break;
 			case "background-image":
 				getView().setBackground(
-						new BitmapDrawable(mContext.getResources(), BitmapFactory
+						new BitmapDrawable(getContext().getResources(), BitmapFactory
 								.decodeFile(mResourceDir + "/" + val)));
 				break;
 			case "width":
@@ -235,9 +234,13 @@ public class NodeParser {
 			}
 		}
 	}
-
+	
+	/**
+	 * Get this activity's context
+	 * @return The context used by this activity
+	 */
 	protected Context getContext() {
-		return mContext;
+		return mGamePad;
 	}
 
 	/**
@@ -246,7 +249,13 @@ public class NodeParser {
 	public XmlPullParser getParser() {
 		return mParser;
 	}
-
+	
+	/**
+	 * @return the currently built GamePad
+	 */
+	public GamePadActivity getGamePad(){
+		return mGamePad;
+	}
 	/**
 	 * Check that the {@link XmlPullParser} current event type is TAG_START
 	 * element and that the tag's name correspond's to the type managed by this
@@ -270,7 +279,7 @@ public class NodeParser {
 	 */
 	protected int parseDimension(String dimension){
 		int dim = 100;
-		Log.i("NodeParser",dimension);
+		//Log.i("NodeParser",dimension);
 
 		Matcher matcher = dimensionPattern.matcher(dimension);
 		if(matcher.matches()){
@@ -281,7 +290,7 @@ public class NodeParser {
 					String unit = matcher.group(2);
 					switch (unit) {
 					case "dp":
-						dim = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dim, mContext.getResources().getDisplayMetrics());
+						dim = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dim, getContext().getResources().getDisplayMetrics());
 						break;
 					case "px":
 					default:
@@ -293,16 +302,6 @@ public class NodeParser {
 			}
 		}
 		return dim;
-	
-	}
-	
-	/**
-	 * 
-	 * @return dimension in pixels
-	 */
-	protected int sPixelsFromDps(int dp){
-	Resources r = mContext.getResources();
-	return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,dp, r.getDisplayMetrics());
 	
 	}
 

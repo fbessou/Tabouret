@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.view.View;
 
+import com.fbessou.tabouret.GamePadActivity;
 import com.fbessou.tabouret.GamePadInformation;
 import com.fbessou.tabouret.NodeParser;
 
@@ -38,8 +39,8 @@ public class GamePadLayout extends Container{
 		 * @param context context used to create views
 		 * @param resDir directory where are located resources (images, sounds, icons)
 		 */
-		public Parser(XmlPullParser parser, Context context,String resDir) {
-			super("layout",new NodeParser(null,parser,context,resDir));
+		public Parser(XmlPullParser parser, GamePadActivity gamepad,String resDir) {
+			super("layout",new NodeParser(null,parser,gamepad,resDir));
 		}
 		
 		/* (non-Javadoc)
