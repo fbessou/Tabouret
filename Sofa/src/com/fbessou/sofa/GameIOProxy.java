@@ -225,12 +225,9 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		 */
 		@Override
 		public void onStringReceived(String s) {
-			String messageToGame   = null;
-			String messageToGamePad= null;
 			if(s==null){ // Communication was closed !
-				Log.i("GameIOProxy","Unnamed Disconnected");
-				mGamePads.remove(mGamePadId);
-				sendToGame(s+"\n");
+				onDisconnect();
+
 				return;
 			}
 			try {// For JSON decoding
@@ -264,7 +261,14 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 
 		}
 		
+		void onDisconnect(){
+			Log.i("GameIOProxy","Unnamed ("+mGamePadId+") Disconnected");
+			mGamePads.append(mGamePadId, null);
+			sendToGame("{\"type\":\"padevent\",\"event\":\"{\"pad\":\""+mGamePadId+"\"}\"}\n");
+		}
+		
 		void associateIdUUID(int id, UUID uuid){
+			Log.i("GameIOProxy","Unnamed ("+id+") Connected");
 			mIds[id]=uuid;
 			mGamePads.put(id, mGamepadSocket);
 			mGamePadId=id;
@@ -279,15 +283,19 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 				
 				if(mGamePads.get(i)==null && firstAvailableId==-1){
 					firstAvailableId=i;
-					if(inUUID==null) // Succefully recovered
+					if(inUUID==null){ // Succefully recovered
 						associateIdUUID(i, UUID.randomUUID());
+						return;
+					}
 				}
 				
 				if(inUUID!=null && inUUID.equals(mIds[i])){// the uuid match an id
 					if(mGamePads.get(i)==null){// there is no gamepads connected with this id
 						associateIdUUID(firstAvailableId, inUUID);
+						return;
 					} else { //id is already attributed
 						associateIdUUID(firstAvailableId, UUID.randomUUID());
+						return;
 					}
 				}
 			}

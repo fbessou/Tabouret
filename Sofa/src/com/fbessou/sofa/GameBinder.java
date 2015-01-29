@@ -54,7 +54,7 @@ public class GameBinder extends Fragment implements Sensor.Listener, StringRecei
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
+		setRetainInstance(true);
 		ProxyConnector connector = new ProxyConnector(this.getActivity().getApplicationContext(), 9696, this);
 		connector.connect();
 		/**
