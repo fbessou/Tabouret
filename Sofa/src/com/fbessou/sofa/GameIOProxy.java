@@ -68,7 +68,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 	private int mGamePort = 6969;
 
 	/**
-	 * Socket the
+	 * 
 	 */
 	private Socket mGameSocket = null;
 	private StringSender mGameSender = null;
@@ -191,6 +191,15 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		return null;
 	}
 	
+	/**
+	 * 
+	 * @param s
+	 */
+	void sendToGame(String s){
+		if(mGameSender!=null){
+			mGameSender.send(s);
+		}
+	}
 	
 	class GamePadToGameTransmitter implements StringReceiver.Listener {
 		private int mGamePadId;
@@ -216,11 +225,13 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		 */
 		@Override
 		public void onStringReceived(String s) {
+			String messageToGame   = null;
+			String messageToGamePad= null;
 			if(s==null){ // Communication was closed !
 				Log.i("GameIOProxy","Unnamed Disconnected");
 				mGamePads.remove(mGamePadId);
-				mGameSender.send(s+"\n");
-
+				sendToGame(s+"\n");
+				return;
 			}
 			try {// For JSON decoding
 				JSONObject object = new JSONObject(s);
@@ -240,11 +251,11 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 					JSONObject event=object.getJSONObject("event");
 					event.put("pad", mGamePadId);
 					object.put("event",event);
-					mGameSender.send(object.toString()+"\n");
+					sendToGame(object.toString()+"\n");
 					break;
 				default:
 					Log.i("On envoie",s);
-					mGameSender.send(s+"\n");
+					sendToGame(s+"\n");
 				}
 
 			} catch (JSONException e) {
@@ -261,7 +272,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			mSender.send(response);
 		}
 		
-		void registerOrRecover(UUID inUUID){
+		void registerOrRecover(UUID inUUID){ //priority to the newly connected client
 			int firstAvailableId = -1;
 			
 			for(int i = 0; i<mIds.length; i++){

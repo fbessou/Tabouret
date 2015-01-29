@@ -39,15 +39,15 @@ public class StringReceiver implements Runnable {
 					mListener.onStringReceived(s);
 				}
 				else
-					
-				Log.d("StringReceiver",s);
+					Log.d("StringReceiver",s);
 			}
-			if(mListener!=null){
-				mListener.onStringReceived(null);
-			}
+
 			
 		} catch (IOException e) {
-			e.printStackTrace();
+			Log.d("StringReceiver","Connection closed");
+		}
+		if(mListener!=null){
+			mListener.onStringReceived(null);
 		}
 	}
 	
