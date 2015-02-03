@@ -17,6 +17,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 import android.os.Vibrator;
+import android.text.TextUtils.StringSplitter;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -39,17 +40,13 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 	 * be transmitted to the game.
 	 */
 	ArrayList<Socket> mBlockedGamePads;
-	
+
 	/**
-	 * Array which associates Id to UUID.
-	 * The index in the array represents the Id.
+	 * Array which associates Id to UUID. The index in the array represents the
+	 * Id.
 	 */
-	UUID[] mIds= new UUID[16];
-	
-	/**
-	 * 
-	 */
-	
+	UUID[] mIds = new UUID[16];
+
 	/**
 	 * Map that associates a client UUID to its corresponding ID in the game.
 	 * The UUID is only used for recovery, when a client disconnect and want to
@@ -60,7 +57,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 	/**
 	 * Map that associates a Socket to a client UUID
 	 */
-	private SparseArray<Socket> mGamePads;
+	private SparseArray<GamePadConnection> mGamePads;
 
 	/**
 	 * Port the proxy is listening on for game connection
@@ -70,8 +67,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 	/**
 	 * 
 	 */
-	private Socket mGameSocket = null;
-	private StringSender mGameSender = null;
+	private GameConnection mGameConnection = null;
 	/**
 	 * Port the proxy is listening on for clients connection
 	 */
@@ -82,9 +78,9 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 	 */
 	public GameIOProxy() {
 		mUUIDToId = new HashMap<UUID, Integer>();
-		mGamePads = new SparseArray<Socket>();
+		mGamePads = new SparseArray<GamePadConnection>();
 		mBlockedGamePads = new ArrayList<Socket>();
-		Log.i("GameIOProxy","Running");
+		Log.i("GameIOProxy", "Running");
 	}
 
 	/**
@@ -96,12 +92,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 	 */
 	private void registerGamePad(Socket gamepadSocket) {
 		mBlockedGamePads.add(gamepadSocket);
-		StringReceiver receiver = new StringReceiver(gamepadSocket);
-		// TODO make only ONE sender
-		StringSender sender = new StringSender(gamepadSocket);
-		receiver.setListener(new GamePadToGameTransmitter(gamepadSocket, sender));
-		new Thread(receiver).start();
-		new Thread(sender).start();
+		new GamePadConnection(gamepadSocket);
 
 	}
 
@@ -115,26 +106,20 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 	private void registerGame(Socket gameSocket) {
 		// If the game socket is already defined don't
 		// close newly created socket.
-		/*if (mGameSocket != null) {
-			if (gameSocket != null){
-				try {
-					gameSocket.close();
-					Log.i("GameIOProxy","Abort connection");
-				} catch (IOException e) {
-					Log.w("GameIOProxy", "Error on invalid game socket's closing.");
-				}
-			}
-		} else*/ { // We are accepting a game
-			if(gameSocket!=null){
-				mGameSocket = gameSocket;
-				mGameSender= new StringSender(mGameSocket);
-				new Thread(mGameSender).start();
-				
-				Log.i("GameIOProxy","");
+		/*
+		 * if (mGameSocket != null) { if (gameSocket != null){ try {
+		 * gameSocket.close(); Log.i("GameIOProxy","Abort connection"); } catch
+		 * (IOException e) { Log.w("GameIOProxy",
+		 * "Error on invalid game socket's closing."); } } } else
+		 */{ // We are accepting a game
+			if (gameSocket != null) {
+				mGameConnection = new GameConnection(gameSocket);
+
+				Log.i("GameIOProxy", "A game has connected");
 				Vibrator v2 = (Vibrator) getSystemService(VIBRATOR_SERVICE);
 				v2.vibrate(100);
 			}
-			
+
 		}
 	}
 
@@ -164,8 +149,8 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 	@Override
 	public void onCreate() {
 		// Start to listen for connections
-		new Thread(new ClientAccepter(mGamePort, this)).start();
-		new Thread(new ClientAccepter(mGamePadsPort, this)).start();
+		new ClientAccepter(mGamePort, this).start();
+		new ClientAccepter(mGamePadsPort, this).start();
 		super.onCreate();
 	}
 
@@ -187,33 +172,38 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 	 */
 	@Override
 	public IBinder onBind(Intent intent) {
-		// TODO Auto-generated method stub
 		return null;
 	}
-	
+
 	/**
 	 * 
-	 * @param s
+	 * @param string
 	 */
-	void sendToGame(String s){
-		if(mGameSender!=null){
-			mGameSender.send(s);
+	void sendToGame(String string) {
+		if (mGameConnection != null) {
+			mGameConnection.send(string);
 		}
 	}
-	
-	class GamePadToGameTransmitter implements StringReceiver.Listener {
-		private int mGamePadId;
-		private Socket mGamepadSocket;
-		private StringSender mSender;
-		private String mName;
+
+	/**
+	 * 
+	 * @author Frank Bessou
+	 *
+	 */
+	class GameConnection extends StringSender implements StringReceiver.Listener {
+		private Socket mSocket;
+		private StringReceiver mReceiver;
 
 		/**
-		 * 
+		 * @param socket
 		 */
-		public GamePadToGameTransmitter(Socket socket, StringSender sender) {
-			mGamepadSocket = socket;
-			mSender = sender;
-			mName = "Unnamed";
+		public GameConnection(Socket socket) {
+			super(socket);
+			mSocket = socket;
+			mReceiver = new StringReceiver(socket);
+			mReceiver.setListener(this);
+			this.start();
+			mReceiver.start();
 		}
 
 		/*
@@ -224,35 +214,103 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		 * .String)
 		 */
 		@Override
-		public void onStringReceived(String s) {
-			if(s==null){ // Communication was closed !
-				onDisconnect();
+		public void onStringReceived(String string, Socket socket) {
+			
+			//End Close connection
+			if (string == null) {
+
+			}
+			// Interpret and redirect the message
+			try {
+				JSONObject obj = new JSONObject(string);
+				switch (obj.getString("type")) {
+				case "outputevent":
+					JSONObject evt = obj.getJSONObject("event");
+					int pad = evt.getInt("pad");
+					if(pad==-1){
+						
+					} else if (mGamePads.get(pad)!=null){
+						mGamePads.get(pad).send(string);
+					}
+					break;
+				default:
+					break;
+				}
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+			Log.i("GameIOProxy", "Game message : " + string);
+		}
+
+		/* (non-Javadoc)
+		 * @see com.fbessou.sofa.StringReceiver.Listener#onClosed(java.net.Socket)
+		 */
+		@Override
+		public void onClosed(Socket socket) {
+			// TODO Auto-generated method stub
+			
+		}
+
+	}
+
+	class GamePadConnection extends StringSender implements StringReceiver.Listener {
+		private int mId;
+		private Socket mSocket;
+		private StringReceiver mReceiver;
+
+		// private String mName; //For debug, there is no reason to store the
+
+		/**
+		 * 
+		 */
+		public GamePadConnection(Socket socket) {
+			// Initialise the Sender
+			super(socket);
+			mSocket = socket;
+			mReceiver = new StringReceiver(socket);
+			mReceiver.setListener(this);
+			new Thread(this).start();
+			new Thread(mReceiver).start();
+		}
+
+		
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see
+		 * com.fbessou.sofa.StringReceiver.Listener#onStringReceived(java.lang
+		 * .String)
+		 */
+		@Override
+		public void onStringReceived(String string, Socket socket) {
+			if (string == null) { // Communication was closed !
+				onDisconnected();
 
 				return;
 			}
 			try {// For JSON decoding
-				JSONObject object = new JSONObject(s);
+				JSONObject object = new JSONObject(string);
 				String comType = object.getString("type");
 				// If the message is a presentation
 				switch (comType) {
 				case "hello":
-					UUID lastUUID=null;
-					if(object.has("uuid"))
+					UUID lastUUID = null;
+					if (object.has("uuid"))
 						lastUUID = UUID.fromString(object.getString(object.getString("uuid")));
 					registerOrRecover(lastUUID);
-					// Vibrate to indicate the gamepad
+					// Vibrate to indicate the gamepad has connected
 					Vibrator v1 = (Vibrator) getSystemService(VIBRATOR_SERVICE);
 					v1.vibrate(100);
 					break;
 				case "inputevent":
-					JSONObject event=object.getJSONObject("event");
-					event.put("pad", mGamePadId);
-					object.put("event",event);
-					sendToGame(object.toString()+"\n");
+					JSONObject event = object.getJSONObject("event");
+					event.put("pad", mId);
+					object.put("event", event);
+					sendToGame(object.toString());
 					break;
 				default:
-					Log.i("On envoie",s);
-					sendToGame(s+"\n");
+					Log.i("On envoie", string);
+					sendToGame(string);
 				}
 
 			} catch (JSONException e) {
@@ -260,47 +318,77 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			}
 
 		}
-		
-		void onDisconnect(){
-			Log.i("GameIOProxy","Unnamed ("+mGamePadId+") Disconnected");
-			mGamePads.append(mGamePadId, null);
-			sendToGame("{\"type\":\"padevent\",\"event\":\"{\"pad\":\""+mGamePadId+"\"}\"}\n");
+
+		void onDisconnected() {
+			Log.i("GameIOProxy", "Unnamed (" + mId + ") Disconnected");
+			mGamePads.append(mId, null);
+			// Send notification to the client
+			try {
+				JSONObject msg = new JSONObject();
+				msg.put("type", "padevent");
+				msg.put("event", PadEvent.createLeaveEvent(mId));
+				sendToGame(msg.toString());
+			} catch (Exception e) {
+				e.printStackTrace();
+				;
+			}
+
 		}
-		
-		void associateIdUUID(int id, UUID uuid){
-			Log.i("GameIOProxy","Unnamed ("+id+") Connected");
-			mIds[id]=uuid;
-			mGamePads.put(id, mGamepadSocket);
-			mGamePadId=id;
-			String response = "{\"type\":\"hello\",\"uuid\":\""+uuid+"\"}\n";
-			mSender.send(response);
+
+		void associateIdUUID(int id, UUID uuid) {
+			Log.i("GameIOProxy", "Unnamed (" + id + ") Connected");
+			mIds[id] = uuid;
+			mGamePads.put(id, this);
+			mId = id;
+			String response = "{\"type\":\"hello\",\"uuid\":\"" + uuid + "\"}";
+			send(response);
+			// Send the notification to the game
+			try {
+				JSONObject msg = new JSONObject();
+				msg.put("type", "padevent");
+				msg.put("event", PadEvent.createJoinEvent(mId));
+				sendToGame(msg.toString());
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
 		}
-		
-		void registerOrRecover(UUID inUUID){ //priority to the newly connected client
+
+		void registerOrRecover(UUID inUUID) { // priority to the newly connected
+												// client
 			int firstAvailableId = -1;
-			
-			for(int i = 0; i<mIds.length; i++){
-				
-				if(mGamePads.get(i)==null && firstAvailableId==-1){
-					firstAvailableId=i;
-					if(inUUID==null){ // Succefully recovered
+
+			for (int i = 0; i < mIds.length; i++) {
+
+				if (mGamePads.get(i) == null && firstAvailableId == -1) {
+					firstAvailableId = i;
+					if (inUUID == null) { // Successfully recovered
 						associateIdUUID(i, UUID.randomUUID());
 						return;
 					}
 				}
-				
-				if(inUUID!=null && inUUID.equals(mIds[i])){// the uuid match an id
-					if(mGamePads.get(i)==null){// there is no gamepads connected with this id
+
+				if (inUUID != null && inUUID.equals(mIds[i])) {// the uuid match
+																// an id
+					if (mGamePads.get(i) == null) {// there is no gamepads
+													// connected with this id
 						associateIdUUID(firstAvailableId, inUUID);
 						return;
-					} else { //id is already attributed
+					} else { // id is already attributed
 						associateIdUUID(firstAvailableId, UUID.randomUUID());
 						return;
 					}
 				}
 			}
 		}
-	}
 
+		/* (non-Javadoc)
+		 * @see com.fbessou.sofa.StringReceiver.Listener#onClosed(java.net.Socket)
+		 */
+		@Override
+		public void onClosed(Socket socket) {
+			mGameConnection = null;			
+		}
+
+	}// Class GamePadConnection
 
 }

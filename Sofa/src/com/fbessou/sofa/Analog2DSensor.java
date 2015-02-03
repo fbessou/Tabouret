@@ -24,7 +24,7 @@ public class Analog2DSensor extends Sensor {
 		mValueX = Math.max(-1, Math.min(1,x));
 		mValueY = Math.max(-1, Math.min(1,y));
 		if(changed){
-			InputEvent evt = new InputEvent(InputEvent.EventType.MOTION_2D);
+			InputEvent evt = new InputEvent(InputEvent.InputEventType.MOTION_2D);
 			evt.inputId = getId();
 			evt.x = mValueX;
 			evt.y = mValueY;

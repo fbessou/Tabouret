@@ -3,7 +3,6 @@
  */
 package com.fbessou.sofa;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -15,11 +14,12 @@ import android.util.Log;
  * @author Frank Bessou
  *
  */
-public class ClientAccepter implements Runnable {
+public class ClientAccepter extends Thread {
 	
 	public interface OnClientAcceptedListener{
 		public boolean onClientAccepted(Socket socket, int port);
 	}
+	
 	/**
 	 * Port the Accepter is listening on.
 	 */
@@ -71,23 +71,10 @@ public class ClientAccepter implements Runnable {
 					continueAccepting = mListener.onClientAccepted(socket, mPort);
 				}
 				//If we exited normally, don't forget to close the sockets.
-				stop();
 			} catch (SocketException e) {
 				mServerSocket.close();
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	/**
-	 * Call this method to interrupt the current action
-	 * on the ServerSocket.
-	 * When this method is called the Runnable should end.
-	 */
-	void stop() {
-		try {
-			mServerSocket.close();
-		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}

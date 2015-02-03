@@ -12,7 +12,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Fragment;
+import android.content.Context;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.util.Log;
 
 import com.fbessou.sofa.ProxyConnector.OnConnectedListener;
@@ -92,8 +94,8 @@ public class GameBinder extends Fragment implements Sensor.Listener, StringRecei
 						JSONObject obj = new JSONObject();
 						obj.put("type","inputevent");
 						obj.put("event",getJson(evt) );
-						mSocket.getOutputStream().write((obj.toString()+"\n").getBytes());
-					} catch (IOException | JSONException e) {
+						mSender.send(obj.toString());
+					} catch (JSONException e) {
 						e.printStackTrace();
 					}
 				}
@@ -170,14 +172,25 @@ public class GameBinder extends Fragment implements Sensor.Listener, StringRecei
 	 * @see com.fbessou.sofa.StringReceiver.Listener#onStringReceived(java.lang.String)
 	 */
 	@Override
-	public void onStringReceived(String s) {
+	public void onStringReceived(String string, Socket socket) {
 		try{
-			JSONObject message = new JSONObject(s);
+			JSONObject message = new JSONObject(string);
 			if(message.has("type")){
 			switch (message.getString("type")) {
 			case "hello":
 				mUUID = UUID.fromString(message.getString("uuid"));
 				break;
+			case "outputevent":
+				JSONObject event = message.getJSONObject("event");
+				switch (event.getString("type")) {
+				case "haptic" :
+					Vibrator v = (Vibrator)getActivity().getSystemService(Context.VIBRATOR_SERVICE);
+					v.vibrate(150);
+					break;
+
+				default:
+					break;
+				}
 			default:
 				break;
 			}
@@ -198,15 +211,23 @@ public class GameBinder extends Fragment implements Sensor.Listener, StringRecei
 			mReceiver = new StringReceiver(mSocket);
 			// TODO setListener
 			mSender = new StringSender(mSocket);
-			new Thread(mReceiver).start();
-			new Thread(mSender).start();
+			mReceiver.start();
+			mSender.start();
 			if(mUUID!=null)
-				mSender.send("{\"type\":\"hello\",\"uuid\":\""+mUUID+"\"}\n");
+				mSender.send("{\"type\":\"hello\",\"uuid\":\""+mUUID+"\"}");
 			else
-				mSender.send("{\"type\":\"hello\"}\n");
+				mSender.send("{\"type\":\"hello\"}");
 		}
 		else
 			Log.w("GameBinder","Couldn't connect to the proxy");
+	}
+
+	/* (non-Javadoc)
+	 * @see com.fbessou.sofa.StringReceiver.Listener#onClosed(java.net.Socket)
+	 */
+	@Override
+	public void onClosed(Socket socket) {
+		Log.i("GameBinder","Shit, we are disconnected.");
 	}
 
 }

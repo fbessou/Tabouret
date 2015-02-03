@@ -3,7 +3,7 @@
  */
 package com.fbessou.sofa;
 
-import com.fbessou.sofa.InputEvent.EventType;
+import com.fbessou.sofa.InputEvent.InputEventType;
 
 /**
  * @author Frank Bessou
@@ -20,7 +20,7 @@ public class Analog1DSensor extends Sensor {
 	
 	public void setValue(float val){
 		mValue = Math.max(0, Math.min(1,val));
-		InputEvent evt = new InputEvent(EventType.MOTION_1D);
+		InputEvent evt = new InputEvent(InputEventType.MOTION_1D);
 		evt.inputId=getId();
 		evt.x=mValue;
 		triggerEvent(evt);

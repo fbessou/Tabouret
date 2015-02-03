@@ -15,13 +15,13 @@ public class InputEvent{
 	public int inputId=0;
 	public int padId=0;
 	//Content description
-	public EventType eventType;
+	public InputEventType eventType;
 	public float x=0;
 	public float y=0;
 	public float z=0;
 	public String text;
 	// ? public Sensor.SensorType sensorType;
-	public enum EventType{
+	public enum InputEventType{
 		KEY_DOWN,
 		KEY_UP,
 		MOTION_1D,
@@ -32,7 +32,7 @@ public class InputEvent{
 	/**
 	 * 
 	 */
-	public InputEvent(EventType type) {
+	public InputEvent(InputEventType type) {
 		eventType=type;
 	}
 	public InputEvent(JSONObject jo) throws JSONException {
@@ -40,28 +40,28 @@ public class InputEvent{
 		inputId = jo.getInt("input");
 		switch(jo.getString("type")) {
 		case "key_up":
-			eventType = EventType.KEY_UP;
+			eventType = InputEventType.KEY_UP;
 			break;
 		case "key_down":
-			eventType = EventType.KEY_DOWN;
+			eventType = InputEventType.KEY_DOWN;
 			break;
 		case "motion1d":
-			eventType = EventType.MOTION_1D;
+			eventType = InputEventType.MOTION_1D;
 			x = (float) jo.getDouble("x");
 			break;
 		case "motion2d":
-			eventType = EventType.MOTION_2D;
+			eventType = InputEventType.MOTION_2D;
 			x = (float) jo.getDouble("x");
 			y = (float) jo.getDouble("y");
 			break;
 		case "motion3d":
-			eventType = EventType.MOTION_3D;
+			eventType = InputEventType.MOTION_3D;
 			x = (float) jo.getDouble("x");
 			y = (float) jo.getDouble("y");
 			z = (float) jo.getDouble("z");
 			break;
 		case "text":
-			eventType = EventType.TEXT_SENT;
+			eventType = InputEventType.TEXT_SENT;
 			text = jo.getString("text");
 			break;
 		default:
@@ -97,6 +97,46 @@ public class InputEvent{
 			break;
 		}
 		return ret;
+	}
+	
+	/**
+	 * 
+	 */
+	private JSONObject toJSON() {
+		JSONObject object = new JSONObject();
+		try {
+			switch (eventType) {
+			case KEY_DOWN:
+				object.put("type", "keydown");
+				break;
+			case KEY_UP:
+				object.put("type", "keyup");
+				break;
+			case MOTION_1D:
+				object.put("type", "motion1d");
+				object.put("x", x);
+				break;
+			case MOTION_2D:
+				object.put("type", "motion2d");
+				object.put("x", x);
+				object.put("y", y);
+				break;
+			case MOTION_3D:
+				object.put("type", "motion3d");
+				object.put("x", x);
+				object.put("y", y);
+				object.put("z", z);
+				break;
+			case TEXT_SENT:
+			default:
+				break;
+			}
+		} catch (Exception e) {
+			object=null;
+		}
+
+		return object;
+		
 	}
 	
 }

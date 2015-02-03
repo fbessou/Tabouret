@@ -14,13 +14,10 @@ import android.util.Log;
  * @author Frank Bessou
  *
  */
-public class StringSender implements Runnable {
+public class StringSender extends Thread {
 	public Socket socket; // Socket to send data to
 	private LinkedBlockingQueue<String> mStrings = new LinkedBlockingQueue<String>();
-	public interface Listener{
-		void onStringReceived(String s);
-	}
-	Listener mListener=null;
+
 	/**
 	 * 
 	 */
@@ -45,7 +42,9 @@ public class StringSender implements Runnable {
 		}
 	}
 	
-	void send(String string){
-		mStrings.add(string);
+	
+	public void send(String string){
+		mStrings.add(string+"\n");
 	}
+	
 }

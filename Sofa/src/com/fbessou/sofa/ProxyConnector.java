@@ -30,9 +30,16 @@ public class ProxyConnector extends BroadcastReceiver implements ConnectionInfoL
 	private Channel mChannel;
 
 	public interface OnConnectedListener {
+		/**
+		 * When a TCP connection is established, this method is called.
+		 * 
+		 * @param socket The distant socket obtained from connection or null if connection can't be established.
+		 */
 		void onConnected(Socket socket);
 	}
-
+	/**
+	 * Interface whose the onConnected method is called when the connection is established.
+	 */
 	private OnConnectedListener mListener = null;
 
 	/**

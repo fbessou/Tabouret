@@ -1,5 +1,4 @@
-<resources>
 
-    <string name="app_name">Sofa</string>
-
-</resources>
+    <resources>
+        <string name="json">{&quot;type&quot;:&quot;padevent&quot;,&quot;event&quot;:{&quot;pad&quot;:%d}}</string>
+    </resources>

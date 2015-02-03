@@ -13,15 +13,35 @@ import android.util.Log;
 /**
  * @author Frank Bessou
  *
+ * This class uses a socket to listen on. Strings are read line by line.
+ * The distant application must provide Strings separated by newline character.
+ * 
+ * If the StringReceiver is linked to a listener, the listener's onStringReceived() method
+ * will be called on reception.
  */
-public class StringReceiver implements Runnable {
+public class StringReceiver extends Thread {
 	public Socket socket; // Socket to receive from
-	public interface Listener{
-		void onStringReceived(String s);
-	}
-	Listener mListener=null;
+	
 	/**
 	 * 
+	 * @author Frank Bessou
+	 *
+	 */
+	public interface Listener{
+		void onStringReceived(String s, Socket socket);
+		void onClosed(Socket socket);
+	}
+	
+	/**
+	 * 
+	 */
+	private Listener mListener=null;
+	
+	/**
+	 * Construct a StringReceiver instance which will listen on the socket
+	 * 
+	 * @param socket
+	 * 				The socket to listen on.
 	 */
 	public StringReceiver(Socket socket) {
 		this.socket=socket;
@@ -36,7 +56,7 @@ public class StringReceiver implements Runnable {
 
 			while ((s = reader.readLine()) != null) {
 				if(mListener!=null){
-					mListener.onStringReceived(s);
+					mListener.onStringReceived(s,socket);
 				}
 				else
 					Log.d("StringReceiver",s);
@@ -46,8 +66,9 @@ public class StringReceiver implements Runnable {
 		} catch (IOException e) {
 			Log.d("StringReceiver","Connection closed");
 		}
-		if(mListener!=null){
-			mListener.onStringReceived(null);
+		
+		if(mListener!=null){ //Obvious
+			mListener.onClosed(socket);
 		}
 	}
 	

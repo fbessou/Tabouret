@@ -3,7 +3,7 @@
  */
 package com.fbessou.sofa;
 
-import com.fbessou.sofa.InputEvent.EventType;
+import com.fbessou.sofa.InputEvent.InputEventType;
 
 import android.text.InputType;
 
@@ -25,7 +25,7 @@ public class KeySensor extends Sensor {
 	public void setValue(boolean on){
 		boolean changed = (mOn != on);
 		if(changed){
-			InputEvent evt = new InputEvent(on?EventType.KEY_DOWN:EventType.KEY_UP);
+			InputEvent evt = new InputEvent(on?InputEventType.KEY_DOWN:InputEventType.KEY_UP);
 			evt.inputId = getId();
 			triggerEvent(evt);
 		}
