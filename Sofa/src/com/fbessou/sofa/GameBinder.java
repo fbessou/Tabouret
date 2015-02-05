@@ -173,6 +173,7 @@ public class GameBinder extends Fragment implements Sensor.Listener, StringRecei
 	 */
 	@Override
 	public void onStringReceived(String string, Socket socket) {
+		Log.i("Blabla",string);
 		try{
 			JSONObject message = new JSONObject(string);
 			if(message.has("type")){
@@ -183,11 +184,10 @@ public class GameBinder extends Fragment implements Sensor.Listener, StringRecei
 			case "outputevent":
 				JSONObject event = message.getJSONObject("event");
 				switch (event.getString("type")) {
-				case "haptic" :
+				case "feedback" :
 					Vibrator v = (Vibrator)getActivity().getSystemService(Context.VIBRATOR_SERVICE);
 					v.vibrate(150);
 					break;
-
 				default:
 					break;
 				}
@@ -209,7 +209,7 @@ public class GameBinder extends Fragment implements Sensor.Listener, StringRecei
 		if(socket!=null){
 			mSocket = socket;
 			mReceiver = new StringReceiver(mSocket);
-			// TODO setListener
+			mReceiver.setListener(this);
 			mSender = new StringSender(mSocket);
 			mReceiver.start();
 			mSender.start();

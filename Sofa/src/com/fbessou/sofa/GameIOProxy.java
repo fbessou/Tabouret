@@ -191,7 +191,14 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 	 *
 	 */
 	class GameConnection extends StringSender implements StringReceiver.Listener {
+		/**
+		 * 
+		 */
 		private Socket mSocket;
+		
+		/**
+		 * 
+		 */
 		private StringReceiver mReceiver;
 
 		/**
@@ -215,11 +222,8 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		 */
 		@Override
 		public void onStringReceived(String string, Socket socket) {
+			Log.i("IO",string);
 			
-			//End Close connection
-			if (string == null) {
-
-			}
 			// Interpret and redirect the message
 			try {
 				JSONObject obj = new JSONObject(string);
@@ -230,6 +234,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 					if(pad==-1){
 						
 					} else if (mGamePads.get(pad)!=null){
+						Log.i("###","de merde");
 						mGamePads.get(pad).send(string);
 					}
 					break;
@@ -247,15 +252,18 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		 */
 		@Override
 		public void onClosed(Socket socket) {
-			// TODO Auto-generated method stub
+			mGameConnection = null;
 			
 		}
 
 	}
 
 	class GamePadConnection extends StringSender implements StringReceiver.Listener {
+
 		private int mId;
+		
 		private Socket mSocket;
+		
 		private StringReceiver mReceiver;
 
 		// private String mName; //For debug, there is no reason to store the
@@ -283,11 +291,6 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		 */
 		@Override
 		public void onStringReceived(String string, Socket socket) {
-			if (string == null) { // Communication was closed !
-				onDisconnected();
-
-				return;
-			}
 			try {// For JSON decoding
 				JSONObject object = new JSONObject(string);
 				String comType = object.getString("type");
@@ -315,22 +318,6 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 
 			} catch (JSONException e) {
 				e.printStackTrace();
-			}
-
-		}
-
-		void onDisconnected() {
-			Log.i("GameIOProxy", "Unnamed (" + mId + ") Disconnected");
-			mGamePads.append(mId, null);
-			// Send notification to the client
-			try {
-				JSONObject msg = new JSONObject();
-				msg.put("type", "padevent");
-				msg.put("event", PadEvent.createLeaveEvent(mId));
-				sendToGame(msg.toString());
-			} catch (Exception e) {
-				e.printStackTrace();
-				;
 			}
 
 		}
@@ -386,7 +373,18 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		 */
 		@Override
 		public void onClosed(Socket socket) {
-			mGameConnection = null;			
+			Log.i("GameIOProxy", "Unnamed (" + mId + ") Disconnected");
+			mGamePads.append(mId, null);
+			// Send notification to the client
+			try {
+				JSONObject msg = new JSONObject();
+				msg.put("type", "padevent");
+				msg.put("event", PadEvent.createLeaveEvent(mId));
+				sendToGame(msg.toString());
+			} catch (Exception e) {
+				e.printStackTrace();
+				;
+			}
 		}
 
 	}// Class GamePadConnection

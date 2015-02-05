@@ -13,17 +13,19 @@ import org.json.JSONObject;
  *
  */
 public class OutputEvent {
+	
 	/**
 	 * The target pad of this event
 	 * -1 for broadcast
 	 */
-	public Integer padId = null;
+	public int padId=-1;
 	
 	/**
 	 * The target output of the event.
 	 * (ex : for a text : the textView id)
+	 * -1 for unspecified
 	 */
-	public Integer outputId=null;
+	public int outputId=-1;
 	
 	/**
 	 * For a state event, set state of an output.
@@ -117,7 +119,7 @@ public class OutputEvent {
 		obj.put("pad",padId);
 		switch (eventType) {
 		case FEEDBACK:
-			obj.put("type", "FEEDBACK");
+			obj.put("type", "feedback");
 			switch (feedback) {
 			case -1:
 				obj.put("feedback", -1);

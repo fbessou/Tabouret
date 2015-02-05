@@ -8,12 +8,12 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.StateListDrawable;
+import android.os.Vibrator;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
 import com.fbessou.sofa.KeySensor;
-
 import com.fbessou.tabouret.NodeParser;
 
 public class ButtonView extends View {
@@ -41,6 +41,8 @@ public class ButtonView extends View {
 		switch (event.getAction()) {
 		case MotionEvent.ACTION_DOWN:
 			pressed=true;
+			Vibrator v = (Vibrator)getContext().getSystemService(Context.VIBRATOR_SERVICE);
+			v.vibrate(10);
 			sensor.setValue(true);
 			break;
 		case MotionEvent.ACTION_CANCEL:

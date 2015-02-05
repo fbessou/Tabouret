@@ -8,6 +8,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.os.Vibrator;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -115,6 +116,8 @@ public class JoystickView extends View {
 		switch (event.getAction()) {
 		case MotionEvent.ACTION_DOWN:
 			if (!isOut) {
+				Vibrator v = (Vibrator)getContext().getSystemService(Context.VIBRATOR_SERVICE);
+				v.vibrate(1);
 				// Start moving the stick
 				mIsTouched = true;
 				if (mCenterPosition == Position.DYNAMIC || mCenterPosition == Position.FOLLOW) {
@@ -140,8 +143,10 @@ public class JoystickView extends View {
 					// The center is too far of the stick -> it follows its
 					// friend;
 					if (d > mBoundRadius) {
+
 						if (mCenterPosition == Position.FOLLOW) {
 							float reduceDist = mBoundRadius / d;
+							
 							// move the center
 							mCenterPos[0] = x * (1 - reduceDist) + mCenterPos[0] * reduceDist;// x+(c-x)*r
 							mCenterPos[1] = y * (1 - reduceDist) + mCenterPos[1] * reduceDist;// y+(c-y)*r
