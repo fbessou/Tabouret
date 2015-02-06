@@ -161,6 +161,18 @@ public class OutputEvent {
 		}
 		return obj;
 	}
+	
+	/** 
+	 * returns the JSON string corresponding to this event
+	 */
+	@Override
+	public String toString() {
+		try {
+			return toJSON().toString();
+		} catch (JSONException e) {
+			return "{\"type\":\"unknown\"}";
+		}
+	}
 
 	/**
 	 * 
@@ -186,6 +198,13 @@ public class OutputEvent {
 		return evt;
 	}
 
+	/**
+	 * 
+	 * @param text
+	 * @param padId
+	 * @param outputId
+	 * @return
+	 */
 	public static OutputEvent createTextEvent(String text, Integer padId, Integer outputId) {
 		OutputEvent evt = new OutputEvent(OutputEventType.TEXT);
 		evt.padId = padId;
