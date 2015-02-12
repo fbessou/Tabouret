@@ -31,7 +31,7 @@ public class GamePadActivity extends Activity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		
+		mConfig = new Configuration(this);
 		//call parent's constructor
 		super.onCreate(savedInstanceState);
 		
@@ -40,7 +40,7 @@ public class GamePadActivity extends Activity {
 		if((mGameBinder=(GameBinder) fm.findFragmentByTag("gameBinder"))==null){
 			//This is the first time the activity is launched
 			//we have to create a new GameBinder
-			mGameBinder=new GameBinder();
+			mGameBinder=new GameBinder(mConfig.getNickname());
 			
 			//register the newly created GameBinder in the fragment manager for
 			// future usage
@@ -62,7 +62,6 @@ public class GamePadActivity extends Activity {
 			setRequestedOrientation(layout.getOrientation());
 		}
 
-	
 	}
 
 	@Override

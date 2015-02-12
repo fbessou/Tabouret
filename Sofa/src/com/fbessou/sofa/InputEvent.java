@@ -19,9 +19,9 @@ public class InputEvent {
 	
 	// Content description
 	public InputEventType eventType;
-	public double x = 0;
-	public double y = 0;
-	public double z = 0;
+	public float x = 0;
+	public float y = 0;
+	public float z = 0;
 	public String text;
 
 	// ? public Sensor.SensorType sensorType;
@@ -147,7 +147,7 @@ public class InputEvent {
 	/**
 	 * Create a motion1d event
 	 */
-	static public InputEvent createMotion1DEvent(int inputId, double x, int padId){
+	static public InputEvent createMotion1DEvent(int inputId, float x, int padId){
 		InputEvent evt = new InputEvent(InputEventType.MOTION_1D);
 		evt.inputId = inputId;
 		evt.padId = padId;
@@ -158,7 +158,7 @@ public class InputEvent {
 	/**
 	 * Create a motion2d event
 	 */
-	static public InputEvent createMotion2DEvent(int inputId, double x, double y, int padId){
+	static public InputEvent createMotion2DEvent(int inputId, float x, float y, int padId){
 		InputEvent evt = new InputEvent(InputEventType.MOTION_2D);
 		evt.inputId = inputId;
 		evt.padId = padId;
@@ -176,15 +176,15 @@ public class InputEvent {
 		InputEvent evt = new InputEvent(InputEventType.MOTION_2D);
 		evt.inputId = inputId;
 		evt.padId = padId;
-		evt.x = Array.getDouble(arr, 0);
-		evt.y = Array.getDouble(arr, 1);
+		evt.x = Array.getFloat(arr, 0);
+		evt.y = Array.getFloat(arr, 1);
 		return evt;
 	}
 	
 	/**
 	 * Create a motion3d event
 	 */
-	static public InputEvent createMotion3DEvent(int inputId, double x, double y, double z, int padId){
+	static public InputEvent createMotion3DEvent(int inputId, Float x, Float y, Float z, int padId){
 		InputEvent evt = new InputEvent(InputEventType.MOTION_3D);
 		evt.inputId = inputId;
 		evt.padId = padId;
@@ -203,9 +203,9 @@ public class InputEvent {
 		InputEvent evt = new InputEvent(InputEventType.MOTION_3D);
 		evt.inputId = inputId;
 		evt.padId = padId;
-		evt.x = Array.getDouble(arr, 0);
-		evt.y = Array.getDouble(arr, 1);
-		evt.z = Array.getDouble(arr, 2);
+		evt.x = Array.getFloat(arr, 0);
+		evt.y = Array.getFloat(arr, 1);
+		evt.z = Array.getFloat(arr, 2);
 
 		return evt;
 	}

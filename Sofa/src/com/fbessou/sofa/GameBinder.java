@@ -24,10 +24,13 @@ import com.fbessou.sofa.ProxyConnector.OnConnectedListener;
  *
  */
 public class GameBinder extends Fragment implements Sensor.Listener, StringReceiver.Listener, OnConnectedListener {
+	
+	String mNickname;
 	/**
 	 * 
 	 */
 	GameInformation gameInfo;
+	
 	/**
 	 * Stored unique identifier to help recovering
 	 */
@@ -47,7 +50,12 @@ public class GameBinder extends Fragment implements Sensor.Listener, StringRecei
 	private StringReceiver mReceiver = null;
 	private StringSender mSender = null;
 
-
+	/**
+	 * 
+	 */
+	public GameBinder(String name) {
+		mNickname = name;
+	}
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -214,9 +222,9 @@ public class GameBinder extends Fragment implements Sensor.Listener, StringRecei
 			mReceiver.start();
 			mSender.start();
 			if(mUUID!=null)
-				mSender.send("{\"type\":\"hello\",\"uuid\":\""+mUUID+"\"}");
+				mSender.send("{\"type\":\"hello\",\"uuid\":\""+mUUID+"\",\"name\":\""+mNickname+"\"}");
 			else
-				mSender.send("{\"type\":\"hello\"}");
+				mSender.send("{\"type\":\"hello\",\"name\":\""+mNickname+"\"}");
 		}
 		else
 			Log.w("GameBinder","Couldn't connect to the proxy");
@@ -228,6 +236,13 @@ public class GameBinder extends Fragment implements Sensor.Listener, StringRecei
 	@Override
 	public void onClosed(Socket socket) {
 		Log.i("GameBinder","Shit, we are disconnected.");
+	}
+	public void setNickname(String name) {
+		mNickname = name;
+	}
+	
+	public String getNickname() {
+		return mNickname;
 	}
 
 }

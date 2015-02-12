@@ -14,6 +14,7 @@ public class Configuration {
 	private final static String APP_DIR = "app_directory";
 	private final static String LAYOUT_DIR = "layout_directory";
 	private final static String RES_DIR = "resources_directory";
+	private final static String NICK_NAME = "name";
 
 	public Configuration(Context context) {
 		//p.
@@ -65,10 +66,17 @@ public class Configuration {
 		f.mkdirs();
 	}
 	
-	boolean isFirstLaunch(){
+	public boolean isFirstLaunch(){
 		return mPreferences.getAll().isEmpty();
 	}
 	
+	String getNickname(){
+		return mPreferences.getString(NICK_NAME, "nameless pad");
+	}
+	
+	public void setNickname(String name){
+		mEditor.putString(NICK_NAME,name).commit();
+	}
 	
 	
 }

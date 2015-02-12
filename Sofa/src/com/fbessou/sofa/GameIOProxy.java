@@ -234,7 +234,6 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 					if(pad==-1){
 						
 					} else if (mGamePads.get(pad)!=null){
-						Log.i("###","de merde");
 						mGamePads.get(pad).send(string);
 					}
 					break;
@@ -266,7 +265,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		
 		private StringReceiver mReceiver;
 
-		// private String mName; //For debug, there is no reason to store the
+		private String mNickname; //For debug, there is no reason to store the
 
 		/**
 		 * 
@@ -300,7 +299,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 					UUID lastUUID = null;
 					if (object.has("uuid"))
 						lastUUID = UUID.fromString(object.getString(object.getString("uuid")));
-					registerOrRecover(lastUUID);
+					registerOrRecover(lastUUID,null);
 					// Vibrate to indicate the gamepad has connected
 					Vibrator v1 = (Vibrator) getSystemService(VIBRATOR_SERVICE);
 					v1.vibrate(100);
@@ -340,10 +339,10 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			}
 		}
 
-		void registerOrRecover(UUID inUUID) { // priority to the newly connected
+		void registerOrRecover(UUID inUUID, String name) { // priority to the newly connected
 												// client
 			int firstAvailableId = -1;
-
+			mNickname = name;
 			for (int i = 0; i < mIds.length; i++) {
 
 				if (mGamePads.get(i) == null && firstAvailableId == -1) {
