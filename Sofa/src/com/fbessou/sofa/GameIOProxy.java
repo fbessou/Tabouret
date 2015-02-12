@@ -265,7 +265,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		
 		private StringReceiver mReceiver;
 
-		private String mNickname; //For debug, there is no reason to store the
+		private String mNickname;
 
 		/**
 		 * 
@@ -332,7 +332,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			try {
 				JSONObject msg = new JSONObject();
 				msg.put("type", "padevent");
-				msg.put("event", PadEvent.createJoinEvent(mId));
+				msg.put("event", PadEvent.createJoinEvent(mId, mNickname));
 				sendToGame(msg.toString());
 			} catch (JSONException e) {
 				e.printStackTrace();
