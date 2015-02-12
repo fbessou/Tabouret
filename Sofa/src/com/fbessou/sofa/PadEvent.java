@@ -6,14 +6,12 @@ package com.fbessou.sofa;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.util.Log;
-
 /**
  * @author Frank Bessou
  *
  */
 public class PadEvent {
-	public Integer padId = null;
+	public int padId;
 	String padName = null;
 	public PadEventType eventType = null;
 
@@ -33,6 +31,7 @@ public class PadEvent {
 		switch (object.getString("type")) {
 		case "join":
 			eventType = PadEventType.JOIN;
+			padName = object.getString("name");
 			break;
 		case "leave":
 			eventType = PadEventType.LEAVE;
@@ -47,17 +46,18 @@ public class PadEvent {
 	
 	JSONObject toJSON() throws JSONException{
 		JSONObject event = new JSONObject();
-		event.put("pad",padId);
+		event.put("pad", padId);
 		switch (eventType) {
 		case JOIN:
 			event.put("type", "join");
+			event.put("name", padName);
 			break;
 		case LEAVE:
 			event.put("type","leave");
 			break;
 		case RENAME:
 			event.put("type", "rename");
-			event.put("name",padName);
+			event.put("name", padName);
 			break;
 		default:
 			break;
@@ -67,20 +67,21 @@ public class PadEvent {
 
 	public static PadEvent createLeaveEvent(int pad){
 		PadEvent event = new PadEvent(PadEventType.LEAVE);
-		event.padId=pad;
+		event.padId = pad;
 		return event;
 	}
 	
-	public static PadEvent createJoinEvent(int pad){
+	public static PadEvent createJoinEvent(int pad, String name){
 		PadEvent event = new PadEvent(PadEventType.JOIN);
-		event.padId=pad;
+		event.padId = pad;
+		event.padName = name;
 		return event;
 	}
 	
-	public static PadEvent createRenameEvent(int pad,String name){
+	public static PadEvent createRenameEvent(int pad, String name){
 		PadEvent event = new PadEvent(PadEventType.RENAME);
-		event.padId=pad;
-		event.padName=name;
+		event.padId = pad;
+		event.padName = name;
 		return event;
 	}
 }
