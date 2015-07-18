@@ -15,6 +15,7 @@ import android.net.NetworkInfo;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.WifiP2pManager.Channel;
+import android.net.wifi.p2p.WifiP2pManager.ChannelListener;
 import android.net.wifi.p2p.WifiP2pManager.ConnectionInfoListener;
 import android.util.Log;
 
@@ -23,10 +24,10 @@ import android.util.Log;
  * it is running on your device or on the groupOwner
  *
  */
-public class ProxyConnector extends BroadcastReceiver implements ConnectionInfoListener {
+public class ProxyConnector extends BroadcastReceiver implements ConnectionInfoListener, ChannelListener {
 	private int mPort;
 	private Context mContext;
-	private WifiP2pManager mManager;
+	private WifiP2pManager mWifiManager;
 	private Channel mChannel;
 
 	public interface OnConnectedListener {
@@ -35,7 +36,15 @@ public class ProxyConnector extends BroadcastReceiver implements ConnectionInfoL
 		 * 
 		 * @param socket The distant socket obtained from connection or null if connection can't be established.
 		 */
+		
 		void onConnected(Socket socket);
+		/**
+		 * At loss of framework communication, this method is called.
+		 * @see android.net.wifi.p2p.WifiP2pManager#initialize(Context, android.os.Looper, ChannelListener)
+		 * @see android.net.wifi.p2p.WifiP2pManager.Channel
+		 * @see android.net.wifi.p2p.WifiP2pManager.ChannelListener
+		 */
+		void onDisconnected();
 	}
 	/**
 	 * Interface whose the onConnected method is called when the connection is established.
@@ -49,79 +58,106 @@ public class ProxyConnector extends BroadcastReceiver implements ConnectionInfoL
 		mContext = context.getApplicationContext();
 		mPort = port;
 		mListener = listener;
-		mManager = (WifiP2pManager) mContext.getSystemService(Context.WIFI_P2P_SERVICE);
-		mChannel = mManager.initialize(mContext, mContext.getMainLooper(), null);
-
+		mWifiManager = (WifiP2pManager) mContext.getSystemService(Context.WIFI_P2P_SERVICE);
+		mChannel = mWifiManager.initialize(mContext, mContext.getMainLooper(), this);
 	}
 
+	/** Start the process of connection **/
 	public void connect() {
 		IntentFilter filter = new IntentFilter(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
 		mContext.registerReceiver(this, filter);
 	}
 
-	/*
-	 * (non-Javadoc)
+	/**
+	 * Called when this broadcast receiver receives an intent
 	 * 
 	 * @see android.content.BroadcastReceiver#onReceive(android.content.Context,
 	 * android.content.Intent)
-	 */
+	 **/
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		if (intent.getAction().equals(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION)) {
-			NetworkInfo info = (NetworkInfo) intent
-					.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
+			NetworkInfo info = (NetworkInfo) intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
 			if (info.isConnected()) {
-				mManager.requestConnectionInfo(mChannel, this);
-			} else {
+				mWifiManager.requestConnectionInfo(mChannel, this);
+			}
+			else {
 				connectToProxy(null, mPort);
 			}
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
+	/**
+	 * This callback is called when the device is connected with wifi p2p to an other device.
+	 * The wifi p2p info let us know if this device is the group owner (in this case
+	 * the proxy address is localhost) or not (in this case, we get the proxy's address from info).
+	 * Finally, we connect to proxy.
+	 * 
 	 * 
 	 * @see android.net.wifi.p2p.WifiP2pManager.ConnectionInfoListener#
 	 * onConnectionInfoAvailable(android.net.wifi.p2p.WifiP2pInfo)
-	 */
+	 **/
 	@Override
 	public void onConnectionInfoAvailable(WifiP2pInfo info) {
 		if (!info.isGroupOwner) {
 			final InetAddress ip = info.groupOwnerAddress;
 			Log.i("ProxyConnector","The group owner is "+ip.getHostAddress());
+			
 			connectToProxy(ip, mPort);
 		} else {
-			Log.i("ProxyConnector","I am the group owner");
+			Log.i("ProxyConnector", "I am the group owner");
+			
 			connectToProxy(null, mPort);
 		}
-
 	}
 
+	/**
+	 * Connect to the proxy with an address and a port
+	 * @param hostaddr proxy's address. May be null for localhost
+	 * @param port proxy's port
+	 **/
 	void connectToProxy(final InetAddress hostaddr, final int port) {
-
 		new Thread(new Runnable() {
-
 			@Override
 			public void run() {
 				Socket socket = null;
+				String address = null;
 				try {
-					String address = (hostaddr == null ? InetAddress.getLocalHost()
-							.getHostAddress() : hostaddr.getHostAddress());
+					// Get the address
+					if(hostaddr == null)
+						address = InetAddress.getLocalHost().getHostAddress();
+					else
+						address = hostaddr.getHostAddress();
+					
+					// create a new socket and connect
 					socket = new Socket(address, port);
 					socket.setTcpNoDelay(true);
-					Log.i("Connected", "Connected to " + address);
+					
+					Log.v("ProxyConnector", "Connected to " + address);
 				} catch (IOException e) {
 					socket = null;
-					Log.v("GameBinder", "Connexion attempt failed");
+					Log.v("ProxyConnector", "Connexion attempt to "+address+" failed");
 					e.printStackTrace();
 				}
+				
+				/*
+				// if we failed to connect to the given address, try with localhost
+				// FIXME why ?
 				if (hostaddr != null && socket == null){
-					Log.v("GameBinder", "Trying to connect locally");
+					Log.v("ProxyConnector", "Trying to connect locally");
 					connectToProxy(null, mPort);
 				}
-				else
+				else*/ {
 					mListener.onConnected(socket);
+				}
 			}
 		}).start();
+	}
+
+	
+	@Override
+	public void onChannelDisconnected() {
+		if(mListener != null)
+			mListener.onDisconnected();
 	}
 }

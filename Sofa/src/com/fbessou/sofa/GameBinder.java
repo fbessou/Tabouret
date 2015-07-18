@@ -23,7 +23,7 @@ import com.fbessou.sofa.ProxyConnector.OnConnectedListener;
  * @author Frank Bessou
  *
  */
-public class GameBinder extends Fragment implements Sensor.Listener, StringReceiver.Listener, OnConnectedListener {
+public class GameBinder extends Fragment implements Sensor.InputEventListener, StringReceiver.Listener, OnConnectedListener {
 	
 	String mNickname;
 	/**
@@ -229,7 +229,14 @@ public class GameBinder extends Fragment implements Sensor.Listener, StringRecei
 		else
 			Log.w("GameBinder","Couldn't connect to the proxy");
 	}
-
+	/* (non-Javadoc)
+	 * @see com.fbessou.sofa.ProxyConnector.OnConnectedListener#onDisconnected()
+	 */
+	@Override
+	public void onDisconnected() {
+		// TODO Auto-generated method stub
+	}
+	
 	/* (non-Javadoc)
 	 * @see com.fbessou.sofa.StringReceiver.Listener#onClosed(java.net.Socket)
 	 */

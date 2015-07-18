@@ -14,17 +14,19 @@ import org.json.JSONObject;
  */
 public class InputEvent {
 
+	/** Id of the input **/
 	public int inputId = 0;
+	/** Id of the pad that triggers the event **/
 	public int padId = 0;
 	
-	// Content description
+	/** Content description **/
 	public InputEventType eventType;
 	public float x = 0;
 	public float y = 0;
 	public float z = 0;
 	public String text;
 
-	// ? public Sensor.SensorType sensorType;
+	// FIXME use public Sensor.SensorType instead ? no ! sensor should generate inputeventtype and offer other service like clamp values
 	public enum InputEventType {
 		KEY_DOWN, KEY_UP, MOTION_1D, MOTION_2D, MOTION_3D, TEXT_SENT
 	}
@@ -184,7 +186,7 @@ public class InputEvent {
 	/**
 	 * Create a motion3d event
 	 */
-	static public InputEvent createMotion3DEvent(int inputId, Float x, Float y, Float z, int padId){
+	static public InputEvent createMotion3DEvent(int inputId, float x, float y, float z, int padId){
 		InputEvent evt = new InputEvent(InputEventType.MOTION_3D);
 		evt.inputId = inputId;
 		evt.padId = padId;

@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.Socket;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import android.util.Log;
 
@@ -20,7 +19,7 @@ import android.util.Log;
  * will be called on reception.
  */
 public class StringReceiver extends Thread {
-	public Socket socket; // Socket to receive from
+	public Socket mSocket; // Socket to receive from FIXME why public ?
 	
 	/**
 	 * 
@@ -35,7 +34,7 @@ public class StringReceiver extends Thread {
 	/**
 	 * 
 	 */
-	private Listener mListener=null;
+	private Listener mListener = null;
 	
 	/**
 	 * Construct a StringReceiver instance which will listen on the socket
@@ -44,36 +43,50 @@ public class StringReceiver extends Thread {
 	 * 				The socket to listen on.
 	 */
 	public StringReceiver(Socket socket) {
-		this.socket=socket;
+		this.mSocket = socket;
 	}
 	
 	@Override
 	public void run() {
 		try {
-			InputStream stream = socket.getInputStream();
-			BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+			// Use the sockect as an input stream
+			InputStream stream = mSocket.getInputStream();
+			BufferedReader reader = new BufferedReader(new InputStreamReader(stream));//FIXME Buffered = delayed ?
 			String s = null;
 
-			while ((s = reader.readLine()) != null) {
-				if(mListener!=null){
-					mListener.onStringReceived(s,socket);
-				}
+			// Read lines while EOF is not reached or the thread is not interrupted
+			while ((s = reader.readLine()) != null && !this.isInterrupted()) {
+				if(mListener != null)
+					mListener.onStringReceived(s, mSocket);
 				else
-					Log.d("StringReceiver",s);
+					Log.d("StringReceiver", s);
 			}
-
 			
 		} catch (IOException e) {
 			Log.d("StringReceiver","Connection closed");
 		}
 		
-		if(mListener!=null){ //Obvious
-			mListener.onClosed(socket);
+		if(mListener != null) //Obvious FIXME really ? even with the method shutdown() ?
+			mListener.onClosed(mSocket);
+	}
+	
+	/** Shutdowns the input stream of the sockect and consequently ends this thread.
+	 * The listener's method #onClosed() should be called soon. **/
+	public void shutdown() {
+		if(this.isAlive()) {
+			// Shutdowns the input stream (-> EOF)
+			try {
+				mSocket.shutdownInput();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			// Interrupts this thread
+			this.interrupt();
 		}
 	}
 	
 	public void setListener(Listener listener){
-		mListener=listener;
+		mListener = listener;
 	}
 	
 	Listener getListener(){
