@@ -79,10 +79,15 @@ public class StringSender extends Thread {
 	
 	/**
 	 * Sends a message through this Sender. You can send {@code StringSender.EOS} to end this sender.
+	 * Drops the message if the sender is not running.
 	 * @param string String to send. 
 	 */
 	public void send(String string){
-		mStrings.add(string);
+		if(isAlive() && !isInterrupted())
+			mStrings.add(string);
+		else {
+			// Log.d("StringSender", "Sender not running, message dropped");
+		}
 	}
 	
 }

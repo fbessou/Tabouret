@@ -92,7 +92,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 	/**
 	 * Port the proxy is listening on for game connection
 	 */
-	public static final int GamePort = 6969;
+	public static final int DefaultGamePort = 6969;
 	private ClientAccepter mGameAccepter;
 
 	/**
@@ -102,7 +102,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 	/**
 	 * Port the proxy is listening on for clients connection
 	 */
-	public static final int GamePadsPort = 9696;
+	public static final int DefaultGamePadsPort = 9696;
 	private ClientAccepter mGamepadAccepter;
 
 	/**
@@ -123,9 +123,9 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 	 *            The port the client connected to.
 	 */
 	public boolean onClientAccepted(Socket socket, int port) {
-		if (port == GamePort) {
+		if (port == DefaultGamePort) {
 			registerGame(socket);
-		} else if (port == GamePadsPort) {
+		} else if (port == DefaultGamePadsPort) {
 			registerGamePad(socket);
 		}
 		return true;
@@ -221,8 +221,8 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		super.onCreate();
 		
 		// Start to listen for connections
-		mGameAccepter = new ClientAccepter(GamePort, this);
-		mGamepadAccepter = new ClientAccepter(GamePadsPort, this);
+		mGameAccepter = new ClientAccepter(DefaultGamePort, this);
+		mGamepadAccepter = new ClientAccepter(DefaultGamePadsPort, this);
 		
 		mGameAccepter.start();
 		mGamepadAccepter.start();

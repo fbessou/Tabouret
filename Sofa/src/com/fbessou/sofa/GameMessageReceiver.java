@@ -3,14 +3,8 @@ package com.fbessou.sofa;
 import java.net.Socket;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.json.JSONException;
 import org.json.JSONObject;
-
-import android.util.Log;
-
-import com.fbessou.sofa.InputEvent;
-import com.fbessou.sofa.StringReceiver;
-
+@Deprecated
 public class GameMessageReceiver implements StringReceiver.Listener {
 	private PadEventListener mPadEventListener;
 	private InputEventListener mInputEventListener;
@@ -63,9 +57,9 @@ public class GameMessageReceiver implements StringReceiver.Listener {
 			default:
 				break;
 			}
-		} catch (JSONException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
-			Log.d("###", "JSONException on "+s);
+			//Log.d("###", "JSONException on "+s);
 		}
 	}
 	

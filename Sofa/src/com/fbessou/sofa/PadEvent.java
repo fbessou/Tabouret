@@ -11,8 +11,9 @@ import org.json.JSONObject;
 /**
  * PadEvent created by a game pad
  * @author Frank Bessou
- *
+ * @deprecated use com.fbessou.sofa.Message.* instead
  */
+@Deprecated
 public class PadEvent {
 	public UUID uuid;
 	String padName = null;

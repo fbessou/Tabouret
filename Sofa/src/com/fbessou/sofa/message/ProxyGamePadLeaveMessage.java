@@ -38,4 +38,9 @@ public class ProxyGamePadLeaveMessage extends ProxyMessage {
 		
 		return json;
 	}
+
+	
+	public int getGamePadId() {
+		return mGamePadId;
+	}
 }

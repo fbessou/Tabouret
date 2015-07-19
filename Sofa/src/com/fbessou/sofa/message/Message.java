@@ -14,12 +14,7 @@ public class Message {
 	 * Type of message. Use toString() to get the name in lower case.
 	 **/
 	public enum Type {
-		JOIN,// TODO ?? (GamePadJoinMessage.class, GameJoinMessage.class, ProxyGamePadJoinMessage.class, ProxyGameJoinMessage.class),
-		RENAME,
-		LEAVE,
-		INPUTEVENT,
-		OUTPUTEVENT,
-		ACCEPT;
+		JOIN, RENAME, LEAVE, INPUTEVENT, OUTPUTEVENT, ACCEPT;
 		
 		public String toString() {
 			return super.toString().toLowerCase(Locale.ENGLISH);

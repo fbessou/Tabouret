@@ -43,4 +43,13 @@ public class ProxyGamePadRenameMessage extends ProxyMessage {
 		
 		return json;
 	}
+
+	
+	public int getGamePadId() {
+		return mGamePadId;
+	}
+
+	public String getNewNickname() {
+		return mNewNickname;
+	}
 }

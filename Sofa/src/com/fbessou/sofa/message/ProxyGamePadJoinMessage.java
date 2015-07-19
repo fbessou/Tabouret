@@ -10,7 +10,7 @@ import org.json.JSONObject;
  *
  */
 public class ProxyGamePadJoinMessage extends ProxyMessage {
-	
+	// TODO add boolean : from recovering
 	/** Nickname given by the game-pad. Empty string by default. Should not be null **/
 	private final String mNickname;
 	private final UUID mUUID;
@@ -48,5 +48,9 @@ public class ProxyGamePadJoinMessage extends ProxyMessage {
 		json.put("gamepad", mGamePadId);
 		
 		return json;
+	}
+
+	public int getGamePadId() {
+		return mGamePadId;
 	}
 }

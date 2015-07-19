@@ -12,7 +12,7 @@ public class Sensor {
 	
 	/** Listener on input event **/
 	public interface InputEventListener{
-		void onInputEvent(InputEvent evt);
+		void onInputEventTriggered(InputEvent evt);
 	}
 	
 	/** Type of sensor **/
@@ -33,9 +33,9 @@ public class Sensor {
 	public static int sourceId = 0;
 	
 	/** Indicates if the sensor is enabled **/
-	private boolean mEnabled=true;
+	private boolean mEnabled = true;
 	/** unique identifier **/
-	private int mId;
+	protected int mId;
 	/** Type of this sensor **/
 	private SensorType mType;
 	/** Listener attached to this sensor **/
@@ -61,11 +61,27 @@ public class Sensor {
 		mListener = listener;
 	}
 	
-	/** Trigger the given event **/
+	/** Trigger the given event if this sensor is enable **/
 	protected void triggerEvent(InputEvent event){
-		if(mListener != null)
-			mListener.onInputEvent(event);
+		if(mListener != null && mEnabled)
+			mListener.onInputEventTriggered(event);
 	}
+	
+	/**
+	 * Sets the state of this sensor. A disabled sensor will not trigger events.
+	 * @params enabled 
+	 */
+	public void setEnabled(boolean enabled) {
+		mEnabled = enabled;
+	}
+	
+	/**
+	 * Returns the state of this sensor. A disabled sensor will not trigger events.
+	 */
+	public boolean isEnabled() {
+		return mEnabled;
+	}
+	
 	/** FIXME ? **/
 	Character getFootprint(){
 		return mType.getFootprint();

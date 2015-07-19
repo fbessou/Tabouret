@@ -6,6 +6,7 @@ package com.fbessou.sofa;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.UUID;
 
 import org.json.JSONException;
@@ -17,13 +18,12 @@ import android.os.Bundle;
 import android.os.Vibrator;
 import android.util.Log;
 
-import com.fbessou.sofa.ProxyConnector.OnConnectedListener;
-
 /**
  * @author Frank Bessou
  *
+ * GameBinder used by game pads
  */
-public class GameBinder extends Fragment implements Sensor.InputEventListener, StringReceiver.Listener, OnConnectedListener {
+public class GameBinder extends Fragment implements Sensor.InputEventListener, StringReceiver.Listener, ProxyConnector.OnConnectedListener {
 	
 	String mNickname;
 	/**
@@ -65,7 +65,7 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setRetainInstance(true);
-		ProxyConnector connector = new ProxyConnector(this.getActivity().getApplicationContext(), 9696, this);
+		ProxyConnector connector = new ProxyConnector(this.getActivity().getApplicationContext(), GameIOProxy.DefaultGamePadsPort, this);
 		connector.connect();
 		/**
 		 * // Before connecting to this service, we have to wait for the service
@@ -89,19 +89,19 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 	 * )
 	 */
 	@Override
-	public void onInputEvent(final InputEvent evt) {
-		Log.i("GameBinder", evt.toString());
+	public void onInputEventTriggered(final InputEvent evt) {
+		//Log.i("GameBinder", evt.toString());
+		
 		new Thread(new Runnable() {
-
 			@Override
 			public void run() {
-
 				// check we are connected to a server
 				if (mSocket != null) {
 					try {
+						
 						JSONObject obj = new JSONObject();
-						obj.put("type","inputevent");
-						obj.put("event",getJson(evt) );
+						obj.put("type", "inputevent");
+						obj.put("event", evt.toJSON());
 						mSender.send(obj.toString());
 					} catch (JSONException e) {
 						e.printStackTrace();
@@ -116,44 +116,23 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 		sensor.setListener(this);
 	}
 
-	JSONObject getJson(InputEvent evt) {
-		JSONObject eventJ = new JSONObject();
-		try {
-			eventJ.put("input", evt.inputId);
-			eventJ.put("pad", evt.padId);
-			switch (evt.eventType) {
-			case MOTION_3D:
-				eventJ.put("type", "motion3d");
-				eventJ.put("x", evt.x);
-				eventJ.put("y", evt.y);
-				eventJ.put("z", evt.z);
-				break;
-			case MOTION_2D:
-				eventJ.put("type", "motion2d");
-				eventJ.put("x", evt.x);
-				eventJ.put("y", evt.y);
-				break;
-			case MOTION_1D:
-				eventJ.put("type", "motion1d");
-				eventJ.put("x", evt.x);
-				break;
-			case KEY_DOWN:
-				eventJ.put("type", "key_down");
-				break;
-			case KEY_UP:
-				eventJ.put("type", "key_up");
-				break;
-			case TEXT_SENT:
-				eventJ.put("type", "text");
-				eventJ.put("text", evt.text);
-				break;
-			default:
-				break;
-			}
-		} catch (JSONException e) {
-			e.printStackTrace();
-		}
-		return eventJ;
+	public void removeSensor(Sensor sensor) {
+		mAvailableSensors.remove(sensor);
+		sensor.setListener(null);
+	}
+
+	public void removeAllSensor() {
+		for(Sensor s : mAvailableSensors)
+			s.setListener(null);
+		
+		mAvailableSensors.clear();
+	}
+	
+	public void addAllSensor(Collection<Sensor> sensors) {
+		for(Sensor s : sensors)
+			s.setListener(this);
+		
+		mAvailableSensors.addAll(sensors);
 	}
 
 	/*
@@ -221,7 +200,7 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 			mSender = new StringSender(mSocket);
 			mReceiver.start();
 			mSender.start();
-			if(mUUID!=null)
+			if(mUUID != null)
 				mSender.send("{\"type\":\"hello\",\"uuid\":\""+mUUID+"\",\"name\":\""+mNickname+"\"}");
 			else
 				mSender.send("{\"type\":\"hello\",\"name\":\""+mNickname+"\"}");
@@ -234,7 +213,7 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 	 */
 	@Override
 	public void onDisconnected() {
-		// TODO Auto-generated method stub
+		// TODO FIXME reconnect ?
 	}
 	
 	/* (non-Javadoc)
@@ -244,6 +223,7 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 	public void onClosed(Socket socket) {
 		Log.i("GameBinder","Shit, we are disconnected.");
 	}
+	
 	public void setNickname(String name) {
 		mNickname = name;
 	}

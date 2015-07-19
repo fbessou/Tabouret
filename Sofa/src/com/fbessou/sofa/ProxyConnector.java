@@ -20,9 +20,9 @@ import android.net.wifi.p2p.WifiP2pManager.ConnectionInfoListener;
 import android.util.Log;
 
 /**
- * Use this class to connect to easily connect to a proxy when you don't know if
+ * Use this class to easily connect to a proxy when you don't know if
  * it is running on your device or on the groupOwner
- *
+ * TODO retry connect()
  */
 public class ProxyConnector extends BroadcastReceiver implements ConnectionInfoListener, ChannelListener {
 	private int mPort;
@@ -82,7 +82,8 @@ public class ProxyConnector extends BroadcastReceiver implements ConnectionInfoL
 				mWifiManager.requestConnectionInfo(mChannel, this);
 			}
 			else {
-				connectToProxy(null, mPort);
+				// FIXME why should we connect to local?
+				// connectToProxy(null, mPort);
 			}
 		}
 	}
@@ -121,13 +122,11 @@ public class ProxyConnector extends BroadcastReceiver implements ConnectionInfoL
 			@Override
 			public void run() {
 				Socket socket = null;
-				String address = null;
+				InetAddress address = hostaddr;
 				try {
-					// Get the address
-					if(hostaddr == null)
-						address = InetAddress.getLocalHost().getHostAddress();
-					else
-						address = hostaddr.getHostAddress();
+					// Get the localhost address if hostaddr is not defined
+					if(address == null)
+						address = InetAddress.getLocalHost();
 					
 					// create a new socket and connect
 					socket = new Socket(address, port);

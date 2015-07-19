@@ -12,7 +12,7 @@ public class ProxyMessage extends Message {
 	 * Instatiate the proxy message from an other message.
 	 * @param message Message to transmit
 	 */
-	public ProxyMessage(Message message) {
+	protected ProxyMessage(Message message) {
 		super(message.getType());
 	}
 
@@ -20,7 +20,7 @@ public class ProxyMessage extends Message {
 	 * Instatiate a message from a JSON object
 	 * @throws Exception If message cannot be instatiate from the json object for any reasons.
 	 * */
-	public ProxyMessage(JSONObject json) throws Exception {
+	ProxyMessage(JSONObject json) throws Exception {
 		super(json);
 	}
 
@@ -59,7 +59,7 @@ public class ProxyMessage extends Message {
 	 * @return Message corresponding to this JSON object. 
 	 * @throws Exception If message cannot be instatiate from the json object for any reasons.
 	 */
-	public static Message gamePadFromJSON(JSONObject json) throws Exception {
+	public static ProxyMessage gamePadFromJSON(JSONObject json) throws Exception {
 		ProxyMessage msg = new ProxyMessage(json);
 		switch(msg.getType()) {
 		case JOIN:

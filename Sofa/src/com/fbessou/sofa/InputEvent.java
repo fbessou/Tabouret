@@ -4,7 +4,9 @@
 package com.fbessou.sofa;
 
 import java.lang.reflect.Array;
+import java.util.Locale;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -13,6 +15,18 @@ import org.json.JSONObject;
  *
  */
 public class InputEvent {
+	
+	// FIXME use public Sensor.SensorType instead ? no ! sensor should generate inputeventtype and offer other service like clamp values
+	public enum Type {
+		KEYDOWN, KEYUP, FLOATDOWN, FLOATMOVE, FLOATUP, TEXT;
+
+		public String toString() {
+			return super.toString().toLowerCase(Locale.ENGLISH);
+		};
+		public static InputEvent.Type get(String name) {
+			return InputEvent.Type.valueOf(name.toUpperCase(Locale.ENGLISH));
+		}
+	}
 
 	/** Id of the input **/
 	public int inputId = 0;
@@ -20,64 +34,71 @@ public class InputEvent {
 	public int padId = 0;
 	
 	/** Content description **/
-	public InputEventType eventType;
-	public float x = 0;
-	public float y = 0;
-	public float z = 0;
+	public InputEvent.Type eventType;
+	public float values[];
 	public String text;
 
-	// FIXME use public Sensor.SensorType instead ? no ! sensor should generate inputeventtype and offer other service like clamp values
-	public enum InputEventType {
-		KEY_DOWN, KEY_UP, MOTION_1D, MOTION_2D, MOTION_3D, TEXT_SENT
-	}
 
 	/**
 	 * Create an empty {@link InputEvent} of type determined by type
 	 * @param type The type of the created event
 	 */
-	public InputEvent(InputEventType type) {
+	public InputEvent(InputEvent.Type type) {
 		eventType = type;
 	}
 
 	/**
 	 * Create an {@link InputEvent} instance from a {@link JSONObject}
 	 * @param jo
-	 * @throws JSONException
+	 * @throws Exception if the input event cannot be instantiate for any reasons.
 	 */
-	public InputEvent(JSONObject jo) throws JSONException {
+	public InputEvent(JSONObject jo) throws Exception {
 		padId = jo.getInt("pad");
 		inputId = jo.getInt("input");
-		switch (jo.getString("type")) {
-		case "key_up":
-			eventType = InputEventType.KEY_UP;
+		eventType = InputEvent.Type.get(jo.getString("type")); // throws exception if type unknown
+		switch (eventType) {
+		case FLOATDOWN:
+		case FLOATMOVE:
+		case FLOATUP:
+			JSONArray array = jo.getJSONArray("values");
+			values = new float[array.length()];
+			for(int i = 0; i < values.length; i++)
+				values[i] = (float) array.getDouble(i);
 			break;
-		case "key_down":
-			eventType = InputEventType.KEY_DOWN;
-			break;
-		case "motion1d":
-			eventType = InputEventType.MOTION_1D;
-			x = (float) jo.getDouble("x");
-			break;
-		case "motion2d":
-			eventType = InputEventType.MOTION_2D;
-			x = (float) jo.getDouble("x");
-			y = (float) jo.getDouble("y");
-			break;
-		case "motion3d":
-			eventType = InputEventType.MOTION_3D;
-			x = (float) jo.getDouble("x");
-			y = (float) jo.getDouble("y");
-			z = (float) jo.getDouble("z");
-			break;
-		case "text":
-			eventType = InputEventType.TEXT_SENT;
+			
+		case TEXT:
 			text = jo.getString("text");
 			break;
-		default:
-			throw new JSONException("Invalid input event type");
+			
+		case KEYDOWN:
+		case KEYUP:
+			// nothing else to read
+			break;
 		}
 	}
 
+	/**
+	 * Returns the first value of the array {@code values}. The array size
+	 * must be at least 1.
+	 * */
+	public float getX() {
+		return values[0];
+	}
+	/**
+	 * Returns the second value of the array {@code values}. The array size
+	 * must be at least 2.
+	 * */
+	public float getY() {
+		return values[1];
+	}
+	/**
+	 * Returns the third value of the array {@code values}. The array size
+	 * must be at least 3.
+	 * */
+	public float getZ() {
+		return values[2];
+	}
+	
 	/** 
 	 * returns the JSON string corresponding to this event
 	 */
@@ -96,31 +117,25 @@ public class InputEvent {
 	public JSONObject toJSON() throws JSONException {
 		JSONObject object = new JSONObject();
 		object.put("input", inputId);
+		object.put("pad", padId);
+		object.put("tyoe", eventType.toString());
 		switch (eventType) {
-		case KEY_DOWN:
-			object.put("type", "keydown");
+		case FLOATDOWN:
+		case FLOATMOVE:
+		case FLOATUP:
+			JSONArray array = new JSONArray();
+			for(float v : values)
+				array.put(v);
+			object.put("values", array);
 			break;
-		case KEY_UP:
-			object.put("type", "keyup");
-			break;
-		case MOTION_1D:
-			object.put("type", "motion1d");
-			object.put("x", x);
-			break;
-		case MOTION_2D:
-			object.put("type", "motion2d");
-			object.put("x", x);
-			object.put("y", y);
-			break;
-		case MOTION_3D:
-			object.put("type", "motion3d");
-			object.put("x", x);
-			object.put("y", y);
-			object.put("z", z);
-			break;
-		case TEXT_SENT:
+			
+		case TEXT:
 			object.put("text", text);
-		default:
+			break;
+			
+		case KEYDOWN:
+		case KEYUP:
+			// nothing else to put
 			break;
 		}
 		return object;
@@ -130,7 +145,7 @@ public class InputEvent {
 	 * Create a key down event
 	 */
 	static public InputEvent createKeyDownEvent(int inputId, int padId){
-		InputEvent evt = new InputEvent(InputEventType.KEY_DOWN);
+		InputEvent evt = new InputEvent(InputEvent.Type.KEYDOWN);
 		evt.inputId = inputId;
 		evt.padId = padId;
 		return evt;
@@ -140,7 +155,7 @@ public class InputEvent {
 	 * Create a key up event
 	 */
 	static public InputEvent createKeyUpEvent(int inputId, int padId){
-		InputEvent evt = new InputEvent(InputEventType.KEY_UP);
+		InputEvent evt = new InputEvent(InputEvent.Type.KEYUP);
 		evt.inputId = inputId;
 		evt.padId = padId;
 		return evt;
@@ -150,10 +165,10 @@ public class InputEvent {
 	 * Create a motion1d event
 	 */
 	static public InputEvent createMotion1DEvent(int inputId, float x, int padId){
-		InputEvent evt = new InputEvent(InputEventType.MOTION_1D);
+		InputEvent evt = new InputEvent(InputEvent.Type.FLOATMOVE);
 		evt.inputId = inputId;
 		evt.padId = padId;
-		evt.x = x;
+		evt.values= new float[] {x};
 		return evt;
 	}
 	
@@ -161,11 +176,10 @@ public class InputEvent {
 	 * Create a motion2d event
 	 */
 	static public InputEvent createMotion2DEvent(int inputId, float x, float y, int padId){
-		InputEvent evt = new InputEvent(InputEventType.MOTION_2D);
+		InputEvent evt = new InputEvent(InputEvent.Type.FLOATMOVE);
 		evt.inputId = inputId;
 		evt.padId = padId;
-		evt.x = x;
-		evt.y = y;
+		evt.values= new float[] {x, y};
 		return evt;
 	}
 	
@@ -175,11 +189,13 @@ public class InputEvent {
 	public InputEvent createMotion2DEvent(int inputId, Object arr, int padId) throws IllegalArgumentException{
 		if(!arr.getClass().isArray())
 			throw new IllegalArgumentException("Second argument is not an array :"+arr.getClass());
-		InputEvent evt = new InputEvent(InputEventType.MOTION_2D);
+		InputEvent evt = new InputEvent(InputEvent.Type.FLOATMOVE);
 		evt.inputId = inputId;
 		evt.padId = padId;
-		evt.x = Array.getFloat(arr, 0);
-		evt.y = Array.getFloat(arr, 1);
+		evt.values= new float[] {
+				Array.getFloat(arr, 0),
+				Array.getFloat(arr, 1),
+			};
 		return evt;
 	}
 	
@@ -187,12 +203,10 @@ public class InputEvent {
 	 * Create a motion3d event
 	 */
 	static public InputEvent createMotion3DEvent(int inputId, float x, float y, float z, int padId){
-		InputEvent evt = new InputEvent(InputEventType.MOTION_3D);
+		InputEvent evt = new InputEvent(InputEvent.Type.FLOATMOVE);
 		evt.inputId = inputId;
 		evt.padId = padId;
-		evt.x = x;
-		evt.y = y;
-		evt.z = z;
+		evt.values= new float[] {x, y, z};
 		return evt;
 	}
 	
@@ -202,12 +216,14 @@ public class InputEvent {
 	static public InputEvent createMotion3DEvent(int inputId, Object arr, int padId) throws IllegalArgumentException{
 		if(!arr.getClass().isArray())
 			throw new IllegalArgumentException("Second argument is not an array :"+arr.getClass());
-		InputEvent evt = new InputEvent(InputEventType.MOTION_3D);
+		InputEvent evt = new InputEvent(InputEvent.Type.FLOATMOVE);
 		evt.inputId = inputId;
 		evt.padId = padId;
-		evt.x = Array.getFloat(arr, 0);
-		evt.y = Array.getFloat(arr, 1);
-		evt.z = Array.getFloat(arr, 2);
+		evt.values= new float[] {
+				Array.getFloat(arr, 0),
+				Array.getFloat(arr, 1),
+				Array.getFloat(arr, 2),
+			};
 
 		return evt;
 	}

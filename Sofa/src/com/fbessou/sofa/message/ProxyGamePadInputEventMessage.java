@@ -44,4 +44,12 @@ public class ProxyGamePadInputEventMessage extends ProxyMessage {
 		
 		return json;
 	}
+
+	
+	public int getGamePadId() {
+		return mGamePadId;
+	}
+	public InputEvent getInputEvent() {
+		return mInputEvent;
+	}
 }
