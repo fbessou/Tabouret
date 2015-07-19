@@ -7,16 +7,18 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Frank Bessou
- *
+ * 
+ * This thread should be automatically closed if the socket is closed or disconnected.
+ * It is not the job of the StringSender to close the socket.
+ * 
  */
 public class StringSender extends Thread {
-	/** String to send to close the stream **/
-	public static final String EOS = "eos";
 	
-	public Socket socket; // Socket to send data to FIXME why public ?
+	private Socket mSocket; // Socket to send data to
 	/** The queue of message to send **/
 	private LinkedBlockingQueue<String> mStrings = new LinkedBlockingQueue<String>();
 
@@ -24,43 +26,60 @@ public class StringSender extends Thread {
 	 * 
 	 */
 	public StringSender(Socket socket) {
-		this.socket=socket;
+		this.mSocket = socket;
 	}
 	
 	@Override
 	public void run() {
 		try {
-			OutputStream stream = socket.getOutputStream();
+			OutputStream stream = mSocket.getOutputStream();
 			String s = null;
 			
-			while (!(s = mStrings.take()).equals(EOS)) {
+			while ((s = takeMessageFromQueue()) != null) {
 				//Log.i("StringSender", "Sending "+s);
 				
-				/** do not forget the '\n' characters, it is the delimiter
+				/** do not forget the '\n' character, it is the delimiter
 				 * for <code>com.fbessou.sofa.StringReceiver</code> **/
 				stream.write((s+"\n").getBytes());
 			}
-			
-			socket.shutdownOutput();
 		} catch (IOException e) {
 			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+		}  catch (InterruptedException e) {
+			// Exception thrown by LinkedBlockingQueue.pool(delay) after shutdown() is called
 		}
 	}
 	
-	/** Shutdowns this sender by clearing the message queue and sending the string <code>EOS</code>.<br>
-	 * You can manually shutdown without clearing the queue by calling <code>send(EOS)</code>. */
-	public void shutdown() {
-		// Clear the message queue
-		mStrings.clear();
-		// Send EOS
-		mStrings.add(EOS);
+	/**
+	 * Returns the next message of the queue or null is the socket is closed.
+	 * @return String to send or null if socket is closed
+	 * @throws InterruptedException
+	 */
+	private String takeMessageFromQueue() throws InterruptedException {
+		while(true) {
+			// Wait for a string. Throws InterruptedException.
+			String s = mStrings.poll(500, TimeUnit.MICROSECONDS);
+			if(s != null)
+				return s;
+			
+			// return null is the socket is no longer connected or if it is shutdown
+			if(!mSocket.isConnected() || mSocket.isOutputShutdown())
+				return null;
+		}
+	}
+
+	/**
+	 * Interrupts properly this sender. This method do not have to be called to close this sender since
+	 * this sender should be automatically closed when its attached socket is closed.
+	 * @see Thread#interrupt()
+	 */
+	@Override
+	public void interrupt() {
+		super.interrupt();
 	}
 	
 	/**
-	 * Send a message through this Sender
-	 * @param string
+	 * Sends a message through this Sender. You can send {@code StringSender.EOS} to end this sender.
+	 * @param string String to send. 
 	 */
 	public void send(String string){
 		mStrings.add(string);

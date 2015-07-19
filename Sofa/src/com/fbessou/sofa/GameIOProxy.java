@@ -3,6 +3,7 @@
  */
 package com.fbessou.sofa;
 
+import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -174,7 +175,8 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 	}
 
 	/**
-	 * Search the next free id from the {@code mLastGivenID} to favour the recovering ability.
+	 * Search the next free id from the {@code mLastGivenID} to favour the
+	 * recovering ability.
 	 * @return a free id, -1 if no id available.
 	 */
 	private int getNewId() {
@@ -189,9 +191,24 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		// return -1 if not found
 		return mPadIdToUUID[nextId] == null ? -1 : nextId;
 	}
-	/** Should be called each time the id given by {@code getNewId()} is associated to a pad **/
+	/**
+	 * Should be called each time the id given by {@code getNewId()} is
+	 * associated to a pad
+	 */
 	private void setLastGivenId(int id) {
 		mLastGivenID = id;
+	}
+	
+	/**
+	 * Unregisters all the game-pads. Should be called before close the game-pad
+	 * connection. 
+	 */
+	private void unregisterAllTheGamePads() {
+		for(int i = mGamePads.size()-1; i >= 0; i--) {
+			GamePadConnection gpConnection = mGamePads.valueAt(i);
+			if(gpConnection.isRegistered())
+				gpConnection.unregister();
+		}
 	}
 	
 	/*
@@ -201,6 +218,8 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 	 */
 	@Override
 	public void onCreate() {
+		super.onCreate();
+		
 		// Start to listen for connections
 		mGameAccepter = new ClientAccepter(GamePort, this);
 		mGamepadAccepter = new ClientAccepter(GamePadsPort, this);
@@ -208,7 +227,6 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		mGameAccepter.start();
 		mGamepadAccepter.start();
 		
-		super.onCreate();
 		Log.i("GameIOProxy", "Running");
 	}
 
@@ -219,11 +237,31 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 	 */
 	@Override
 	public void onDestroy() {
-		// TODO close sockets
 		
 		// Interrupt the client accepter threads
 		mGameAccepter.interrupt();
 		mGamepadAccepter.interrupt();
+		
+		// Close game connection
+		if(mGameConnection != null)
+			mGameConnection.close();
+		
+		// Close unregistered game-pad socket
+		for(Socket socket : mBlockedGamePads) {
+			try {
+				socket.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		unregisterAllTheGamePads();
+		
+		//Close registered game-pad connection
+		for(int i = mGamePads.size() - 1; i >= 0; i--) {
+			GamePadConnection gpConnection = mGamePads.valueAt(i);
+			gpConnection.close();
+		}
 		
 		super.onDestroy();
 	}
@@ -256,11 +294,11 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		if(padId != -1) {
 			// Unique recipient
 			GamePadConnection gpConnection = mGamePads.get(padId);
-			if(gpConnection != null) {
+			
+			if(gpConnection != null)
 				gpConnection.send(msg.toString());
-			} else {
-				Log.w("GameIOProxy", "Game -pad with id "+padId+" not found. Message dropped.");
-			}
+			else
+				Log.w("GameIOProxy", "Game-pad with id "+padId+" not found. Message dropped.");
 		}
 		else {
 			// Broadcast
@@ -359,6 +397,16 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			mGameConnection = null;
 		}
 
+		/**
+		 * Closes this connection. Shutdowns the associated StringSender and StringReceiver.
+		 */
+		public void close() {
+			try {
+				mSocket.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	class GamePadConnection extends StringSender implements StringReceiver.Listener {
@@ -452,6 +500,8 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			mPadIdToUUID[padId] = uuid;
 			mGamePads.put(padId, this);
 			mUUIDToPadId.put(uuid, padId);
+			// remove from the list of unregistered game-pads
+			mBlockedGamePads.remove(mSocket);
 			
 			mPadId = padId;
 			setLastGivenId(padId);
@@ -459,7 +509,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			// Vibrate to indicate the gamepad has connected
 			Vibrator v1 = (Vibrator) getSystemService(VIBRATOR_SERVICE);
 			v1.vibrate(100);
-			Toast.makeText(GameIOProxy.this, "Game pad (id:"+mPadId+") is connected", Toast.LENGTH_SHORT).show();
+			Toast.makeText(GameIOProxy.this, "Game pad (id:"+mPadId+") is registered", Toast.LENGTH_SHORT).show();
 		}
 
 		/** Register this game-pad and get a new id. If the given UUID has 
@@ -501,8 +551,11 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		 */
 		void unregister() {
 			Log.i("GameIOProxy", "Discard id:" + mPadId);
+			// Remove from the list of registered game-pads
 			mGamePads.remove(mPadId);
 			mPadIdToUUID[mPadId] = null;
+			// Go back to the list of unregistered game-pads
+			mBlockedGamePads.add(mSocket);
 			
 			mPadId = -1;
 			
@@ -512,25 +565,39 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			Toast.makeText(GameIOProxy.this, "Game pad (id:"+mPadId+") is disconnected", Toast.LENGTH_SHORT).show();
 		}
 		
+		/**
+		 * Indicates if this game-pad has been registered
+		 */
+		public boolean isRegistered() {
+			return mPadId != -1;
+		}
+		
 		/* (non-Javadoc)
 		 * @see com.fbessou.sofa.StringReceiver.Listener#onClosed(java.net.Socket)
 		 */
 		@Override
 		public void onClosed(Socket socket) {
-			unregister();
-			
-			// TODO? Send notification to the client ?
-			/*try {
-				JSONObject msg = new JSONObject();
-				msg.put("type", "padevent");
-				msg.put("event", PadEvent.createLeaveEvent(mPadId));
-				sendToGame(msg.toString());
-			} catch (Exception e) {
-				e.printStackTrace();
-				;
-			}*/
+			// if the game-pad is still registered, it means that the
+			// game-pad has disconnected unexpectedly
+			if(isRegistered()) {
+				unregister();
+				// TODO Send notification to the game. 
+				// -> TODO Create message ProxyGamePadLostMessage
+			}
 		}
 
+		/**
+		 * Closes this connection by closing the associated socket. Should called
+		 * {@code unregister()} before this, otherwise it will be considered as
+		 * an unexpected disconnection.
+		 */
+		public void close() {
+			try {
+				mSocket.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}// Class GamePadConnection
 
 }
