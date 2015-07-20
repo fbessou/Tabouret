@@ -90,4 +90,10 @@ public class StringSender extends Thread {
 		}
 	}
 	
+	/**
+	 * Removes all the messages from the buffer
+	 */
+	public void clearBufferedMessage() {
+		mStrings.clear();
+	}
 }

@@ -5,29 +5,24 @@ package com.fbessou.sofa;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Collection;
 
-import org.json.JSONException;
 import org.json.JSONObject;
+
+import android.app.Activity;
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.os.Bundle;
+import android.util.Log;
 
 import com.fbessou.sofa.message.GameAcceptMessage;
 import com.fbessou.sofa.message.GameJoinMessage;
 import com.fbessou.sofa.message.GameLeaveMessage;
 import com.fbessou.sofa.message.GameOutputEventMessage;
-import com.fbessou.sofa.message.Message;
 import com.fbessou.sofa.message.ProxyGamePadInputEventMessage;
 import com.fbessou.sofa.message.ProxyGamePadJoinMessage;
 import com.fbessou.sofa.message.ProxyGamePadLeaveMessage;
 import com.fbessou.sofa.message.ProxyGamePadRenameMessage;
 import com.fbessou.sofa.message.ProxyMessage;
-
-import android.app.Activity;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.graphics.Paint.Join;
-import android.os.Bundle;
-import android.util.Log;
 
 /**
  * Game
@@ -37,7 +32,7 @@ import android.util.Log;
 public class GameIOClient extends Fragment implements StringReceiver.Listener, ProxyConnector.OnConnectedListener {
 	
 	/**
-	 * 
+	 * Informations of the running game
 	 */
 	GameInformation gameInfo;
 
@@ -51,8 +46,10 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 	private GamePadMessageListener gamePadListener = null;
 	
 	// TODO list of accepted gamepad (whitelist)? Thus, we could filter game
-	// pad message if the game want to refuse player even if the max game pad
-	// count (GameInformation) is not reached
+	// pad messages if the game want to refuse players even if the max game pad
+	// count (GameInformation) is not reached.
+	// Otherwise, we could let the proxy build and use a whitelist according to
+	// the GameAcceptMessage that it receives -> DONE!
 	
 	/**
 	 * 
@@ -88,31 +85,26 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 		
 		if(mSocket != null) {
 			try {
+				mSender.clearBufferedMessage();
 				mSender.send(new GameLeaveMessage().toString());
-				// TODO do not do this to fast, the sender must send its message before closing socket
+				// The sender must send its message before closing socket
+				Thread.sleep(500);// FIXME find a better way to be sure that the leave message has been sent
 				mSocket.close();
 			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
 	}
-
-	// ArrayList<Output> mOutputMapping;
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * com.fbessou.sofa.Sensor.Listener#onInputEvent(com.fbessou.sofa.InputEvent
-	 * )
-	 */
-	/*TODO
-	@Override
-	public void onOutputEventTriggered(OutputEvent evt, int gamepad) {
-		mSender.send(new GameOutputEventMessage(evt, gamepad).toString());
-	}*/
 	
+	/**
+	 * Updates and (TODO)send game info
+	 * @param info
+	 */
 	public void updateGameInfo(GameInformation info) {
 		gameInfo = info;
+		// TODO resend gameInfo
 	}
 	
 	public GameInformation getGameInfo() {
@@ -143,6 +135,7 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 				int gamePadId = ((ProxyGamePadJoinMessage)message).getGamePadId();
 				if(gamePadListener != null) {
 					if(!gamePadListener.onGamePadJoined(gamePadId))
+						// if we do not send the GameAcceptMessage, the proxy will messages coming from this game-pad
 						break;// TODO send refused message
 				}
 				mSender.send(new GameAcceptMessage(gameInfo.name, gamePadId).toString());
@@ -172,14 +165,23 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 		}
 	}
 
+	/**
+	 * Sends an output event to the gamepad(s).
+	 * @param event Output event to send
+	 * @param gamepad Recipent of this event. -1 for broadcast
+	 */
+	public void sendOutputEvent(OutputEvent event, int gamepad) {
+		mSender.send(new GameOutputEventMessage(event, gamepad).toString());
+	}
+	
 	/* (non-Javadoc)
 	 * @see com.fbessou.sofa.ProxyConnector.OnConnectedListener#onConnected(java.net.Socket)
 	 */
 	@Override
 	public void onConnected(Socket socket) {
-		// TODO 
 		if(socket == null) {
 			// TODO retry 
+			Log.e("GameIOClient", "Connection failed");
 		}
 		else {
 			// Start Sender and Receiver
@@ -215,6 +217,14 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 	}
 
 	/**
+	 * Indicates if this gameIOClient is connected to the proxy.
+	 * @return connected or not
+	 */
+	public boolean isConnected() {
+		return mSender != null && mSocket.isConnected();
+	}
+	
+	/**
 	 * Returns a gameIOClient retrieved from fragment manager, otherwise a newly created gameIOClient.
 	 * @param context
 	 * @param info Use to define game info if the gameIOClient need to be
@@ -245,6 +255,6 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 		void onGamePadLeft(int gamepad);
 		/** @return true if the gamepad is accepted **/
 		boolean onGamePadJoined(int gamepad);
-		void onGamePadUnexpectedlyDisconnected(int gamepad);
+		//void onGamePadUnexpectedlyDisconnected(int gamepad);
 	}
 }

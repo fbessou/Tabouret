@@ -314,7 +314,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 	 * @author Frank Bessou
 	 *
 	 */
-	class GameConnection extends StringSender implements StringReceiver.Listener {
+	private class GameConnection extends StringSender implements StringReceiver.Listener {
 		/**
 		 * The socket used to communicate with the game server
 		 */
@@ -354,7 +354,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 				// Default recipient is broadcast.
 				int recipientID = -1;
 				
-				// Make a new message according to the received message
+				// Make a new message according to the received message and define a unique recipient if needed
 				switch(message.getType()) {
 				case JOIN:
 					proxyMessage = new ProxyGameJoinMessage((GameJoinMessage) message);
@@ -365,6 +365,8 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 				case ACCEPT:
 					proxyMessage = new ProxyGameAcceptMessage((GameAcceptMessage) message);
 					recipientID = ((GameAcceptMessage) message).getGamePadId(); // Unique recipient
+					// Mark the game pad as accepted
+					mGamePads.get(recipientID).accept();
 					break;
 				case RENAME:
 					proxyMessage = new ProxyGameRenameMessage((GameRenameMessage) message);
@@ -409,7 +411,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		}
 	}
 
-	class GamePadConnection extends StringSender implements StringReceiver.Listener {
+	private class GamePadConnection extends StringSender implements StringReceiver.Listener {
 		/** The id associated to this game-pad. Equals
 		 * to -1 if the game-pad is not registered */
 		private int mPadId = -1;
@@ -418,6 +420,14 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		
 		// FIXME why is the receiver an attribute? Meanwhile the sender is extended... 
 		private StringReceiver mReceiver;
+		
+		/**
+		 * A game pad is accepted by the game if the game send GameAcceptMessage
+		 * to the game-pad. If a game-pad is not accepted, it can only send the
+		 * GamePadJoinMessage to the game, the other messages are blocked by the
+		 * proxy.
+		 */
+		private boolean mIsAcceptedByGame = false;
 
 		/**
 		 * 
@@ -449,26 +459,29 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 				
 				switch(message.getType()) {
 				case JOIN:
+					// Register if still not done
+					if(!isRegistered())
+						registerOrRecover(((GamePadJoinMessage) message).getUUID());
 					// transmit message if the game-pad has been successfully registered
-					if(registerOrRecover(((GamePadJoinMessage) message).getUUID()))
+					if(isRegistered())
 						proxyMessage = new ProxyGamePadJoinMessage((GamePadJoinMessage) message, mPadId);
 					break;
 				case LEAVE:
-					if(mPadId != -1) {
+					if(!isRegistered() || !isAccepted()) {
 						proxyMessage = new ProxyGamePadLeaveMessage((GamePadLeaveMessage) message, mPadId);
 						unregister();
 					}
 					else
-						Log.i("GameIOProxy", "Leave received from a non-registered game-pad");
+						Log.i("GameIOProxy", "Leave received from a non-registered/non-accepted game-pad");
 					break;
 				case RENAME:
-					if(mPadId != -1)
+					if(!isRegistered() || !isAccepted())
 						proxyMessage = new ProxyGamePadRenameMessage((GamePadRenameMessage) message, mPadId);
 					else
 						Log.i("GameIOProxy", "Rename received from a non-registered game-pad");
 					break;
 				case INPUTEVENT:
-					if(mPadId != -1)
+					if(!isRegistered() || !isAccepted())
 						proxyMessage = new ProxyGamePadInputEventMessage((GamePadInputEventMessage) message, mPadId);
 					else
 						Log.i("GameIOProxy", "Input event received from a non-registered game-pad");
@@ -558,6 +571,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			mBlockedGamePads.add(mSocket);
 			
 			mPadId = -1;
+			mIsAcceptedByGame = false;
 			
 			// Vibrate to indicate the gamepad has disconnected
 			Vibrator v1 = (Vibrator) getSystemService(VIBRATOR_SERVICE);
@@ -586,6 +600,17 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			}
 		}
 
+		/**
+		 * Mark this game-pad as accepted by the game
+		 */
+		public void accept() {
+			mIsAcceptedByGame = true;
+		}
+		
+		public boolean isAccepted() {
+			return mIsAcceptedByGame;
+		}
+		
 		/**
 		 * Closes this connection by closing the associated socket. Should called
 		 * {@code unregister()} before this, otherwise it will be considered as
