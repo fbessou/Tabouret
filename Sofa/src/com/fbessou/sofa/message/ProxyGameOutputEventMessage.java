@@ -37,4 +37,8 @@ public class ProxyGameOutputEventMessage extends ProxyMessage {
 		
 		return json;
 	}
+
+	public OutputEvent getOutputEvent() {
+		return mOutputEvent;
+	}
 }

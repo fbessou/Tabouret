@@ -46,7 +46,13 @@ import com.fbessou.sofa.message.ProxyMessage;
  * proxy. This service provides two entry points : for the game server and for the game-pads.
  * It associates a client UUID to a player id and it permits client to disconnect and reconnect
  * without changing its player ID.
- * TODO FIXME How to stop this service ?
+ * FIXME How to stop this service ?
+ * TODO -> Define auto-stop trigger
+ * 				example:
+ * 					no message received during the last X seconds
+ * 					Wifi turned off (I'm speaking about wifi not wifiP2P)
+ * 					GameActivity destroyed (if proxy is running on the game owner device)
+ * 					... Any other idea?
  * 
  * @author Frank Bessou
  *

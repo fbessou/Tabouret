@@ -9,27 +9,32 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.UUID;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Fragment;
-import android.content.Context;
 import android.os.Bundle;
-import android.os.Vibrator;
 import android.util.Log;
+
+import com.fbessou.sofa.message.GamePadInputEventMessage;
+import com.fbessou.sofa.message.GamePadJoinMessage;
+import com.fbessou.sofa.message.GamePadRenameMessage;
+import com.fbessou.sofa.message.Message;
+import com.fbessou.sofa.message.ProxyGameOutputEventMessage;
+import com.fbessou.sofa.message.ProxyGameRenameMessage;
+import com.fbessou.sofa.message.ProxyMessage;
 
 /**
  * @author Frank Bessou
  *
- * GameBinder used by game pads
+ * GameBinder used by game pads.
+ * TODO check mSender != null or something like that before sending a message
  */
 public class GameBinder extends Fragment implements Sensor.InputEventListener, StringReceiver.Listener, ProxyConnector.OnConnectedListener {
 	
-	String mNickname;
 	/**
 	 * 
 	 */
-	GameInformation gameInfo;
+	GamePadInformation mGamePadInfo;
 	
 	/**
 	 * Stored unique identifier to help recovering
@@ -37,10 +42,12 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 	UUID mUUID;
 
 	/**
-	 * 
+	 * FIXME Move to gamePadInfo?
 	 */
 	ArrayList<Sensor> mAvailableSensors = new ArrayList<Sensor>();
 
+	GameMessageListener mGameListener;
+	
 	// Communication with proxy
 
 	/**
@@ -53,8 +60,8 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 	/**
 	 * 
 	 */
-	public GameBinder(String name) {
-		mNickname = name;
+	public GameBinder(GamePadInformation info) {
+		mGamePadInfo = info;
 	}
 	/*
 	 * (non-Javadoc)
@@ -89,26 +96,8 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 	 * )
 	 */
 	@Override
-	public void onInputEventTriggered(final InputEvent evt) {
-		//Log.i("GameBinder", evt.toString());
-		
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				// check we are connected to a server
-				if (mSocket != null) {
-					try {
-						
-						JSONObject obj = new JSONObject();
-						obj.put("type", "inputevent");
-						obj.put("event", evt.toJSON());
-						mSender.send(obj.toString());
-					} catch (JSONException e) {
-						e.printStackTrace();
-					}
-				}
-			}
-		}).start();
+	public void onInputEventTriggered(InputEvent evt) {
+		mSender.send(new GamePadInputEventMessage(evt).toString());
 	}
 
 	public void addSensor(Sensor sensor) {
@@ -160,31 +149,48 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 	 */
 	@Override
 	public void onStringReceived(String string, Socket socket) {
-		Log.i("Blabla",string);
 		try{
-			JSONObject message = new JSONObject(string);
-			if(message.has("type")){
-			switch (message.getString("type")) {
-			case "hello":
-				mUUID = UUID.fromString(message.getString("uuid"));
+			Message message = ProxyMessage.gameFromJSON(new JSONObject(string));
+			switch(message.getType()) {
+			case ACCEPT:
+				// We are now officially connected to the game! Congratulation!
 				break;
-			case "outputevent":
-				JSONObject event = message.getJSONObject("event");
-				switch (event.getString("type")) {
-				case "feedback" :
-					Vibrator v = (Vibrator)getActivity().getSystemService(Context.VIBRATOR_SERVICE);
-					v.vibrate(150);
-					break;
-				default:
-					break;
+			case JOIN:
+				// Game is ready, join the game
+				mSender.send(new GamePadJoinMessage(mGamePadInfo.getNickname(), mGamePadInfo.getUUID()).toString());
+				break;
+			case LEAVE:
+				// Game leaves
+				if(mGameListener != null) {
+					mGameListener.onGameLeft();
 				}
-			default:
 				break;
-			}
-				
+			case OUTPUTEVENT:
+				if(mGameListener != null) {
+					OutputEvent event = ((ProxyGameOutputEventMessage)message).getOutputEvent();
+					mGameListener.onGameOutputReceived(event);
+				}
+				break;
+			case RENAME:
+				if(mGameListener != null) {
+					String name = ((ProxyGameRenameMessage)message).getNewName();
+					mGameListener.onGameRenamed(name);
+				}
+				break;
+			case INPUTEVENT: // Should not occur
+				break;
 			}
 		}catch(Exception e){
 		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see com.fbessou.sofa.StringReceiver.Listener#onClosed(java.net.Socket)
+	 */
+	@Override
+	public void onClosed(Socket socket) {
+		// TODO FIXME What could we do? try to reconnect ? But first, check if this service is shuting down ;)
+		Log.i("GameBinder","Shit, we are disconnected.");
 	}
 
 	/* (non-Javadoc)
@@ -192,21 +198,21 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 	 */
 	@Override
 	public void onConnected(Socket socket) {
-		Log.i("Connected?",""+socket);
-		if(socket!=null){
+		if(socket == null) {
+			// TODO retry 
+			Log.e("GamePadIOClient", "Connection failed");
+		}
+		else {
 			mSocket = socket;
+			mSender = new StringSender(mSocket);
 			mReceiver = new StringReceiver(mSocket);
 			mReceiver.setListener(this);
-			mSender = new StringSender(mSocket);
-			mReceiver.start();
 			mSender.start();
-			if(mUUID != null)
-				mSender.send("{\"type\":\"hello\",\"uuid\":\""+mUUID+"\",\"name\":\""+mNickname+"\"}");
-			else
-				mSender.send("{\"type\":\"hello\",\"name\":\""+mNickname+"\"}");
+			mReceiver.start();
+
+			// Send Join message
+			mSender.send(new GamePadJoinMessage(mGamePadInfo.getNickname(), mGamePadInfo.getUUID()).toString());
 		}
-		else
-			Log.w("GameBinder","Couldn't connect to the proxy");
 	}
 	/* (non-Javadoc)
 	 * @see com.fbessou.sofa.ProxyConnector.OnConnectedListener#onDisconnected()
@@ -216,20 +222,36 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 		// TODO FIXME reconnect ?
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.fbessou.sofa.StringReceiver.Listener#onClosed(java.net.Socket)
+	/**
+	 * Indicates if this gamePadIOClient is connected to the proxy.
+	 * @return connected or not
 	 */
-	@Override
-	public void onClosed(Socket socket) {
-		Log.i("GameBinder","Shit, we are disconnected.");
+	public boolean isConnected() {
+		return mSocket != null && mSocket.isConnected();
 	}
 	
-	public void setNickname(String name) {
-		mNickname = name;
+	public GamePadInformation getGamePadInfo() {
+		return mGamePadInfo;
 	}
-	
-	public String getNickname() {
-		return mNickname;
+	/**
+	 * Updates and (TODO)send game info
+	 * @param info
+	 */
+	public void updateGamePadInfo(GamePadInformation info) {
+		mGamePadInfo = info;
+
+		mSender.send(new GamePadRenameMessage(info.getNickname()).toString());
 	}
 
+	/**
+	 * 
+	 * @author Proïd
+	 *
+	 */
+	public interface GameMessageListener {
+		void onGameOutputReceived(OutputEvent event);
+		void onGameRenamed(String newName);
+		void onGameLeft();
+		//void onGameUnexpectedlyDisconnected();
+	}
 }

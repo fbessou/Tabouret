@@ -18,6 +18,7 @@ import com.fbessou.sofa.message.GameAcceptMessage;
 import com.fbessou.sofa.message.GameJoinMessage;
 import com.fbessou.sofa.message.GameLeaveMessage;
 import com.fbessou.sofa.message.GameOutputEventMessage;
+import com.fbessou.sofa.message.GameRenameMessage;
 import com.fbessou.sofa.message.ProxyGamePadInputEventMessage;
 import com.fbessou.sofa.message.ProxyGamePadJoinMessage;
 import com.fbessou.sofa.message.ProxyGamePadLeaveMessage;
@@ -27,7 +28,7 @@ import com.fbessou.sofa.message.ProxyMessage;
 /**
  * Game
  * @author Frank Bessou
- *
+ * TODO check mSender != null or something like that before sending a message
  */
 public class GameIOClient extends Fragment implements StringReceiver.Listener, ProxyConnector.OnConnectedListener {
 	
@@ -104,7 +105,8 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 	 */
 	public void updateGameInfo(GameInformation info) {
 		gameInfo = info;
-		// TODO resend gameInfo
+
+		mSender.send(new GameRenameMessage(info.getName()).toString());
 	}
 	
 	public GameInformation getGameInfo() {
@@ -138,7 +140,7 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 						// if we do not send the GameAcceptMessage, the proxy will messages coming from this game-pad
 						break;// TODO send refused message
 				}
-				mSender.send(new GameAcceptMessage(gameInfo.name, gamePadId).toString());
+				mSender.send(new GameAcceptMessage(gameInfo.getName(), gamePadId).toString());
 				break;
 			}
 			case LEAVE:
@@ -202,8 +204,8 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 	 */
 	@Override
 	public void onClosed(Socket socket) {
-		// TODO FIXME What could we do? try to reconnect ? But first, check if this service is shuting down before ;)
-		Log.i("GameBinder","Shit, we are disconnected.");
+		// TODO FIXME What could we do? try to reconnect ? But first, check if this service is shuting down ;)
+		Log.i("GameIOClient","Shit, we are disconnected.");
 	}
 	
 	/** 
@@ -221,7 +223,7 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 	 * @return connected or not
 	 */
 	public boolean isConnected() {
-		return mSender != null && mSocket.isConnected();
+		return mSocket != null && mSocket.isConnected();
 	}
 	
 	/**

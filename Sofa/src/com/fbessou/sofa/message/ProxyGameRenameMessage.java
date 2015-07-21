@@ -36,4 +36,10 @@ public class ProxyGameRenameMessage extends ProxyMessage {
 		
 		return json;
 	}
+
+	
+	public String getNewName() {
+		return mNewName;
+	}
 }
+	

@@ -9,8 +9,8 @@ package com.fbessou.sofa;
  *
  */
 public class GameInformation {
-	String name = "Nameless Game";
-	int maxPlayers = 16;
+	private String mName = "Nameless Game";
+	private int mMaxPlayers = 16;
 	//Map<String, String> inputs; 
 	
 	/** Returns a default game information. **/
@@ -19,25 +19,25 @@ public class GameInformation {
 	}
 
 	public GameInformation(String gameName) {
-		this.name = gameName;
+		this.mName = gameName;
 	}
 	private GameInformation() {
 		
 	}
 
 	public String getName() {
-		return name;
+		return mName;
 	}
 
 	public void setName(String name) {
-		this.name = name;
+		this.mName = name;
 	}
 
 	public int getMaxPlayers() {
-		return maxPlayers;
+		return mMaxPlayers;
 	}
 
 	public void setMaxPlayers(int maxPlayers) {
-		this.maxPlayers = maxPlayers;
+		this.mMaxPlayers = maxPlayers;
 	}
 }
