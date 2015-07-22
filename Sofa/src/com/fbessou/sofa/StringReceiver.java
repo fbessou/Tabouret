@@ -7,7 +7,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.Socket;
 
-import android.util.Log;
 
 /**
  * @author Frank Bessou
@@ -62,7 +61,7 @@ public class StringReceiver extends Thread {
 				if(mListener != null)
 					mListener.onStringReceived(s, mSocket);
 				else
-					Log.d("StringReceiver", s);
+					Log.v("StringReceiver", "No registered listener / "+s);
 			}
 			
 		} catch (IOException e) {

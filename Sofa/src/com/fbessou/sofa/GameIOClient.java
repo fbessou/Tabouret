@@ -12,7 +12,6 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.os.Bundle;
-import android.util.Log;
 
 import com.fbessou.sofa.message.GameAcceptMessage;
 import com.fbessou.sofa.message.GameJoinMessage;

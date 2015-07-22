@@ -13,7 +13,6 @@ import org.json.JSONObject;
 
 import android.app.Fragment;
 import android.os.Bundle;
-import android.util.Log;
 
 import com.fbessou.sofa.message.GamePadInputEventMessage;
 import com.fbessou.sofa.message.GamePadJoinMessage;
