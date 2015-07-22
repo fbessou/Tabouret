@@ -86,43 +86,6 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 		 **/
 	}
 
-	// ArrayList<Output> mOutputMapping;
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * com.fbessou.sofa.Sensor.Listener#onInputEvent(com.fbessou.sofa.InputEvent
-	 * )
-	 */
-	@Override
-	public void onInputEventTriggered(InputEvent evt) {
-		mSender.send(new GamePadInputEventMessage(evt).toString());
-	}
-
-	public void addSensor(Sensor sensor) {
-		mAvailableSensors.add(sensor);
-		sensor.setListener(this);
-	}
-
-	public void removeSensor(Sensor sensor) {
-		mAvailableSensors.remove(sensor);
-		sensor.setListener(null);
-	}
-
-	public void removeAllSensor() {
-		for(Sensor s : mAvailableSensors)
-			s.setListener(null);
-		
-		mAvailableSensors.clear();
-	}
-	
-	public void addAllSensor(Collection<Sensor> sensors) {
-		for(Sensor s : sensors)
-			s.setListener(this);
-		
-		mAvailableSensors.addAll(sensors);
-	}
-
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -143,6 +106,28 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 		super.onDestroy();
 	}
 
+	// ArrayList<Output> mOutputMapping;
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * com.fbessou.sofa.Sensor.Listener#onInputEvent(com.fbessou.sofa.InputEvent
+	 * )
+	 */
+	@Override
+	public void onInputEventTriggered(InputEvent evt) {
+		sendMessage(new GamePadInputEventMessage(evt));
+	}
+
+	/**
+	 * Sends the given message if we are connected.
+	 * @param m message to send
+	 */
+	private void sendMessage(Message m) {
+		if(isConnected())
+			mSender.send(m.toString());
+	}
+	
 	/* (non-Javadoc)
 	 * @see com.fbessou.sofa.StringReceiver.Listener#onStringReceived(java.lang.String)
 	 */
@@ -156,7 +141,7 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 				break;
 			case JOIN:
 				// Game is ready, join the game
-				mSender.send(new GamePadJoinMessage(mGamePadInfo.getNickname(), mGamePadInfo.getUUID()).toString());
+				sendMessage(new GamePadJoinMessage(mGamePadInfo.getNickname(), mGamePadInfo.getUUID()));
 				break;
 			case LEAVE:
 				// Game leaves
@@ -210,7 +195,7 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 			mReceiver.start();
 
 			// Send Join message
-			mSender.send(new GamePadJoinMessage(mGamePadInfo.getNickname(), mGamePadInfo.getUUID()).toString());
+			sendMessage(new GamePadJoinMessage(mGamePadInfo.getNickname(), mGamePadInfo.getUUID()));
 		}
 	}
 	/* (non-Javadoc)
@@ -239,9 +224,33 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 	public void updateGamePadInfo(GamePadInformation info) {
 		mGamePadInfo = info;
 
-		mSender.send(new GamePadRenameMessage(info.getNickname()).toString());
+		sendMessage(new GamePadRenameMessage(info.getNickname()));
 	}
 
+	public void addSensor(Sensor sensor) {
+		mAvailableSensors.add(sensor);
+		sensor.setListener(this);
+	}
+
+	public void removeSensor(Sensor sensor) {
+		mAvailableSensors.remove(sensor);
+		sensor.setListener(null);
+	}
+
+	public void removeAllSensor() {
+		for(Sensor s : mAvailableSensors)
+			s.setListener(null);
+		
+		mAvailableSensors.clear();
+	}
+	
+	public void addAllSensor(Collection<Sensor> sensors) {
+		for(Sensor s : sensors)
+			s.setListener(this);
+		
+		mAvailableSensors.addAll(sensors);
+	}
+	
 	/**
 	 * 
 	 * @author Proïd

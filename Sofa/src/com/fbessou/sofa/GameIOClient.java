@@ -18,6 +18,7 @@ import com.fbessou.sofa.message.GameJoinMessage;
 import com.fbessou.sofa.message.GameLeaveMessage;
 import com.fbessou.sofa.message.GameOutputEventMessage;
 import com.fbessou.sofa.message.GameRenameMessage;
+import com.fbessou.sofa.message.Message;
 import com.fbessou.sofa.message.ProxyGamePadInputEventMessage;
 import com.fbessou.sofa.message.ProxyGamePadJoinMessage;
 import com.fbessou.sofa.message.ProxyGamePadLeaveMessage;
@@ -86,7 +87,7 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 		if(mSocket != null) {
 			try {
 				mSender.clearBufferedMessage();
-				mSender.send(new GameLeaveMessage().toString());
+				sendMessage(new GameLeaveMessage());
 				// The sender must send its message before closing socket
 				Thread.sleep(500);// FIXME find a better way to be sure that the leave message has been sent
 				mSocket.close();
@@ -116,6 +117,15 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 		gamePadListener = listener;
 	}
 	
+	/**
+	 * Sends the given message if we are connected.
+	 * @param m message to send
+	 */
+	private void sendMessage(Message m) {
+		if(isConnected())
+			mSender.send(m.toString());
+	}
+	
 	/* (non-Javadoc)
 	 * @see com.fbessou.sofa.StringReceiver.Listener#onStringReceived(java.lang.String)
 	 */
@@ -139,7 +149,7 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 						// if we do not send the GameAcceptMessage, the proxy will messages coming from this game-pad
 						break;// TODO send refused message
 				}
-				mSender.send(new GameAcceptMessage(gameInfo.getName(), gamePadId).toString());
+				sendMessage(new GameAcceptMessage(gameInfo.getName(), gamePadId));
 				break;
 			}
 			case LEAVE:
@@ -172,7 +182,7 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 	 * @param gamepad Recipent of this event. -1 for broadcast
 	 */
 	public void sendOutputEvent(OutputEvent event, int gamepad) {
-		mSender.send(new GameOutputEventMessage(event, gamepad).toString());
+		sendMessage(new GameOutputEventMessage(event, gamepad));
 	}
 	
 	/* (non-Javadoc)
@@ -194,7 +204,7 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 			mReceiver.start();
 			
 			// Send Join message
-			mSender.send(new GameJoinMessage().toString());
+			sendMessage(new GameJoinMessage());
 		}
 	}
 	
@@ -254,7 +264,7 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 		void onGamePadInputEventReceived(InputEvent event, int gamepad);
 		void onGamePadRenamed(String newNickname, int gamepad);
 		void onGamePadLeft(int gamepad);
-		/** @return true if the gamepad is accepted **/
+		/** @return true if the game pad is accepted **/
 		boolean onGamePadJoined(int gamepad);
 		//void onGamePadUnexpectedlyDisconnected(int gamepad);
 	}
