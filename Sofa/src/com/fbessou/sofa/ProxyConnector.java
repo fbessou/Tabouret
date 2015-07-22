@@ -15,7 +15,6 @@ import android.net.NetworkInfo;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.WifiP2pManager.Channel;
-import android.net.wifi.p2p.WifiP2pManager.ChannelListener;
 import android.net.wifi.p2p.WifiP2pManager.ConnectionInfoListener;
 
 /**
@@ -23,7 +22,7 @@ import android.net.wifi.p2p.WifiP2pManager.ConnectionInfoListener;
  * it is running on your device or on the groupOwner
  * TODO retry connect()
  */
-public class ProxyConnector extends BroadcastReceiver implements ConnectionInfoListener, ChannelListener {
+public class ProxyConnector extends BroadcastReceiver implements ConnectionInfoListener {
 	private int mPort;
 	private Context mContext;
 	private WifiP2pManager mWifiManager;
@@ -35,15 +34,7 @@ public class ProxyConnector extends BroadcastReceiver implements ConnectionInfoL
 		 * 
 		 * @param socket The distant socket obtained from connection or null if connection can't be established.
 		 */
-		
 		void onConnected(Socket socket);
-		/**
-		 * At loss of framework communication, this method is called.
-		 * @see android.net.wifi.p2p.WifiP2pManager#initialize(Context, android.os.Looper, ChannelListener)
-		 * @see android.net.wifi.p2p.WifiP2pManager.Channel
-		 * @see android.net.wifi.p2p.WifiP2pManager.ChannelListener
-		 */
-		void onDisconnected();
 	}
 	/**
 	 * Interface whose the onConnected method is called when the connection is established.
@@ -58,13 +49,15 @@ public class ProxyConnector extends BroadcastReceiver implements ConnectionInfoL
 		mPort = port;
 		mListener = listener;
 		mWifiManager = (WifiP2pManager) mContext.getSystemService(Context.WIFI_P2P_SERVICE);
-		mChannel = mWifiManager.initialize(mContext, mContext.getMainLooper(), this);
+		mChannel = mWifiManager.initialize(mContext, mContext.getMainLooper(), null);
+		Log.i("ProxyConnector", "initialisation");
 	}
 
 	/** Start the process of connection **/
 	public void connect() {
 		IntentFilter filter = new IntentFilter(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
 		mContext.registerReceiver(this, filter);
+		Log.i("ProxyConnector", "start process of connection, broadcastReceiver.registerReceiver wifi p2p");
 	}
 
 	/**
@@ -78,6 +71,7 @@ public class ProxyConnector extends BroadcastReceiver implements ConnectionInfoL
 		if (intent.getAction().equals(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION)) {
 			NetworkInfo info = (NetworkInfo) intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
 			if (info.isConnected()) {
+				Log.i("ProxyConnector", "wifi p2p connection etablished, querying connection info");
 				mWifiManager.requestConnectionInfo(mChannel, this);
 			}
 			else {
@@ -131,11 +125,10 @@ public class ProxyConnector extends BroadcastReceiver implements ConnectionInfoL
 					socket = new Socket(address, port);
 					socket.setTcpNoDelay(true);
 					
-					Log.v("ProxyConnector", "Connected to " + address);
+					Log.i("ProxyConnector", "Connected to " + address);
 				} catch (IOException e) {
 					socket = null;
-					Log.v("ProxyConnector", "Connexion attempt to "+address+" failed");
-					e.printStackTrace();
+					Log.w("ProxyConnector", "Connexion attempt to "+address+" failed", e);
 				}
 				
 				/*
@@ -150,12 +143,5 @@ public class ProxyConnector extends BroadcastReceiver implements ConnectionInfoL
 				}
 			}
 		}).start();
-	}
-
-	
-	@Override
-	public void onChannelDisconnected() {
-		if(mListener != null)
-			mListener.onDisconnected();
 	}
 }

@@ -198,13 +198,6 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 			sendMessage(new GamePadJoinMessage(mGamePadInfo.getNickname(), mGamePadInfo.getUUID()));
 		}
 	}
-	/* (non-Javadoc)
-	 * @see com.fbessou.sofa.ProxyConnector.OnConnectedListener#onDisconnected()
-	 */
-	@Override
-	public void onDisconnected() {
-		// TODO FIXME reconnect ?
-	}
 	
 	/**
 	 * Indicates if this gamePadIOClient is connected to the proxy.

@@ -121,6 +121,8 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		mUUIDToPadId = new HashMap<UUID, Integer>();
 		mGamePads = new SparseArray<GamePadConnection>();
 		mBlockedGamePads = new ArrayList<Socket>();
+
+		Log.i("GameIOProxy", "initialisation");
 	}
 
 	/**
@@ -133,9 +135,13 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 	 */
 	public boolean onClientAccepted(Socket socket, int port) {
 		if (port == DefaultGamePort) {
+			Log.i("GameIOProxy", "game accepted from port "+DefaultGamePort);
 			registerGame(socket);
 		} else if (port == DefaultGamePadsPort) {
+			Log.i("GameIOProxy", "game pad accepted from port "+DefaultGamePadsPort);
 			registerGamePad(socket);
+		} else {
+			Log.w("GameIOProxy", "Client accepted from unknown port "+port);
 		}
 		return true;
 	}
@@ -167,20 +173,20 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		 * if (mGameSocket != null) { if (gameSocket != null){ try {
 		 * gameSocket.close(); Log.i("GameIOProxy","Abort connection"); } catch
 		 * (IOException e) { Log.w("GameIOProxy",
-		 * "Error on invalid game socket's closing."); } } } else
-		 */{ // We are accepting a game
-			if (gameSocket != null) {
-				mGameConnection = new GameConnection(gameSocket);
+		 * "Error on invalid game socket's closing."); } } } else{
+		 */ // We are accepting a game
+		if (gameSocket == null || !gameSocket.isConnected()) {
+			mGameConnection = new GameConnection(gameSocket);
 
-				Log.i("GameIOProxy", "A game has connected");
-				Vibrator v2 = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-				if(v2 != null)
-					v2.vibrate(100);
-				
-				Toast.makeText(this, "A game is connected", Toast.LENGTH_SHORT).show();
-			}
-
+			Log.i("GameIOProxy", "A game has registered");
+			Vibrator v2 = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+			if(v2 != null)
+				v2.vibrate(100);
+			
+			Toast.makeText(this, "A game is connected", Toast.LENGTH_SHORT).show();
 		}
+		else
+			Log.w("GameIOProxy", "An other game is already registered");
 	}
 
 	/**
@@ -213,6 +219,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 	 * connection. 
 	 */
 	private void unregisterAllTheGamePads() {
+		Log.i("GameIOProxy", "unregistering all the game pads");
 		for(int i = mGamePads.size()-1; i >= 0; i--) {
 			GamePadConnection gpConnection = mGamePads.valueAt(i);
 			if(gpConnection.isRegistered())
@@ -239,7 +246,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		// Auto stop this service when the wifi is turned off
 		setAutoStopMode(StopTrigger.WIFI_TURNED_OFF);
 		
-		Log.i("GameIOProxy", "Running");
+		Log.i("GameIOProxy", "Sevice is now running");
 	}
 
 	/*
@@ -249,6 +256,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 	 */
 	@Override
 	public void onDestroy() {
+		Log.i("GameIOProxy", "destroying service");
 		
 		// Interrupt the client accepter threads
 		mGameAccepter.interrupt();
@@ -259,11 +267,12 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			mGameConnection.close();
 		
 		// Close unregistered game-pad socket
+		Log.i("GameIOProxy", "Close unregistered game-pad socket");
 		for(Socket socket : mBlockedGamePads) {
 			try {
 				socket.close();
 			} catch (IOException e) {
-				e.printStackTrace();
+				Log.w("GameIOProxy", "error while try to close unregistered game pad socket:"+socket, e);
 			}
 		}
 		
@@ -293,8 +302,11 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 	 * @param msg Message to send
 	 */
 	void sendToGame(ProxyMessage msg) {
+		Log.v("GameIOProxy", "sendToGame: "+msg.toString());
 		if (mGameConnection != null) {
 			mGameConnection.send(msg.toString());
+		} else {
+			Log.w("GameIOProxy", "Warning : cannot send message to a disconnected game");
 		}
 	}
 	/**
@@ -303,6 +315,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 	 * @param padId The ID of the game-pad recipient or -1 for broadcast
 	 */
 	void sendToGamePad(ProxyMessage msg, int padId) {
+		Log.v("GameIOProxy", "sendToGamePad id:"+padId+" msg:"+msg.toString());
 		if(padId != -1) {
 			// Unique recipient
 			GamePadConnection gpConnection = mGamePads.get(padId);
@@ -347,6 +360,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			mReceiver.setListener(this);
 			this.start();
 			mReceiver.start();
+			Log.w("GameIOProxy", "Initialisation. GameConnection: start sender and receiver");
 		}
 
 		/*
@@ -357,6 +371,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		 */
 		@Override
 		public void onStringReceived(String string, Socket socket) {
+			Log.w("GameIOProxy", "GameConnection.onStringReceived: "+string+ " from socket:"+socket);
 			// Interpret and redirect the message
 			try {
 				// Read the message
@@ -389,7 +404,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 					break;
 				case INPUTEVENT:
 					// The game cannot send Input event message, we ignore this message
-					Log.w("GameIOProxy", "InputEvent received from the game. Message dropped.");
+					Log.w("GameIOProxy", "GameConnection: InputEvent received from the game. Message dropped.");
 					break;
 				}
 				
@@ -399,7 +414,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 				}
 			} 
 			catch (Exception e) {
-				e.printStackTrace();
+				Log.e("GameIOProxy", "GameConnection.exception: "+string+ " from socket:"+socket, e);
 			}
 		}
 
@@ -408,6 +423,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		 */
 		@Override
 		public void onClosed(Socket socket) {
+			Log.i("GameIOProxy", "GameConnection.onClosed (from stringReceiver)");
 			mGameConnection = null;
 		}
 
@@ -415,9 +431,11 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		 * Closes this connection. Shutdowns the associated StringSender and StringReceiver.
 		 */
 		public void close() {
+			Log.i("GameIOProxy", "GameConnection: close socket");
 			try {
 				mSocket.close();
 			} catch (IOException e) {
+				Log.i("GameIOProxy", "GameConnection: error closing socket", e);
 				e.printStackTrace();
 			}
 		}
@@ -452,6 +470,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			mReceiver.setListener(this);
 			this.start();
 			mReceiver.start();
+			Log.i("GameIOProxy", "Initialisation. GamePadConnection: start sender and receiver");
 		}
 		
 		/*
@@ -463,6 +482,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		 */
 		@Override
 		public void onStringReceived(String string, Socket socket) {
+			Log.i("GameIOProxy", "GamePadConnection.onStringReceived: "+string+" from socket:"+socket);
 			try {
 				// Read the message
 				Message message = Message.gamePadFromJSON(new JSONObject(string));
@@ -484,25 +504,25 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 						unregister();
 					}
 					else
-						Log.i("GameIOProxy", "Leave received from a non-registered/non-accepted game-pad");
+						Log.w("GameIOProxy", "GamePadConnection: Leave received from a non-registered/non-accepted game-pad");
 					break;
 				case RENAME:
 					if(!isRegistered() || !isAccepted())
 						proxyMessage = new ProxyGamePadRenameMessage((GamePadRenameMessage) message, mPadId);
 					else
-						Log.i("GameIOProxy", "Rename received from a non-registered game-pad");
+						Log.w("GameIOProxy", "GamePadConnection: Rename received from a non-registered game-pad");
 					break;
 				case INPUTEVENT:
 					if(!isRegistered() || !isAccepted())
 						proxyMessage = new ProxyGamePadInputEventMessage((GamePadInputEventMessage) message, mPadId);
 					else
-						Log.i("GameIOProxy", "Input event received from a non-registered game-pad");
+						Log.w("GameIOProxy", "GamePadConnection: Input event received from a non-registered game-pad");
 					break;
 				case OUTPUTEVENT:
 				case ACCEPT:
 				default:
 					// The game-pad cannot send neithr Output event or accept message, we ignore this message
-					Log.w("GameIOProxy", "InputEvent/Accept received from a game-pad. Message dropped.");
+					Log.w("GameIOProxy", "GamePadConnection: InputEvent/Accept received from a game-pad. Message dropped.");
 					break;
 				}
 				
@@ -511,7 +531,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 					sendToGame(proxyMessage);
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
+				Log.e("GameIOProxy", "GamePadConnection.onStringReceived error:", e);
 			}
 
 		}
@@ -519,7 +539,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		/** Associates the playerId, the UUID and this game-pad.<br>
 		 * must be respected : 0 <= playerId < GameIOProxy.mIds.length **/
 		void associateIdUUID(int padId, UUID uuid) {
-			Log.i("GameIOProxy", "Associate id:" + padId + " to UUID:" + uuid);
+			Log.i("GameIOProxy", "GamePadConnection: Associate id:" + padId + " to UUID:" + uuid);
 			
 			// Save value in GameIOProxy.this
 			mPadIdToUUID[padId] = uuid;
@@ -544,27 +564,32 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		 * @return true if successfully register or recover
 		 * */
 		boolean registerOrRecover(UUID inUUID) { // priority to the newly connected client
+			Log.i("GameIOProxy", "GamePadConnection.registerOrRecover UUID:"+inUUID);
 			// Try to recover if possible
 			if(mUUIDToPadId.containsKey(inUUID)) {
 				int previousID = mUUIDToPadId.get(inUUID);
 				// Check if this previous id is free
 				if(mPadIdToUUID[previousID] == null) {
 					// The previous id is free, we can recover
+					Log.i("GameIOProxy", "GamePadConnection: recovering id:"+previousID);
 					associateIdUUID(previousID, inUUID);
 					return true;
+				} else {
+					Log.i("GameIOProxy", "GamePadConnection: cannot recover id:"+previousID);
 				}
 			}
 			
 			// Find a free id
 			int freeId = getNewId();
 			if(freeId != -1) {
+				Log.i("GameIOProxy", "GamePadConnection: get new free id:"+freeId);
 				// free id available, we can register
 				associateIdUUID(freeId, inUUID);
 				return true;
 			}
 			
 			// cannot recover nor register
-			Log.w("GameIOProxy", "Cannot finf free id for UUID:" + inUUID);
+			Log.w("GameIOProxy", "GamePadConnection: Cannot find free id for UUID:" + inUUID);
 			return false;
 		}
 		
@@ -575,7 +600,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		 * @param padId Game-pad id to unregister
 		 */
 		void unregister() {
-			Log.i("GameIOProxy", "Discard id:" + mPadId);
+			Log.i("GameIOProxy", "GamePadConnection: unregister game apd id:" + mPadId);
 			// Remove from the list of registered game-pads
 			mGamePads.remove(mPadId);
 			mPadIdToUUID[mPadId] = null;
@@ -603,6 +628,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		 */
 		@Override
 		public void onClosed(Socket socket) {
+			Log.i("GameIOProxy", "GamePadConnection.onClosed (from stringReceiver)");
 			// if the game-pad is still registered, it means that the
 			// game-pad has disconnected unexpectedly
 			if(isRegistered()) {
@@ -616,6 +642,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		 * Mark this game-pad as accepted by the game
 		 */
 		public void accept() {
+			Log.i("GameIOProxy", "GamePadConnection: id:"+mPadId+" accepted by the game");
 			mIsAcceptedByGame = true;
 		}
 		
@@ -629,10 +656,11 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		 * an unexpected disconnection.
 		 */
 		public void close() {
+			Log.i("GameIOProxy", "GamePadConnection: closing socket");
 			try {
 				mSocket.close();
 			} catch (IOException e) {
-				e.printStackTrace();
+				Log.e("GameIOProxy", "GamePadConnection: error closing socket", e);
 			}
 		}
 	}// Class GamePadConnection
@@ -640,6 +668,8 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 	
 	/** Make this service stop when the Wifi is turned off **/
 	void setAutoStopMode(StopTrigger trigger) {
+
+		Log.i("GameIOProxy", "Auto stop mode sets to "+trigger);
 		switch (trigger) {
 		case WIFI_TURNED_OFF:
 			new StopperBroadcastReceiver(trigger);
@@ -662,6 +692,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 				filter = new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION);
 				break;
 			}
+			Log.i("GameIOProxy", "registerReceiver for trigger:"+trigger+"on broadcastReceiver");
 			registerReceiver(this, filter);
 		}
 		@Override
@@ -669,6 +700,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			if (intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
 				// Wifi turned off
 				if(intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, WifiManager.WIFI_STATE_UNKNOWN) == WifiManager.WIFI_STATE_DISABLED) {
+					Log.i("GameIOProxy", "Wifi state changed to disabled, stopping the service");
 					// Stop the service
 					GameIOProxy.this.stopSelf();
 				}
