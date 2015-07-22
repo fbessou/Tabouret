@@ -12,7 +12,12 @@ import java.util.UUID;
 import org.json.JSONObject;
 
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.wifi.WifiManager;
+import android.net.wifi.p2p.WifiP2pManager;
 import android.os.IBinder;
 import android.os.Vibrator;
 import android.util.Log;
@@ -181,7 +186,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 	}
 
 	/**
-	 * Search the next free id from the {@code mLastGivenID} to favour the
+	 * Search the next free id from the {@code mLastGivenID} to favor the
 	 * recovering ability.
 	 * @return a free id, -1 if no id available.
 	 */
@@ -232,6 +237,9 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		
 		mGameAccepter.start();
 		mGamepadAccepter.start();
+		
+		// Auto stop this service when the wifi is turned off
+		setAutoStopMode(StopTrigger.WIFI_TURNED_OFF);
 		
 		Log.i("GameIOProxy", "Running");
 	}
@@ -292,7 +300,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		}
 	}
 	/**
-	 * Send the given message to the gamepad
+	 * Send the given message to the game pad
 	 * @param msg Message to send
 	 * @param padId The ID of the game-pad recipient or -1 for broadcast
 	 */
@@ -439,7 +447,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		 * 
 		 */
 		public GamePadConnection(Socket socket) {
-			// Initialise the Sender
+			// Initialize the Sender
 			super(socket);
 			mSocket = socket;
 			mReceiver = new StringReceiver(socket);
@@ -525,7 +533,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			mPadId = padId;
 			setLastGivenId(padId);
 
-			// Vibrate to indicate the gamepad has connected
+			// Vibrate to indicate the game pad has connected
 			Vibrator v1 = (Vibrator) getSystemService(VIBRATOR_SERVICE);
 			v1.vibrate(100);
 			Toast.makeText(GameIOProxy.this, "Game pad (id:"+mPadId+") is registered", Toast.LENGTH_SHORT).show();
@@ -579,7 +587,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			mPadId = -1;
 			mIsAcceptedByGame = false;
 			
-			// Vibrate to indicate the gamepad has disconnected
+			// Vibrate to indicate the game pad has disconnected
 			Vibrator v1 = (Vibrator) getSystemService(VIBRATOR_SERVICE);
 			v1.vibrate(100);
 			Toast.makeText(GameIOProxy.this, "Game pad (id:"+mPadId+") is disconnected", Toast.LENGTH_SHORT).show();
@@ -631,4 +639,43 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		}
 	}// Class GamePadConnection
 
+	
+	/** Make this service stop when the Wifi is turned off **/
+	void setAutoStopMode(StopTrigger trigger) {
+		switch (trigger) {
+		case WIFI_TURNED_OFF:
+			new StopperBroadcastReceiver(trigger);
+			break;
+		case NEVER:
+		default:
+			// never stop this service :(
+			break;
+		}
+		
+	}
+	enum StopTrigger {WIFI_TURNED_OFF, NEVER};
+	class StopperBroadcastReceiver extends BroadcastReceiver {
+		
+		public StopperBroadcastReceiver(StopTrigger trigger) {
+			IntentFilter filter;
+			switch(trigger) {
+			default:
+			case WIFI_TURNED_OFF:
+				filter = new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION);
+				break;
+			}
+			registerReceiver(this, filter);
+		}
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
+				// Wifi turned off
+				if(intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, WifiManager.WIFI_STATE_UNKNOWN) == WifiManager.WIFI_STATE_DISABLED) {
+					// Stop the service
+					GameIOProxy.this.stopSelf();
+				}
+			}
+		}
+		
+	}
 }
