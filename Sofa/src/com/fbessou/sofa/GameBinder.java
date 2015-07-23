@@ -26,7 +26,6 @@ import com.fbessou.sofa.message.ProxyMessage;
  * @author Frank Bessou
  *
  * GameBinder used by game pads.
- * TODO check mSender != null or something like that before sending a message
  */
 public class GameBinder extends Fragment implements Sensor.InputEventListener, StringReceiver.Listener, ProxyConnector.OnConnectedListener {
 	
@@ -71,6 +70,7 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setRetainInstance(true);
+		Log.i("GameBinder", "Creating fragment, connecting");
 		ProxyConnector connector = new ProxyConnector(this.getActivity().getApplicationContext(), GameIOProxy.DefaultGamePadsPort, this);
 		connector.connect();
 		/**
@@ -93,14 +93,14 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 	 */
 	@Override
 	public void onDestroy() {
-
+		Log.i("GameBinder", "destroying fragment");
 		try {
 			if (mSocket != null) {
-				Log.i("CLOSING", "CLOSING");
+				Log.i("GameBinder", "close socket:"+mSocket);
 				mSocket.close();
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			Log.e("GameBinder", "Error closing socket", e);
 		}
 
 		super.onDestroy();
@@ -116,6 +116,7 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 	 */
 	@Override
 	public void onInputEventTriggered(InputEvent evt) {
+		Log.v("GameBinder", "onInputEventTriggered");
 		sendMessage(new GamePadInputEventMessage(evt));
 	}
 
@@ -124,8 +125,11 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 	 * @param m message to send
 	 */
 	private void sendMessage(Message m) {
+		Log.v("GameBinder", "sendMessage: "+m.toString());
 		if(isConnected())
 			mSender.send(m.toString());
+		else
+			Log.w("GameBinder", "sendMessage error : cannot send message, disconnected from proxy");
 	}
 	
 	/* (non-Javadoc)
@@ -133,6 +137,7 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 	 */
 	@Override
 	public void onStringReceived(String string, Socket socket) {
+		Log.v("GameBinder", "onStringReceived: "+string+" from socket:"+socket);
 		try{
 			Message message = ProxyMessage.gameFromJSON(new JSONObject(string));
 			switch(message.getType()) {
@@ -165,6 +170,7 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 				break;
 			}
 		}catch(Exception e){
+			Log.e("GameBinder", "onStringReceived error ", e);
 		}
 	}
 	
@@ -174,7 +180,7 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 	@Override
 	public void onClosed(Socket socket) {
 		// TODO FIXME What could we do? try to reconnect ? But first, check if this service is shuting down ;)
-		Log.i("GameBinder","Shit, we are disconnected.");
+		Log.i("GameBinder", "disconnected from socket:"+socket);
 	}
 
 	/* (non-Javadoc)
@@ -187,6 +193,7 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 			Log.e("GamePadIOClient", "Connection failed");
 		}
 		else {
+			Log.i("GameBinder", "Connection established, start sender and receiver");
 			mSocket = socket;
 			mSender = new StringSender(mSocket);
 			mReceiver = new StringReceiver(mSocket);
@@ -216,6 +223,7 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 	 */
 	public void updateGamePadInfo(GamePadInformation info) {
 		mGamePadInfo = info;
+		Log.i("GameBinder", "updateGamePadInfo");
 
 		sendMessage(new GamePadRenameMessage(info.getNickname()));
 	}
@@ -242,6 +250,10 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 			s.setListener(this);
 		
 		mAvailableSensors.addAll(sensors);
+	}
+	
+	public void setGameMessageListener(GameMessageListener listener) {
+		mGameListener = listener;
 	}
 	
 	/**

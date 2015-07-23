@@ -28,7 +28,6 @@ import com.fbessou.sofa.message.ProxyMessage;
 /**
  * Game
  * @author Frank Bessou
- * TODO check mSender != null or something like that before sending a message
  */
 public class GameIOClient extends Fragment implements StringReceiver.Listener, ProxyConnector.OnConnectedListener {
 	
@@ -44,7 +43,7 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 	private StringReceiver mReceiver = null;
 	private StringSender mSender = null;
 	
-	private GamePadMessageListener gamePadListener = null;
+	private GamePadMessageListener mGamePadListener = null;
 	
 	// TODO list of accepted gamepad (whitelist)? Thus, we could filter game
 	// pad messages if the game want to refuse players even if the max game pad
@@ -69,7 +68,7 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
+		Log.i("GameIOClient", "Creating fragment, connecting");
 		// connect to proxy
 		ProxyConnector connector = new ProxyConnector(getActivity().getApplicationContext(), GameIOProxy.DefaultGamePadsPort, this);
 		connector.connect();
@@ -83,13 +82,16 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
+		Log.i("GameIOClient", "Destroying fragment");
 		
 		if(mSocket != null) {
 			try {
+				Log.i("GameIOClient", "clearBufferedMessage");
 				mSender.clearBufferedMessage();
 				sendMessage(new GameLeaveMessage());
 				// The sender must send its message before closing socket
 				Thread.sleep(500);// FIXME find a better way to be sure that the leave message has been sent
+				Log.i("GameIOClient", "close socket:"+mSocket+" after sleeping 500ms");
 				mSocket.close();
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -106,6 +108,7 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 	public void updateGameInfo(GameInformation info) {
 		gameInfo = info;
 
+		Log.i("GameIOClient", "updateGameInfo");
 		mSender.send(new GameRenameMessage(info.getName()).toString());
 	}
 	
@@ -113,17 +116,17 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 		return gameInfo;
 	}
 	
-	public void setGamePadMessageListener(GamePadMessageListener listener) {
-		gamePadListener = listener;
-	}
-	
 	/**
 	 * Sends the given message if we are connected.
 	 * @param m message to send
 	 */
 	private void sendMessage(Message m) {
+		Log.v("GameIOClient", "send message:"+m.toString());
 		if(isConnected())
 			mSender.send(m.toString());
+		else {
+			Log.w("GameIOClient", "Warning : cannot send message, disconnected from proxy");
+		}
 	}
 	
 	/* (non-Javadoc)
@@ -131,21 +134,22 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 	 */
 	@Override
 	public void onStringReceived(String string, Socket socket) {
+		Log.v("GameIOClient", "onStringReceived: "+string+" from socket:"+socket);
 		try {
 			ProxyMessage message = ProxyMessage.gamePadFromJSON(new JSONObject(string));
 
 			switch(message.getType()) {
 			case INPUTEVENT:
-				if(gamePadListener != null) {
+				if(mGamePadListener != null) {
 					int gamePadId = ((ProxyGamePadInputEventMessage)message).getGamePadId();
-					gamePadListener.onGamePadInputEventReceived(((ProxyGamePadInputEventMessage)message).getInputEvent(), gamePadId);
+					mGamePadListener.onGamePadInputEventReceived(((ProxyGamePadInputEventMessage)message).getInputEvent(), gamePadId);
 				}
 				break;
 				
 			case JOIN: {
 				int gamePadId = ((ProxyGamePadJoinMessage)message).getGamePadId();
-				if(gamePadListener != null) {
-					if(!gamePadListener.onGamePadJoined(gamePadId))
+				if(mGamePadListener != null) {
+					if(!mGamePadListener.onGamePadJoined(gamePadId))
 						// if we do not send the GameAcceptMessage, the proxy will messages coming from this game-pad
 						break;// TODO send refused message
 				}
@@ -153,16 +157,16 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 				break;
 			}
 			case LEAVE:
-				if(gamePadListener != null) {
+				if(mGamePadListener != null) {
 					int gamePadId = ((ProxyGamePadLeaveMessage)message).getGamePadId();
-					gamePadListener.onGamePadLeft(gamePadId);
+					mGamePadListener.onGamePadLeft(gamePadId);
 				}
 				break;
 				
 			case RENAME:
-				if(gamePadListener != null) {
+				if(mGamePadListener != null) {
 					int gamePadId = ((ProxyGamePadRenameMessage)message).getGamePadId();
-					gamePadListener.onGamePadRenamed(((ProxyGamePadRenameMessage)message).getNewNickname(), gamePadId);
+					mGamePadListener.onGamePadRenamed(((ProxyGamePadRenameMessage)message).getNewNickname(), gamePadId);
 				}
 				break;
 				
@@ -172,7 +176,7 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 			
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			Log.e("GameIOClient", "onStringReceived error", e);
 		}
 	}
 
@@ -182,6 +186,7 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 	 * @param gamepad Recipent of this event. -1 for broadcast
 	 */
 	public void sendOutputEvent(OutputEvent event, int gamepad) {
+		Log.i("GameIOClient", "sendOutputEvent to game pad id:"+gamepad+" event:"+event.toString());
 		sendMessage(new GameOutputEventMessage(event, gamepad));
 	}
 	
@@ -195,6 +200,7 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 			Log.e("GameIOClient", "Connection failed");
 		}
 		else {
+			Log.i("GameIOClient", "Connection established, start sender and receiver");
 			// Start Sender and Receiver
 			mSocket = socket;
 			mSender = new StringSender(socket);
@@ -214,17 +220,7 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 	@Override
 	public void onClosed(Socket socket) {
 		// TODO FIXME What could we do? try to reconnect ? But first, check if this service is shuting down ;)
-		Log.i("GameIOClient","Shit, we are disconnected.");
-	}
-	
-	/** 
-	 * Disconnected from wifi p2p 
-	 * 
-	 * @see com.fbessou.sofa.ProxyConnector.OnConnectedListener#onDisconnected()
-	 */
-	@Override
-	public void onDisconnected() {
-		// TODO what could we do here? Maybe just display a message.
+		Log.i("GameIOClient","disconnected from socket:"+socket);
 	}
 
 	/**
@@ -253,6 +249,10 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 			fm.beginTransaction().add(gameIO, "gameIOClient").commit();
 		}
 		return gameIO;
+	}
+
+	public void setGamePadMessageListener(GamePadMessageListener listener) {
+		mGamePadListener = listener;
 	}
 	
 	/**
