@@ -14,7 +14,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.RelativeLayout;
 
-import com.fbessou.sofa.Analog2DSensor;
+import com.fbessou.sofa.sensor.Analog2DSensor;
 import com.fbessou.tabouret.NodeParser;
 
 /**

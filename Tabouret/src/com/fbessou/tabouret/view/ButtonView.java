@@ -13,7 +13,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
-import com.fbessou.sofa.KeySensor;
+import com.fbessou.sofa.sensor.KeySensor;
 import com.fbessou.tabouret.NodeParser;
 
 public class ButtonView extends View {
