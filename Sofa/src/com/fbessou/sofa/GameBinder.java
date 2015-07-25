@@ -25,7 +25,6 @@ import com.fbessou.sofa.message.ProxyGameOutputEventMessage;
 import com.fbessou.sofa.message.ProxyGameRenameMessage;
 import com.fbessou.sofa.message.ProxyMessage;
 import com.fbessou.sofa.message.Message.Type;
-import com.fbessou.sofa.sensor.Sensor;
 
 /**
  * @author Frank Bessou
