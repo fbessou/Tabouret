@@ -1,7 +1,9 @@
 /**
  * 
  */
-package com.fbessou.sofa;
+package com.fbessou.sofa.sensor;
+
+import com.fbessou.sofa.InputEvent;
 
 
 /**
