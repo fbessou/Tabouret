@@ -20,10 +20,15 @@ public class Analog2DSensor extends Sensor {
 	}
 	
 	public void putValue(float x,float y){
-		boolean changed = (Math.abs(x-mValueX)>0.0001 || Math.abs(y-mValueY)>0.0001 );
-		mValueX = Math.max(-1, Math.min(1,x));
-		mValueY = Math.max(-1, Math.min(1,y));
+		// Clamp values
+		x = Math.max(-1, Math.min(x, 1));
+		y = Math.max(-1, Math.min(y, 1));
+		
+		boolean changed = (Math.abs(x-mValueX) > 0.001 || Math.abs(y-mValueY) > 0.001);
 		if(changed){
+			mValueX = x;
+			mValueY = y;
+			
 			InputEvent evt = InputEvent.createMotion2DEvent(0/*TODO*/, mValueX, mValueY, mId);
 			
 			triggerEvent(evt);
