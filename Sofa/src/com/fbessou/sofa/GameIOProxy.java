@@ -176,14 +176,14 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		 * "Error on invalid game socket's closing."); } } } else{
 		 */ // We are accepting a game
 		if (mGameConnection == null || mGameConnection.mSocket == null || !mGameConnection.mSocket.isConnected()) {
+			if(mGameConnection != null)
+				Log.i("GameIOProxy", "Previous game disconnected, accept a new game");
 			mGameConnection = new GameConnection(gameSocket);
 
 			Log.i("GameIOProxy", "A game has registered");
 			Vibrator v2 = (Vibrator) getSystemService(VIBRATOR_SERVICE);
 			if(v2 != null)
 				v2.vibrate(100);
-			
-			//Toast.makeText(this, "A game is connected", Toast.LENGTH_SHORT).show();
 		}
 		else
 			Log.w("GameIOProxy", "An other game is already registered");
@@ -235,6 +235,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 	@Override
 	public void onCreate() {
 		super.onCreate();
+		Log.i("GameIOProxy", "Creating Sevice, start sender and receiver");
 		
 		// Start to listen for connections
 		mGameAccepter = new ClientAccepter(DefaultGamePort, this);
@@ -244,9 +245,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		mGamepadAccepter.start();
 		
 		// Auto stop this service when the wifi is turned off
-		setAutoStopMode(StopTrigger.WIFI_TURNED_OFF);
-		
-		Log.i("GameIOProxy", "Sevice created, started sender and receiver");
+		setAutoStopMode(StopTrigger.WIFI_TURNING_OFF);
 	}
 
 	/*
@@ -263,8 +262,10 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		mGamepadAccepter.interrupt();
 		
 		// Close game connection
-		if(mGameConnection != null)
+		if(mGameConnection != null) {
+			Log.i("GameIOProxy", "Close game socket");
 			mGameConnection.close();
+		}
 		
 		// Close unregistered game-pad socket
 		Log.i("GameIOProxy", "Close unregistered game-pad socket");
@@ -285,7 +286,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		}
 		
 		// Disable Auto stop when the wifi is turned off
-		disableAutoStopMode(StopTrigger.WIFI_TURNED_OFF);
+		disableAutoStopMode(StopTrigger.WIFI_TURNING_OFF);
 		
 		super.onDestroy();
 	}
@@ -492,7 +493,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 				Message message = Message.gamePadFromJSON(new JSONObject(string));
 				// Prepare to transmit a new message
 				ProxyMessage proxyMessage = null;
-				
+
 				switch(message.getType()) {
 				case JOIN:
 					// Register if still not done
@@ -503,7 +504,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 						proxyMessage = new ProxyGamePadJoinMessage((GamePadJoinMessage) message, mPadId);
 					break;
 				case LEAVE:
-					if(!isRegistered() || !isAccepted()) {
+					if(isRegistered() && isAccepted()) {
 						proxyMessage = new ProxyGamePadLeaveMessage((GamePadLeaveMessage) message, mPadId);
 						unregister();
 					}
@@ -511,25 +512,26 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 						Log.w("GameIOProxy", "GamePadConnection: Leave received from a non-registered/non-accepted game-pad");
 					break;
 				case RENAME:
-					if(!isRegistered() || !isAccepted())
+					if(isRegistered() && isAccepted())
 						proxyMessage = new ProxyGamePadRenameMessage((GamePadRenameMessage) message, mPadId);
 					else
 						Log.w("GameIOProxy", "GamePadConnection: Rename received from a non-registered game-pad");
 					break;
 				case INPUTEVENT:
-					if(!isRegistered() || !isAccepted())
+					if(isRegistered() && isAccepted()) {
 						proxyMessage = new ProxyGamePadInputEventMessage((GamePadInputEventMessage) message, mPadId);
+					}
 					else
 						Log.w("GameIOProxy", "GamePadConnection: Input event received from a non-registered game-pad");
 					break;
 				case OUTPUTEVENT:
 				case ACCEPT:
 				default:
-					// The game-pad cannot send neithr Output event or accept message, we ignore this message
-					Log.w("GameIOProxy", "GamePadConnection: InputEvent/Accept received from a game-pad. Message dropped.");
+					// The game-pad cannot send neither Output event nor accept message, we ignore this message
+					Log.w("GameIOProxy", "GamePadConnection: OutputEvent/Accept received from a game-pad. Message dropped.");
 					break;
 				}
-				
+
 				// If the message has been defined, send it
 				if(proxyMessage != null) {
 					sendToGame(proxyMessage);
@@ -674,6 +676,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 
 		Log.i("GameIOProxy", "Auto stop mode sets to "+trigger);
 		switch (trigger) {
+		case WIFI_TURNING_OFF:
 		case WIFI_TURNED_OFF:
 			mStopperBroadcastReceiver = new StopperBroadcastReceiver(trigger);
 			break;
@@ -688,6 +691,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 
 		Log.i("GameIOProxy", "Disabling auto stop mode set to "+trigger);
 		switch (trigger) {
+		case WIFI_TURNING_OFF:
 		case WIFI_TURNED_OFF:
 			mStopperBroadcastReceiver.unregister();
 			break;
@@ -698,13 +702,15 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		}
 		
 	}
-	enum StopTrigger {WIFI_TURNED_OFF, NEVER};
+	enum StopTrigger {WIFI_TURNED_OFF, WIFI_TURNING_OFF, NEVER};
 	class StopperBroadcastReceiver extends BroadcastReceiver {
-		
+		StopTrigger trigger;
 		public StopperBroadcastReceiver(StopTrigger trigger) {
+			this.trigger = trigger;
 			IntentFilter filter;
 			switch(trigger) {
 			default:
+			case WIFI_TURNING_OFF:
 			case WIFI_TURNED_OFF:
 				filter = new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION);
 				break;
@@ -718,8 +724,10 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			if (intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
+				int state = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, WifiManager.WIFI_STATE_UNKNOWN);
 				// Wifi turned off
-				if(intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, WifiManager.WIFI_STATE_UNKNOWN) == WifiManager.WIFI_STATE_DISABLED) {
+				if(trigger == StopTrigger.WIFI_TURNED_OFF && state == WifiManager.WIFI_STATE_DISABLED
+						|| trigger == StopTrigger.WIFI_TURNING_OFF && state == WifiManager.WIFI_STATE_DISABLING) {
 					Log.i("GameIOProxy", "Wifi state changed to disabled, stopping the service");
 					// Stop the service
 					GameIOProxy.this.stopSelf();

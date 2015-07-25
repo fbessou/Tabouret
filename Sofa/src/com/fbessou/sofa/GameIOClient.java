@@ -91,8 +91,8 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 				mSender.clearBufferedMessage();
 				sendMessage(new GameLeaveMessage());
 				// The sender must send its message before closing socket
-				Thread.sleep(500);// FIXME find a better way to be sure that the leave message has been sent
-				Log.i("GameIOClient", "close socket:"+mSocket+" after sleeping 500ms");
+				Thread.sleep(2000);// FIXME find a better way to be sure that the leave message has been sent
+				Log.i("GameIOClient", "close socket:"+mSocket+" after sleeping 2000ms");
 				mSocket.close();
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -150,10 +150,13 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 			case JOIN: {
 				int gamePadId = ((ProxyGamePadJoinMessage)message).getGamePadId();
 				if(mGamePadListener != null) {
-					if(!mGamePadListener.onGamePadJoined(gamePadId))
-						// if we do not send the GameAcceptMessage, the proxy will messages coming from this game-pad
+					if(!mGamePadListener.onGamePadJoined(gamePadId)) {
+						// if we do not send the GameAcceptMessage, the proxy will block messages coming from this game-pad
+						Log.i("GameIOClient", "Game pad "+gamePadId+" refused");
 						break;// TODO send refused message
+					}
 				}
+				Log.i("GameIOClient", "Game pad "+gamePadId+" accepted");
 				sendMessage(new GameAcceptMessage(gameInfo.getName(), gamePadId));
 				break;
 			}

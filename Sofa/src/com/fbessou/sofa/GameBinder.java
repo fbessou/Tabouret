@@ -18,6 +18,7 @@ import android.os.Bundle;
 
 import com.fbessou.sofa.message.GamePadInputEventMessage;
 import com.fbessou.sofa.message.GamePadJoinMessage;
+import com.fbessou.sofa.message.GamePadLeaveMessage;
 import com.fbessou.sofa.message.GamePadRenameMessage;
 import com.fbessou.sofa.message.Message;
 import com.fbessou.sofa.message.ProxyGameOutputEventMessage;
@@ -100,11 +101,15 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 		Log.i("GameBinder", "destroying fragment");
 		try {
 			if (mSocket != null) {
-				Log.i("GameBinder", "close socket:"+mSocket);
+				sendMessage(new GamePadLeaveMessage());
+				Thread.sleep(2000);
+				Log.i("GameBinder", "close socket:"+mSocket+" after sleeping 2000ms");
 				mSocket.close();
 			}
 		} catch (IOException e) {
 			Log.e("GameBinder", "Error closing socket", e);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		}
 
 		super.onDestroy();
@@ -151,7 +156,7 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 			switch(message.getType()) {
 			case ACCEPT:
 				// We are now officially connected to the game! Congratulation!
-				mIsAcceptedByGame = false;
+				mIsAcceptedByGame = true;
 				Log.i("GameBinder", "Accepted by the game");
 				break;
 			case JOIN:

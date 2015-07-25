@@ -12,7 +12,7 @@ public class GamePadLeaveMessage extends Message {
 	/**
 	 * 
 	 */
-	public GamePadLeaveMessage(String newNickname) {
+	public GamePadLeaveMessage() {
 		super(Type.LEAVE);
 	}
 

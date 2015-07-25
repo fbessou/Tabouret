@@ -52,6 +52,10 @@ public class ProxyConnector extends BroadcastReceiver implements ConnectionInfoL
 		mChannel = mWifiManager.initialize(mContext, mContext.getMainLooper(), null);
 		Log.i("ProxyConnector", "initialisation");
 	}
+	
+	public void unregister() {
+		mContext.unregisterReceiver(this);
+	}
 
 	/** Start the process of connection **/
 	public void connect() {
@@ -140,7 +144,7 @@ public class ProxyConnector extends BroadcastReceiver implements ConnectionInfoL
 				}
 				else*/
 					mListener.onConnected(socket);
-				
+				unregister();
 			}
 		}).start();
 	}
