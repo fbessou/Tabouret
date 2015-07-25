@@ -1,17 +1,8 @@
 package com.fbessou.tabouret;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-
 import android.app.Activity;
-import android.app.Fragment;
-import android.app.FragmentManager;
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
-import android.os.Environment;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -20,9 +11,12 @@ import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.fbessou.sofa.GameBinder;
+import com.fbessou.sofa.GameBinder.GameMessageListener;
+import com.fbessou.sofa.GamePadInformation;
+import com.fbessou.sofa.OutputEvent;
 import com.fbessou.tabouret.view.GamePadLayout;
 
-public class GamePadActivity extends Activity {
+public class GamePadActivity extends Activity implements GameMessageListener {
 	//Configuration contains paths for layout/resource directory
 	Configuration mConfig;
 	RelativeLayout mainLayout;
@@ -35,17 +29,10 @@ public class GamePadActivity extends Activity {
 		//call parent's constructor
 		super.onCreate(savedInstanceState);
 		
+		com.fbessou.sofa.Log.setLogFilterMask(com.fbessou.sofa.Log.FILTER_NOTHING);
 		// Initialize or retrieve the GameBinder fragment.
-		FragmentManager fm = getFragmentManager();
-		if((mGameBinder=(GameBinder) fm.findFragmentByTag("gameBinder"))==null){
-			//This is the first time the activity is launched
-			//we have to create a new GameBinder
-			mGameBinder=new GameBinder(mConfig.getNickname());
-			
-			//register the newly created GameBinder in the fragment manager for
-			// future usage
-			fm.beginTransaction().add(mGameBinder, "gameBinder").commit();
-		}
+		mGameBinder = GameBinder.getGameBinder((Activity)this, GamePadInformation.getDefault());
+		mGameBinder.setGameMessageListener(this);
 		
 		Intent intent = getIntent();
 		if(intent.hasExtra("gamepad_path")){
@@ -93,6 +80,22 @@ public class GamePadActivity extends Activity {
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
+	}
+
+	
+	@Override
+	public void onGameOutputReceived(OutputEvent event) {
+		Toast.makeText(this, "Output event received : "+event.toString(), Toast.LENGTH_SHORT).show();
+	}
+
+	@Override
+	public void onGameRenamed(String newName) {
+		Toast.makeText(this, "Game has renamed : "+newName, Toast.LENGTH_SHORT).show();
+	}
+
+	@Override
+	public void onGameLeft() {
+		Toast.makeText(this, "Game has left", Toast.LENGTH_SHORT).show();
 	}
 	
 

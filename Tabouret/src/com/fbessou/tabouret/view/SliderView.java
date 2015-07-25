@@ -3,7 +3,6 @@ package com.fbessou.tabouret.view;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.view.View;
-import android.widget.RelativeLayout;
 
 public class SliderView extends View {
 	private Bitmap mIndicatorBmp;

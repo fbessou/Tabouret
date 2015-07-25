@@ -20,7 +20,6 @@ import android.net.wifi.WifiManager;
 import android.os.IBinder;
 import android.os.Vibrator;
 import android.util.SparseArray;
-import android.widget.Toast;
 
 import com.fbessou.sofa.ClientAccepter.OnClientAcceptedListener;
 import com.fbessou.sofa.message.GameAcceptMessage;
@@ -40,6 +39,7 @@ import com.fbessou.sofa.message.ProxyGameOutputEventMessage;
 import com.fbessou.sofa.message.ProxyGamePadInputEventMessage;
 import com.fbessou.sofa.message.ProxyGamePadJoinMessage;
 import com.fbessou.sofa.message.ProxyGamePadLeaveMessage;
+import com.fbessou.sofa.message.ProxyGamePadLostMessage;
 import com.fbessou.sofa.message.ProxyGamePadRenameMessage;
 import com.fbessou.sofa.message.ProxyGameRenameMessage;
 import com.fbessou.sofa.message.ProxyMessage;
@@ -175,7 +175,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		 * (IOException e) { Log.w("GameIOProxy",
 		 * "Error on invalid game socket's closing."); } } } else{
 		 */ // We are accepting a game
-		if (gameSocket == null || !gameSocket.isConnected()) {
+		if (mGameConnection == null || mGameConnection.mSocket == null || !mGameConnection.mSocket.isConnected()) {
 			mGameConnection = new GameConnection(gameSocket);
 
 			Log.i("GameIOProxy", "A game has registered");
@@ -183,7 +183,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			if(v2 != null)
 				v2.vibrate(100);
 			
-			Toast.makeText(this, "A game is connected", Toast.LENGTH_SHORT).show();
+			//Toast.makeText(this, "A game is connected", Toast.LENGTH_SHORT).show();
 		}
 		else
 			Log.w("GameIOProxy", "An other game is already registered");
@@ -204,7 +204,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		} while(mPadIdToUUID[nextId] != null && nextId != mLastGivenID);
 		
 		// return -1 if not found
-		return mPadIdToUUID[nextId] == null ? -1 : nextId;
+		return mPadIdToUUID[nextId] != null ? -1 : nextId;
 	}
 	/**
 	 * Should be called each time the id given by {@code getNewId()} is
@@ -246,7 +246,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		// Auto stop this service when the wifi is turned off
 		setAutoStopMode(StopTrigger.WIFI_TURNED_OFF);
 		
-		Log.i("GameIOProxy", "Sevice is now running");
+		Log.i("GameIOProxy", "Sevice created, started sender and receiver");
 	}
 
 	/*
@@ -283,6 +283,9 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			GamePadConnection gpConnection = mGamePads.valueAt(i);
 			gpConnection.close();
 		}
+		
+		// Disable Auto stop when the wifi is turned off
+		disableAutoStopMode(StopTrigger.WIFI_TURNED_OFF);
 		
 		super.onDestroy();
 	}
@@ -371,7 +374,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		 */
 		@Override
 		public void onStringReceived(String string, Socket socket) {
-			Log.w("GameIOProxy", "GameConnection.onStringReceived: "+string+ " from socket:"+socket);
+			Log.v("GameIOProxy", "GameConnection.onStringReceived: "+string+ " from socket:"+socket);
 			// Interpret and redirect the message
 			try {
 				// Read the message
@@ -402,9 +405,10 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 					proxyMessage = new ProxyGameOutputEventMessage((GameOutputEventMessage) message);
 					recipientID = ((GameOutputEventMessage) message).getGamePadId(); // Unique recipient
 					break;
+				case LOST: // Should not occur
 				case INPUTEVENT:
 					// The game cannot send Input event message, we ignore this message
-					Log.w("GameIOProxy", "GameConnection: InputEvent received from the game. Message dropped.");
+					Log.w("GameIOProxy", "GameConnection: "+message.getType()+" received from the game. Message dropped.");
 					break;
 				}
 				
@@ -482,7 +486,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		 */
 		@Override
 		public void onStringReceived(String string, Socket socket) {
-			Log.i("GameIOProxy", "GamePadConnection.onStringReceived: "+string+" from socket:"+socket);
+			Log.v("GameIOProxy", "GamePadConnection.onStringReceived: "+string+" from socket:"+socket);
 			try {
 				// Read the message
 				Message message = Message.gamePadFromJSON(new JSONObject(string));
@@ -554,7 +558,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			// Vibrate to indicate the game pad has connected
 			Vibrator v1 = (Vibrator) getSystemService(VIBRATOR_SERVICE);
 			v1.vibrate(100);
-			Toast.makeText(GameIOProxy.this, "Game pad (id:"+mPadId+") is registered", Toast.LENGTH_SHORT).show();
+			//Toast.makeText(GameIOProxy.this, "Game pad (id:"+mPadId+") is registered", Toast.LENGTH_SHORT).show();
 		}
 
 		/** Register this game-pad and get a new id. If the given UUID has 
@@ -613,7 +617,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			// Vibrate to indicate the game pad has disconnected
 			Vibrator v1 = (Vibrator) getSystemService(VIBRATOR_SERVICE);
 			v1.vibrate(100);
-			Toast.makeText(GameIOProxy.this, "Game pad (id:"+mPadId+") is disconnected", Toast.LENGTH_SHORT).show();
+			//Toast.makeText(GameIOProxy.this, "Game pad (id:"+mPadId+") is disconnected", Toast.LENGTH_SHORT).show();
 		}
 		
 		/**
@@ -633,8 +637,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			// game-pad has disconnected unexpectedly
 			if(isRegistered()) {
 				unregister();
-				// TODO Send notification to the game. 
-				// -> TODO Create message ProxyGamePadLostMessage
+				sendToGame(new ProxyGamePadLostMessage(mPadId));
 			}
 		}
 
@@ -665,14 +668,28 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		}
 	}// Class GamePadConnection
 
-	
+	StopperBroadcastReceiver mStopperBroadcastReceiver;
 	/** Make this service stop when the Wifi is turned off **/
 	void setAutoStopMode(StopTrigger trigger) {
 
 		Log.i("GameIOProxy", "Auto stop mode sets to "+trigger);
 		switch (trigger) {
 		case WIFI_TURNED_OFF:
-			new StopperBroadcastReceiver(trigger);
+			mStopperBroadcastReceiver = new StopperBroadcastReceiver(trigger);
+			break;
+		case NEVER:
+		default:
+			// never stop this service :(
+			break;
+		}
+		
+	}
+	void disableAutoStopMode(StopTrigger trigger) {
+
+		Log.i("GameIOProxy", "Disabling auto stop mode set to "+trigger);
+		switch (trigger) {
+		case WIFI_TURNED_OFF:
+			mStopperBroadcastReceiver.unregister();
 			break;
 		case NEVER:
 		default:
@@ -694,6 +711,9 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			}
 			Log.i("GameIOProxy", "registerReceiver for trigger:"+trigger+"on broadcastReceiver");
 			registerReceiver(this, filter);
+		}
+		public void unregister() {
+			unregisterReceiver(this);
 		}
 		@Override
 		public void onReceive(Context context, Intent intent) {

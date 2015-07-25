@@ -51,6 +51,7 @@ public class ClientAccepter extends Thread {
 			throw new NullPointerException("The listener (interface ClientAccepter.OnClientAcceptedListener) must not be null");
 		
 		mListener = listener;
+		Log.i("ClientAccepter", "initialisation");
 	}
 
 	/*
@@ -61,23 +62,27 @@ public class ClientAccepter extends Thread {
 	@Override
 	public void run() {
 		ServerSocket serverSocket = null;
+		Log.i("ClientAccepter", "running");
 		
 		try {
 			// create a ServerSocket and start accepting.
 			serverSocket = new ServerSocket();
 			serverSocket.setReuseAddress(true);
 			serverSocket.bind(new InetSocketAddress(mPort));
+			Log.i("ClientAccepter", "Server socket created on port:"+mPort);
 			
 			// Define a non-infinite accept timeout, it will permit us to stop
 			// this thread whenever we want with Thread#interrupt()
 			serverSocket.setSoTimeout(1000);
 			
 			boolean continueAccepting = true;
-			
+
+			Log.i("ClientAccepter", "Listening on port:"+mPort);
 			while (continueAccepting) {
 				try {
 					Socket socket = serverSocket.accept();
 					socket.setTcpNoDelay(true);
+					Log.i("ClientAccepter", "client accepted on port:"+mPort);
 					continueAccepting = mListener.onClientAccepted(socket, mPort);
 				} catch(InterruptedIOException e) {
 					// Accept timeout
@@ -93,13 +98,14 @@ public class ClientAccepter extends Thread {
 		catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
+		Log.i("ClientAccepter", "Shuting down");
 		// Don't forget to close the sockets.
 		if(serverSocket != null) {
 			try {
 				serverSocket.close();
 			} catch (IOException e) {
-				e.printStackTrace();
+				Log.e("ClientAccepter", "Error closing socket", e);
 			}
 		}
 	}

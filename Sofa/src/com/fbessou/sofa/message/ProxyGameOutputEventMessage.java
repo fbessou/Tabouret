@@ -33,7 +33,7 @@ public class ProxyGameOutputEventMessage extends ProxyMessage {
 	@Override
 	protected JSONObject toJSON() throws JSONException {
 		JSONObject json = super.toJSON();
-		json.put("event", mOutputEvent.toString());
+		json.put("event", mOutputEvent.toJSON());
 		
 		return json;
 	}

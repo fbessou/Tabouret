@@ -11,7 +11,9 @@ import java.util.UUID;
 
 import org.json.JSONObject;
 
+import android.app.Activity;
 import android.app.Fragment;
+import android.app.FragmentManager;
 import android.os.Bundle;
 
 import com.fbessou.sofa.message.GamePadInputEventMessage;
@@ -21,6 +23,7 @@ import com.fbessou.sofa.message.Message;
 import com.fbessou.sofa.message.ProxyGameOutputEventMessage;
 import com.fbessou.sofa.message.ProxyGameRenameMessage;
 import com.fbessou.sofa.message.ProxyMessage;
+import com.fbessou.sofa.message.Message.Type;
 
 /**
  * @author Frank Bessou
@@ -45,6 +48,7 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 	ArrayList<Sensor> mAvailableSensors = new ArrayList<Sensor>();
 
 	GameMessageListener mGameListener;
+	private boolean mIsAcceptedByGame = false;
 	
 	// Communication with proxy
 
@@ -126,8 +130,12 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 	 */
 	private void sendMessage(Message m) {
 		Log.v("GameBinder", "sendMessage: "+m.toString());
-		if(isConnected())
-			mSender.send(m.toString());
+		if(isConnected()) {
+			if(m.getType() != Type.JOIN && !mIsAcceptedByGame)
+				Log.w("GameBinder", "Try to send "+m.getType()+" but game pad not accepted by game. Cancel.");
+			else
+				mSender.send(m.toString());
+		}
 		else
 			Log.w("GameBinder", "sendMessage error : cannot send message, disconnected from proxy");
 	}
@@ -143,6 +151,8 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 			switch(message.getType()) {
 			case ACCEPT:
 				// We are now officially connected to the game! Congratulation!
+				mIsAcceptedByGame = false;
+				Log.i("GameBinder", "Accepted by the game");
 				break;
 			case JOIN:
 				// Game is ready, join the game
@@ -166,6 +176,7 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 					mGameListener.onGameRenamed(name);
 				}
 				break;
+			case LOST: // Should not occur
 			case INPUTEVENT: // Should not occur
 				break;
 			}
@@ -181,6 +192,7 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 	public void onClosed(Socket socket) {
 		// TODO FIXME What could we do? try to reconnect ? But first, check if this service is shuting down ;)
 		Log.i("GameBinder", "disconnected from socket:"+socket);
+		mIsAcceptedByGame = false;
 	}
 
 	/* (non-Javadoc)
@@ -250,6 +262,28 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 			s.setListener(this);
 		
 		mAvailableSensors.addAll(sensors);
+	}
+	
+
+	/**
+	 * Returns a gameBinder retrieved from fragment manager, otherwise a newly created gameBinder.
+	 * @param context
+	 * @param info Use to define game pad info if the gameBinder need to be
+	 * 				created. Can be null, default values will be used instead.
+	 * @return
+	 */
+	@SuppressWarnings("deprecation")
+	public static GameBinder getGameBinder(Activity activity, GamePadInformation info) {
+		FragmentManager fm = activity.getFragmentManager();
+		GameBinder gameBinder = (GameBinder) fm.findFragmentByTag("GameBinder");
+		if(gameBinder == null) {
+			if(info == null)
+				info = GamePadInformation.getDefault();
+			
+			gameBinder = new GameBinder(info);
+			fm.beginTransaction().add(gameBinder, "GameBinder").commit();
+		}
+		return gameBinder;
 	}
 	
 	public void setGameMessageListener(GameMessageListener listener) {

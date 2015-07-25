@@ -15,6 +15,9 @@ public class ProxyMessage extends Message {
 	protected ProxyMessage(Message message) {
 		super(message.getType());
 	}
+	protected ProxyMessage(Type type) {
+		super(type);
+	}
 
 	/**
 	 * Instatiate a message from a JSON object
@@ -46,9 +49,10 @@ public class ProxyMessage extends Message {
 		case OUTPUTEVENT:
 			return new ProxyGameOutputEventMessage(json);
 		case INPUTEVENT: // Should not occur
-		default:
+		case LOST: // Should not occur
 			return msg;
 		}
+		return msg;
 	}
 	
 	/**
@@ -70,10 +74,12 @@ public class ProxyMessage extends Message {
 			return new ProxyGamePadRenameMessage(json);
 		case INPUTEVENT:
 			return new ProxyGamePadInputEventMessage(json);
+		case LOST: // Should not occur
+			return new ProxyGamePadLostMessage(json);
 		case OUTPUTEVENT: // Should not occur
 		case ACCEPT: // Should not occur
-		default:
 			return msg;
 		}
+		return msg;
 	}
 }

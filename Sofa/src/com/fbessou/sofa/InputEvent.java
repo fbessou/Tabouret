@@ -118,7 +118,7 @@ public class InputEvent {
 		JSONObject object = new JSONObject();
 		object.put("input", inputId);
 		object.put("pad", padId);
-		object.put("tyoe", eventType.toString());
+		object.put("type", eventType.toString());
 		switch (eventType) {
 		case FLOATDOWN:
 		case FLOATMOVE:

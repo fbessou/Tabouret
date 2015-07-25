@@ -38,7 +38,7 @@ public class GameOutputEventMessage extends Message {
 	@Override
 	protected JSONObject toJSON() throws JSONException {
 		JSONObject json = super.toJSON();
-		json.put("event", mOutputEvent.toString());
+		json.put("event", mOutputEvent.toJSON());
 		json.put("gamepad", mGamePadId);
 		
 		return json;

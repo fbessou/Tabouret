@@ -202,7 +202,7 @@ public class JoystickView extends View {
 			mIsTouched = false;
 			break;
 		}
-		sensor.setValue(mStickRelPos[0],-mStickRelPos[1]);
+		sensor.putValue(mStickRelPos[0],-mStickRelPos[1]);
 		// Ask for an update of the view
 		invalidate();
 		

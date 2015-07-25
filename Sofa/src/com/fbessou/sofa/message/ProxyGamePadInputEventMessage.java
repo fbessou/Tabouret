@@ -39,7 +39,7 @@ public class ProxyGamePadInputEventMessage extends ProxyMessage {
 	@Override
 	protected JSONObject toJSON() throws JSONException {
 		JSONObject json = super.toJSON();
-		json.put("name", mInputEvent.toString());
+		json.put("event", mInputEvent.toJSON());
 		json.put("gamepad", mGamePadId);
 		
 		return json;

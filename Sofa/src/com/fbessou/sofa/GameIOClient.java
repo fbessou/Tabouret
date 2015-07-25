@@ -22,6 +22,7 @@ import com.fbessou.sofa.message.Message;
 import com.fbessou.sofa.message.ProxyGamePadInputEventMessage;
 import com.fbessou.sofa.message.ProxyGamePadJoinMessage;
 import com.fbessou.sofa.message.ProxyGamePadLeaveMessage;
+import com.fbessou.sofa.message.ProxyGamePadLostMessage;
 import com.fbessou.sofa.message.ProxyGamePadRenameMessage;
 import com.fbessou.sofa.message.ProxyMessage;
 
@@ -70,7 +71,7 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 		super.onCreate(savedInstanceState);
 		Log.i("GameIOClient", "Creating fragment, connecting");
 		// connect to proxy
-		ProxyConnector connector = new ProxyConnector(getActivity().getApplicationContext(), GameIOProxy.DefaultGamePadsPort, this);
+		ProxyConnector connector = new ProxyConnector(getActivity().getApplicationContext(), GameIOProxy.DefaultGamePort, this);
 		connector.connect();
 	}
 
@@ -169,7 +170,12 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 					mGamePadListener.onGamePadRenamed(((ProxyGamePadRenameMessage)message).getNewNickname(), gamePadId);
 				}
 				break;
-				
+			case LOST:
+				if(mGamePadListener != null) {
+					int gamePadId = ((ProxyGamePadLostMessage)message).getGamePadId();
+					mGamePadListener.onGamePadUnexpectedlyDisconnected(gamePadId);
+				}
+				break;
 			case OUTPUTEVENT: // Should not occur
 			case ACCEPT: // Should not occur
 				break;
@@ -266,6 +272,6 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 		void onGamePadLeft(int gamepad);
 		/** @return true if the game pad is accepted **/
 		boolean onGamePadJoined(int gamepad);
-		//void onGamePadUnexpectedlyDisconnected(int gamepad);
+		void onGamePadUnexpectedlyDisconnected(int gamepad);
 	}
 }

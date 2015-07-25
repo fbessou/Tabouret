@@ -131,16 +131,16 @@ public class ProxyConnector extends BroadcastReceiver implements ConnectionInfoL
 					Log.w("ProxyConnector", "Connexion attempt to "+address+" failed", e);
 				}
 				
-				/*
+				
 				// if we failed to connect to the given address, try with localhost
 				// FIXME why ?
-				if (hostaddr != null && socket == null){
+				/*if (hostaddr != null && socket == null){
 					Log.v("ProxyConnector", "Trying to connect locally");
 					connectToProxy(null, mPort);
 				}
-				else*/ {
+				else*/
 					mListener.onConnected(socket);
-				}
+				
 			}
 		}).start();
 	}

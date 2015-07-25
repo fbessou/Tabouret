@@ -17,8 +17,8 @@ public class ProxyGameLeaveMessage extends ProxyMessage {
 	}
 
 	/**
-	 * Instatiate a message from a JSON object
-	 * @throws Exception If message cannot be instatiate from the json object for any reasons.
+	 * Instantiate a message from a JSON object
+	 * @throws Exception If message cannot be instantiate from the json object for any reasons.
 	 * */
 	public ProxyGameLeaveMessage(JSONObject json) throws Exception {
 		super(json);
