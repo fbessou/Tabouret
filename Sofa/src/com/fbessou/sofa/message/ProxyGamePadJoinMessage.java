@@ -53,4 +53,12 @@ public class ProxyGamePadJoinMessage extends ProxyMessage {
 	public int getGamePadId() {
 		return mGamePadId;
 	}
+	
+	public String getNickname() {
+		return mNickname;
+	}
+	
+	public UUID getUUID() {
+		return mUUID;
+	}
 }

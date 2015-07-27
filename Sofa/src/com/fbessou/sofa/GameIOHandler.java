@@ -124,6 +124,8 @@ public class GameIOHandler implements GamePadMessageListener {
 		final GamePadStateChangedEvent gpEvent = new GamePadStateChangedEvent();
 		gpEvent.eventType = Type.LEFT;
 		gpEvent.gamePadId = gamepad;
+		// Remove the game pad from the list
+		mGamePads.delete(gamepad);
 		if(mode == Mode.LISTENER) {
 			handler.post(new Runnable() {
 				@Override
@@ -137,11 +139,14 @@ public class GameIOHandler implements GamePadMessageListener {
 	}
 	/** Interface GamePadMessageListener **/
 	@Override
-	public boolean onGamePadJoined(int gamepad) {
+	public boolean onGamePadJoined(String nickName, int gamepad) {
 		if(getGamePadCount() < maxGamePadCount) {
 			final GamePadStateChangedEvent gpEvent = new GamePadStateChangedEvent();
 			gpEvent.eventType = Type.JOINED;
 			gpEvent.gamePadId = gamepad;
+			// Add the game pad to the list
+			mGamePads.put(gamepad, new GamePadInGameInformation());
+			mGamePads.get(gamepad).staticInformations = new GamePadInformation(nickName, null);
 			if(mode == Mode.LISTENER) {
 				handler.post(new Runnable() {
 					@Override

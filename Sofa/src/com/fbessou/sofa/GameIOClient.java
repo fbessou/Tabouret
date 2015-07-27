@@ -150,7 +150,7 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 			case JOIN: {
 				int gamePadId = ((ProxyGamePadJoinMessage)message).getGamePadId();
 				if(mGamePadListener != null) {
-					if(!mGamePadListener.onGamePadJoined(gamePadId)) {
+					if(!mGamePadListener.onGamePadJoined(((ProxyGamePadJoinMessage)message).getNickname(), gamePadId)) {
 						// if we do not send the GameAcceptMessage, the proxy will block messages coming from this game-pad
 						Log.i("GameIOClient", "Game pad "+gamePadId+" refused");
 						break;// TODO send refused message
@@ -274,7 +274,7 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 		void onGamePadRenamed(String newNickname, int gamepad);
 		void onGamePadLeft(int gamepad);
 		/** @return true if the game pad is accepted **/
-		boolean onGamePadJoined(int gamepad);
+		boolean onGamePadJoined(String nickname, int gamepad);
 		void onGamePadUnexpectedlyDisconnected(int gamepad);
 	}
 }
