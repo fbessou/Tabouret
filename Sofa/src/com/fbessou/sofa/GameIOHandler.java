@@ -14,7 +14,7 @@ public class GameIOHandler implements GamePadMessageListener {
 	GameIOClient mGameIO;
 	
 	/** Array of connected game pad  **/
-	private SparseArray<GamePadInGameInformation> mGamePads;
+	private SparseArray<GamePadInGameInformation> mGamePads = new SparseArray<>();
 	/** Number max of game pad allowed in the game **/
 	private int maxGamePadCount = 16;
 	
@@ -55,6 +55,7 @@ public class GameIOHandler implements GamePadMessageListener {
 	
 	public void start(Activity activity, GameInformation info) {
 		mGameIO = GameIOClient.getGameIOClient(activity, info);
+		mGameIO.setGamePadMessageListener(this);
 	}
 
 	public void sendOutputEventBroadcast(OutputEvent event) {
