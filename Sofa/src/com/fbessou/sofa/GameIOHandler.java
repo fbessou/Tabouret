@@ -33,7 +33,7 @@ public class GameIOHandler implements GamePadMessageListener {
 	private static Handler handler;
 	
 	/** QUEUE MODE: use pollEvent methods **/
-	public GameIOHandler(Activity activity, GameInformation info) {
+	public GameIOHandler() {
 		mode = Mode.QUEUE;
 		mInputEventQueue = new LinkedBlockingQueue<>();
 		mStateEventQueue = new LinkedBlockingQueue<>();
@@ -43,7 +43,7 @@ public class GameIOHandler implements GamePadMessageListener {
 	}
 	
 	/** LISTENER MODE: use listener interfaces. methods of listener run in the same thread this constructor is called **/
-	public GameIOHandler(Activity activity, GameInformation info, InputEventListener iel, StateChangedEventListener scel) {
+	public GameIOHandler(InputEventListener iel, StateChangedEventListener scel) {
 		mode = Mode.LISTENER;
 		mStateChangedEventListener = scel;
 		mInputEventListener = iel;
