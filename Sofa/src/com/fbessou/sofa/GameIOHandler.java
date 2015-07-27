@@ -41,6 +41,9 @@ public class GameIOHandler implements GamePadMessageListener {
 	public GamePadInputEvent pollInputEvent() {
 		return mInputEventQueue.poll();
 	}
+	public GamePadStateChangedEvent pollStateChangedEvent() {
+		return mStateEventQueue.poll();
+	}
 	
 	/** LISTENER MODE: use listener interfaces. methods of listener run in the same thread this constructor is called **/
 	public GameIOHandler(InputEventListener iel, StateChangedEventListener scel) {
