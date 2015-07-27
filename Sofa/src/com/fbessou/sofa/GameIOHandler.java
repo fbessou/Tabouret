@@ -3,13 +3,16 @@ package com.fbessou.sofa;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
-import com.fbessou.sofa.GameIOClient.GamePadMessageListener;
-import com.fbessou.sofa.GameIOHandler.GamePadStateChangedEvent.Type;
-
+import android.app.Activity;
 import android.os.Handler;
 import android.util.SparseArray;
 
+import com.fbessou.sofa.GameIOClient.GamePadMessageListener;
+import com.fbessou.sofa.GameIOHandler.GamePadStateChangedEvent.Type;
+
 public class GameIOHandler implements GamePadMessageListener {
+	GameIOClient mGameIO;
+	
 	/** Array of connected game pad  **/
 	private SparseArray<GamePadInGameInformation> mGamePads;
 	/** Number max of game pad allowed in the game **/
@@ -30,7 +33,7 @@ public class GameIOHandler implements GamePadMessageListener {
 	private static Handler handler;
 	
 	/** QUEUE MODE: use pollEvent methods **/
-	public GameIOHandler() {
+	public GameIOHandler(Activity activity, GameInformation info) {
 		mode = Mode.QUEUE;
 		mInputEventQueue = new LinkedBlockingQueue<>();
 		mStateEventQueue = new LinkedBlockingQueue<>();
@@ -40,16 +43,29 @@ public class GameIOHandler implements GamePadMessageListener {
 	}
 	
 	/** LISTENER MODE: use listener interfaces. methods of listener run in the same thread this constructor is called **/
-	public GameIOHandler(InputEventListener iel, StateChangedEventListener scel) {
+	public GameIOHandler(Activity activity, GameInformation info, InputEventListener iel, StateChangedEventListener scel) {
 		mode = Mode.LISTENER;
 		mStateChangedEventListener = scel;
 		mInputEventListener = iel;
 		handler = new Handler();
 	}
 	
-	
-	public void send/*Output Events / GameInformation*/() {
-		// TODO
+	public void start(Activity activity, GameInformation info) {
+		mGameIO = GameIOClient.getGameIOClient(activity, info);
+	}
+
+	public void sendOutputEventBroadcast(OutputEvent event) {
+		sendOutputEvent(event, -1);
+	}
+	public void sendOutputEvent(OutputEvent event, int gamepadId) {
+		if(gamepadId != -1 && mGamePads.get(gamepadId) == null) {
+			//Log.w("GameIOHandler", "Cannot send output event: game pad id "+gamepadId+" unknown");
+			return;
+		}
+		mGameIO.sendOutputEvent(event, gamepadId);
+	}
+	public void updateGameInformation(GameInformation info) {
+		mGameIO.updateGameInfo(info);
 	}
 	
 	public int getGamePadCount() {
