@@ -10,8 +10,8 @@ import android.view.View;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
-import com.fbessou.sofa.GameBinder;
-import com.fbessou.sofa.GameBinder.GameMessageListener;
+import com.fbessou.sofa.GamePadIOClient;
+import com.fbessou.sofa.GamePadIOClient.GameMessageListener;
 import com.fbessou.sofa.GamePadInformation;
 import com.fbessou.sofa.OutputEvent;
 import com.fbessou.tabouret.view.GamePadLayout;
@@ -21,7 +21,7 @@ public class GamePadActivity extends Activity implements GameMessageListener {
 	Configuration mConfig;
 	RelativeLayout mainLayout;
 	
-	private GameBinder mGameBinder;
+	private GamePadIOClient mGamePadIOClient;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -30,9 +30,9 @@ public class GamePadActivity extends Activity implements GameMessageListener {
 		super.onCreate(savedInstanceState);
 		
 		com.fbessou.sofa.Log.setLogFilterMask(com.fbessou.sofa.Log.FILTER_NOTHING);
-		// Initialize or retrieve the GameBinder fragment.
-		mGameBinder = GameBinder.getGameBinder((Activity)this, GamePadInformation.getDefault());
-		mGameBinder.setGameMessageListener(this);
+		// Initialize or retrieve the GamePadIOClient fragment.
+		mGamePadIOClient = GamePadIOClient.getGamePadIOClient((Activity)this, GamePadInformation.getDefault());
+		mGamePadIOClient.setGameMessageListener(this);
 		
 		Intent intent = getIntent();
 		if(intent.hasExtra("gamepad_path")){
@@ -70,8 +70,8 @@ public class GamePadActivity extends Activity implements GameMessageListener {
 		return super.onOptionsItemSelected(item);
 	}
 	
-	public GameBinder getGameBinder(){
-		return mGameBinder;
+	public GamePadIOClient getGamePadIOClient(){
+		return mGamePadIOClient;
 	}
 	
 	/* (non-Javadoc)

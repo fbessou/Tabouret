@@ -133,7 +133,7 @@ public class ButtonView extends View {
 			} catch (XmlPullParserException e) {
 				e.printStackTrace();
 			}
-			mGamePad.getGameBinder().addSensor(button.sensor);
+			mGamePad.getGamePadIOClient().addSensor(button.sensor);
 
 			return button;
 		}

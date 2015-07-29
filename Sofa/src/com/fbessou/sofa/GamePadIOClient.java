@@ -32,7 +32,7 @@ import com.fbessou.sofa.sensor.Sensor;
  *
  * GameBinder used by game pads.
  */
-public class GameBinder extends Fragment implements Sensor.InputEventListener, StringReceiver.Listener, ProxyConnector.OnConnectedListener {
+public class GamePadIOClient extends Fragment implements Sensor.InputEventListener, StringReceiver.Listener, ProxyConnector.OnConnectedListener {
 	
 	/**
 	 * 
@@ -64,7 +64,7 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 	/**
 	 * 
 	 */
-	public GameBinder(GamePadInformation info) {
+	public GamePadIOClient(GamePadInformation info) {
 		mGamePadInfo = info;
 	}
 	/*
@@ -279,14 +279,14 @@ public class GameBinder extends Fragment implements Sensor.InputEventListener, S
 	 * @return
 	 */
 	@SuppressWarnings("deprecation")
-	public static GameBinder getGameBinder(Activity activity, GamePadInformation info) {
+	public static GamePadIOClient getGamePadIOClient(Activity activity, GamePadInformation info) {
 		FragmentManager fm = activity.getFragmentManager();
-		GameBinder gameBinder = (GameBinder) fm.findFragmentByTag("GameBinder");
+		GamePadIOClient gameBinder = (GamePadIOClient) fm.findFragmentByTag("GameBinder");
 		if(gameBinder == null) {
 			if(info == null)
 				info = GamePadInformation.getDefault();
 			
-			gameBinder = new GameBinder(info);
+			gameBinder = new GamePadIOClient(info);
 			fm.beginTransaction().add(gameBinder, "GameBinder").commit();
 		}
 		return gameBinder;

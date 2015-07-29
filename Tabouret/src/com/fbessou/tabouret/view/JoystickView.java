@@ -343,7 +343,7 @@ public class JoystickView extends View {
 			} catch (XmlPullParserException e ) {
 				e.printStackTrace();
 			}
-			mGamePad.getGameBinder().addSensor(joystick.sensor);
+			mGamePad.getGamePadIOClient().addSensor(joystick.sensor);
 			return joystick;
 			
 		}
