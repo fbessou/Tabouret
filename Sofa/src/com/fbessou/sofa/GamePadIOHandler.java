@@ -1,10 +1,8 @@
 package com.fbessou.sofa;
 
 import android.app.Activity;
-import android.os.Vibrator;
 
 import com.fbessou.sofa.GamePadIOClient.GameMessageListener;
-import com.fbessou.sofa.OutputEvent.OutputEventType;
 import com.fbessou.sofa.sensor.Sensor;
 
 public class GamePadIOHandler implements GameMessageListener {
