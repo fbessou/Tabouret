@@ -32,7 +32,7 @@ import com.fbessou.sofa.sensor.Sensor;
  *
  * GameBinder used by game pads.
  */
-public class GamePadIOClient extends Fragment implements Sensor.InputEventListener, StringReceiver.Listener, ProxyConnector.OnConnectedListener {
+public class GamePadIOClient extends Fragment implements Sensor.InputEventTriggeredListener, StringReceiver.Listener, ProxyConnector.OnConnectedListener {
 	
 	/**
 	 * 

@@ -171,6 +171,20 @@ public class InputEvent {
 		evt.values= new float[] {x};
 		return evt;
 	}
+	static public InputEvent createDown1DEvent(int inputId, float x, int padId) {
+		InputEvent evt = new InputEvent(InputEvent.Type.FLOATDOWN);
+		evt.inputId = inputId;
+		evt.padId = padId;
+		evt.values= new float[] {x};
+		return evt;
+	}
+	static public InputEvent createUp1DEvent(int inputId, float x, int padId) {
+		InputEvent evt = new InputEvent(InputEvent.Type.FLOATUP);
+		evt.inputId = inputId;
+		evt.padId = padId;
+		evt.values= new float[] {x};
+		return evt;
+	}
 	
 	/**
 	 * Create a motion2d event

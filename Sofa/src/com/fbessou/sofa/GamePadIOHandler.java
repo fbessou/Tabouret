@@ -1,8 +1,10 @@
 package com.fbessou.sofa;
 
 import android.app.Activity;
+import android.os.Vibrator;
 
 import com.fbessou.sofa.GamePadIOClient.GameMessageListener;
+import com.fbessou.sofa.OutputEvent.OutputEventType;
 import com.fbessou.sofa.sensor.Sensor;
 
 public class GamePadIOHandler implements GameMessageListener {
@@ -25,9 +27,14 @@ public class GamePadIOHandler implements GameMessageListener {
 			throw new RuntimeException("To attach sensor, the method start(activity, info) must be invoked first");
 	}
 	
+	public void updateInformation(GamePadInformation info) {
+		mGameBinder.updateGamePadInfo(info);
+	}
+	
 	@Override
 	public void onGameOutputReceived(OutputEvent event) {
 		// TODO Auto-generated method stub
+		
 	}
 
 	@Override

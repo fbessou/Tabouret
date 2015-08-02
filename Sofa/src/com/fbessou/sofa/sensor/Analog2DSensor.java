@@ -4,24 +4,36 @@
 package com.fbessou.sofa.sensor;
 
 import com.fbessou.sofa.InputEvent;
+import com.fbessou.sofa.view.JoystickView;
+import com.fbessou.sofa.view.JoystickView.OnPositionChangedListener;
 
 
 /**
  * @author Frank Bessou
- *
+ *	Clamp values in range -1..1
  */
 public class Analog2DSensor extends Sensor {
 	private float mValueX = 0;
 	private float mValueY = 0;
 
-	/**
-	 * @param type
-	 */
 	public Analog2DSensor() {
-		super(SensorType.ANALOG_2D);
+		super();
+	}
+	public Analog2DSensor(int id) {
+		super(id);
 	}
 	
-	public void putValue(float x,float y){
+	/** Attaches a joystick view to this sensor. Each action will trigger an event.**/
+	public void attachTo(JoystickView joystickView) {
+		joystickView.setOnPositionChangedListener(new OnPositionChangedListener() {
+			@Override
+			public void positionChanged(JoystickView joystick, float px, float py) {
+				putValue(px, py);
+			}
+		});
+	}
+	
+	protected void putValue(float x,float y){
 		// Clamp values
 		x = Math.max(-1, Math.min(x, 1));
 		y = Math.max(-1, Math.min(y, 1));
