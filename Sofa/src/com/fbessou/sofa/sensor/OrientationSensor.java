@@ -40,7 +40,8 @@ public class OrientationSensor extends com.fbessou.sofa.sensor.Sensor implements
 			mLastMagnetValues = event.values.clone();
 		
 			if(computeOrientation()) {
-				
+				InputEvent evt = InputEvent.createMotion3DEvent(0, mAzimuth, mPitch, mRoll, mId);
+				triggerEvent(evt);
 			}
 		}
 	}
@@ -68,9 +69,6 @@ public class OrientationSensor extends com.fbessou.sofa.sensor.Sensor implements
 			mAzimuth = orientation[0];
 			mPitch = orientation[1];
 			mRoll = orientation[2];
-			
-			InputEvent evt = InputEvent.createMotion3DEvent(0, mAzimuth, mPitch, mRoll, mId);
-			triggerEvent(evt);
 			return true;
 		}
 		
