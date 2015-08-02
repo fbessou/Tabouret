@@ -14,7 +14,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.RelativeLayout;
 
-import com.fbessou.sofa.sensor.Analog2DSensor;
 import com.fbessou.tabouret.NodeParser;
 
 /**
@@ -22,9 +21,8 @@ import com.fbessou.tabouret.NodeParser;
  * @author Pierre Guglielminotti-Ghermotti
  *
  */
+@Deprecated
 public class JoystickView extends View {
-	/** Sensor associated with this joystick **/
-	private final Analog2DSensor sensor=new Analog2DSensor();
 	/** Bitmap image of the stick and the center; width must be equal to height **/
 	private Bitmap mStickBmp, mCenterBmp;
 	/** Parameters of the bound that define the constraints of the relative stick position **/
@@ -202,7 +200,7 @@ public class JoystickView extends View {
 			mIsTouched = false;
 			break;
 		}
-		sensor.putValue(mStickRelPos[0],-mStickRelPos[1]);
+
 		// Ask for an update of the view
 		invalidate();
 		
@@ -343,7 +341,10 @@ public class JoystickView extends View {
 			} catch (XmlPullParserException e ) {
 				e.printStackTrace();
 			}
-			mGamePad.getGamePadIOClient().addSensor(joystick.sensor);
+			// FIXME use com.fbessou.sofa.view.JoystickView
+			//Analog2DSensor s = new Analog2DSensor();
+			//s.attachTo(JoystickView.this);
+			//mGamePad.getGamePadIOClient().addSensor(s);
 			return joystick;
 			
 		}

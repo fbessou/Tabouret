@@ -16,15 +16,14 @@ import android.view.View;
 import com.fbessou.sofa.sensor.KeySensor;
 import com.fbessou.tabouret.NodeParser;
 
+@Deprecated
 public class ButtonView extends View {
 	/** Buttons images, null if not defined **/
 	StateListDrawable mDrawable;
-	KeySensor sensor;
 	
 	ButtonView(Context context) {
 		super(context);
 		setClickable(true);
-		sensor = new KeySensor(false);
 	}
 	
 	/** To remember is the button was pressed at the last touch event **/
@@ -43,13 +42,10 @@ public class ButtonView extends View {
 			pressed=true;
 			Vibrator v = (Vibrator)getContext().getSystemService(Context.VIBRATOR_SERVICE);
 			v.vibrate(10);
-			sensor.setValue(true);
 			break;
 		case MotionEvent.ACTION_CANCEL:
 		case MotionEvent.ACTION_UP:
 			pressed=false;
-			sensor.setValue(false);
-
 			break;
 		default:
 			break;
@@ -133,7 +129,7 @@ public class ButtonView extends View {
 			} catch (XmlPullParserException e) {
 				e.printStackTrace();
 			}
-			mGamePad.getGamePadIOClient().addSensor(button.sensor);
+			//mGamePad.getGamePadIOClient().addSensor(button.sensor);
 
 			return button;
 		}
