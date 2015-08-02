@@ -10,56 +10,51 @@ import com.fbessou.sofa.InputEvent;
  * @author Frank Bessou
  *
  */
-public class Sensor {
+abstract public class Sensor {
 	
 	/** Listener on input event **/
-	public interface InputEventListener{
+	public interface InputEventTriggeredListener{
 		void onInputEventTriggered(InputEvent evt);
 	}
 	
-	/** Type of sensor **/
-	public enum SensorType {
-		ANALOG_1D('l'), ANALOG_2D('+'), ANALOG_3D('>'), KEY('l'), TEXT('t');
-		
-		/** A footprint is associated with each item FIXME why? */
-		private char footprint;
-		SensorType(char c) {
-			footprint = c;
-		}
-		public Character getFootprint() {
-			return footprint;
-		}
-	}
-	
 	/** Static id counter used to auto generate an id for each new sensor **/
-	public static int sourceId = 0;
+	private static int sourceId = 0;
+	/** Reset the source id for auto generated id**/
+	public static void init() {
+		sourceId = 0;
+	}
 	
 	/** Indicates if the sensor is enabled **/
 	private boolean mEnabled = true;
 	/** unique identifier **/
 	protected int mId;
-	/** Type of this sensor **/
-	private SensorType mType;
 	/** Listener attached to this sensor **/
-	private InputEventListener mListener;
+	private InputEventTriggeredListener mListener;
 	
 	
-	/** Make a new sensor of the given type, with auto generated id **/
-	public Sensor(SensorType type) {
-		mType = type;
+	/** Make a new sensor with auto generated id **/
+	public Sensor() {
 		mId = sourceId++;
 	}
-	
-	public int getId() {
-		return mId;
+	/** Make a new sensor with auto generated id **/
+	public Sensor(int id) {
+		mId = id;
 	}
 	
+	/** Returns the pad's id**/
+	public int getPadId() {
+		return mId;
+	}
+	/** Sets the pad's id **/
+	public void setPadId(int id) {
+		mId = id;
+	}
 	/**
 	 * Attach this sensor to a listener.
 	 * On state change, the onInputEvent method will be called on this listener.
 	 * @param listener
 	 */
-	public void setListener(InputEventListener listener){
+	public void setListener(InputEventTriggeredListener listener){
 		mListener = listener;
 	}
 	
@@ -84,9 +79,4 @@ public class Sensor {
 		return mEnabled;
 	}
 	
-	/** FIXME ? **/
-	Character getFootprint(){
-		return mType.getFootprint();
-	}
-
 }
