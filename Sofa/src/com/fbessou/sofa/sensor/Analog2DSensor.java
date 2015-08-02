@@ -16,6 +16,9 @@ public class Analog2DSensor extends Sensor {
 	private float mValueX = 0;
 	private float mValueY = 0;
 
+	/** Minimum variation for x or y values needed to trigger a new event **/
+	private static final float deltaMinTrigger = 0.005f;
+	
 	public Analog2DSensor() {
 		super();
 	}
@@ -38,7 +41,7 @@ public class Analog2DSensor extends Sensor {
 		x = Math.max(-1, Math.min(x, 1));
 		y = Math.max(-1, Math.min(y, 1));
 		
-		boolean changed = (Math.abs(x-mValueX) > 0.001 || Math.abs(y-mValueY) > 0.001);
+		boolean changed = (Math.abs(x-mValueX) > deltaMinTrigger || Math.abs(y-mValueY) > deltaMinTrigger);
 		if(changed){
 			mValueX = x;
 			mValueY = y;
