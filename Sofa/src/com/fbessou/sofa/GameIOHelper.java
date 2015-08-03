@@ -10,7 +10,7 @@ import android.util.SparseArray;
 import com.fbessou.sofa.GameIOClient.GamePadMessageListener;
 import com.fbessou.sofa.GameIOHelper.GamePadStateChangedEvent.Type;
 
-public class GameIOHelper implements GamePadMessageListener {
+public class GameIOHelper {
 	GameIOClient mGameIO;
 	
 	/** Array of connected game pad  **/
@@ -55,7 +55,7 @@ public class GameIOHelper implements GamePadMessageListener {
 	
 	public void start(Activity activity, GameInformation info) {
 		mGameIO = GameIOClient.getGameIOClient(activity, info);
-		mGameIO.setGamePadMessageListener(this);
+		mGameIO.setGamePadMessageListener(new GamePadMessage());
 	}
 
 	public void sendOutputEventBroadcast(OutputEvent event) {
@@ -83,71 +83,32 @@ public class GameIOHelper implements GamePadMessageListener {
 	}
 	
 	/** Interface GamePadMessageListener **/
-	@Override
-	public void onGamePadInputEventReceived(InputEvent event, int gamepad) {
-		final GamePadInputEvent gpEvent = new GamePadInputEvent();
-		gpEvent.event = event;
-		gpEvent.gamePadId = gamepad;
-		
-		if(mode == Mode.LISTENER) {
-			handler.post(new Runnable() {
-				@Override
-				public void run() {
-					mInputEventListener.onInputEvent(gpEvent);
-				}
-			});
-		} else {
-			mInputEventQueue.offer(gpEvent);
-		}
-	}
-	/** Interface GamePadMessageListener **/
-	@Override
-	public void onGamePadRenamed(String newNickname, int gamepad) {
-		final GamePadStateChangedEvent gpEvent = new GamePadStateChangedEvent();
-		gpEvent.eventType = Type.INFORMATION;
-		gpEvent.gamePadId = gamepad;
-		gpEvent.newInformation = mGamePads.get(gamepad).staticInformations;
-		gpEvent.newInformation.setNickname(newNickname);
-		if(mode == Mode.LISTENER) {
-			handler.post(new Runnable() {
-				@Override
-				public void run() {
-					mStateChangedEventListener.onPadEvent(gpEvent);
-				}
-			});
-		} else {
-			mStateEventQueue.offer(gpEvent);
-		}
-	}
-	/** Interface GamePadMessageListener **/
-	@Override
-	public void onGamePadLeft(int gamepad) {
-		final GamePadStateChangedEvent gpEvent = new GamePadStateChangedEvent();
-		gpEvent.eventType = Type.LEFT;
-		gpEvent.gamePadId = gamepad;
-		// Remove the game pad from the list
-		mGamePads.delete(gamepad);
-		if(mode == Mode.LISTENER) {
-			handler.post(new Runnable() {
-				@Override
-				public void run() {
-					mStateChangedEventListener.onPadEvent(gpEvent);
-				}
-			});
-		} else {
-			mStateEventQueue.offer(gpEvent);
-		}
-	}
-	/** Interface GamePadMessageListener **/
-	@Override
-	public boolean onGamePadJoined(String nickName, int gamepad) {
-		if(getGamePadCount() < maxGamePadCount) {
-			final GamePadStateChangedEvent gpEvent = new GamePadStateChangedEvent();
-			gpEvent.eventType = Type.JOINED;
+	private class GamePadMessage implements GamePadMessageListener {
+		@Override
+		public void onGamePadInputEventReceived(InputEvent event, int gamepad) {
+			final GamePadInputEvent gpEvent = new GamePadInputEvent();
+			gpEvent.event = event;
 			gpEvent.gamePadId = gamepad;
-			// Add the game pad to the list
-			mGamePads.put(gamepad, new GamePadInGameInformation());
-			mGamePads.get(gamepad).staticInformations = new GamePadInformation(nickName, null);
+			
+			if(mode == Mode.LISTENER) {
+				handler.post(new Runnable() {
+					@Override
+					public void run() {
+						mInputEventListener.onInputEvent(gpEvent);
+					}
+				});
+			} else {
+				mInputEventQueue.offer(gpEvent);
+			}
+		}
+		/** Interface GamePadMessageListener **/
+		@Override
+		public void onGamePadRenamed(String newNickname, int gamepad) {
+			final GamePadStateChangedEvent gpEvent = new GamePadStateChangedEvent();
+			gpEvent.eventType = Type.INFORMATION;
+			gpEvent.gamePadId = gamepad;
+			gpEvent.newInformation = mGamePads.get(gamepad).staticInformations;
+			gpEvent.newInformation.setNickname(newNickname);
 			if(mode == Mode.LISTENER) {
 				handler.post(new Runnable() {
 					@Override
@@ -158,31 +119,72 @@ public class GameIOHelper implements GamePadMessageListener {
 			} else {
 				mStateEventQueue.offer(gpEvent);
 			}
-			return true;
 		}
-		// Max count reached
-		else {
-			return false;
+		/** Interface GamePadMessageListener **/
+		@Override
+		public void onGamePadLeft(int gamepad) {
+			final GamePadStateChangedEvent gpEvent = new GamePadStateChangedEvent();
+			gpEvent.eventType = Type.LEFT;
+			gpEvent.gamePadId = gamepad;
+			// Remove the game pad from the list
+			mGamePads.delete(gamepad);
+			if(mode == Mode.LISTENER) {
+				handler.post(new Runnable() {
+					@Override
+					public void run() {
+						mStateChangedEventListener.onPadEvent(gpEvent);
+					}
+				});
+			} else {
+				mStateEventQueue.offer(gpEvent);
+			}
 		}
-	}
-	/** Interface GamePadMessageListener **/
-	@Override
-	public void onGamePadUnexpectedlyDisconnected(int gamepad) {
-		final GamePadStateChangedEvent gpEvent = new GamePadStateChangedEvent();
-		gpEvent.eventType = Type.UNEXPECTEDLY_DISCONNECTED;
-		gpEvent.gamePadId = gamepad;
-		if(mode == Mode.LISTENER) {
-			handler.post(new Runnable() {
-				@Override
-				public void run() {
-					mStateChangedEventListener.onPadEvent(gpEvent);
+		/** Interface GamePadMessageListener **/
+		@Override
+		public boolean onGamePadJoined(String nickName, int gamepad) {
+			if(getGamePadCount() < maxGamePadCount) {
+				final GamePadStateChangedEvent gpEvent = new GamePadStateChangedEvent();
+				gpEvent.eventType = Type.JOINED;
+				gpEvent.gamePadId = gamepad;
+				// Add the game pad to the list
+				mGamePads.put(gamepad, new GamePadInGameInformation());
+				mGamePads.get(gamepad).staticInformations = new GamePadInformation(nickName, null);
+				if(mode == Mode.LISTENER) {
+					handler.post(new Runnable() {
+						@Override
+						public void run() {
+							mStateChangedEventListener.onPadEvent(gpEvent);
+						}
+					});
+				} else {
+					mStateEventQueue.offer(gpEvent);
 				}
-			});
-		} else {
-			mStateEventQueue.offer(gpEvent);
+				return true;
+			}
+			// Max count reached
+			else {
+				return false;
+			}
+		}
+		/** Interface GamePadMessageListener **/
+		@Override
+		public void onGamePadUnexpectedlyDisconnected(int gamepad) {
+			final GamePadStateChangedEvent gpEvent = new GamePadStateChangedEvent();
+			gpEvent.eventType = Type.UNEXPECTEDLY_DISCONNECTED;
+			gpEvent.gamePadId = gamepad;
+			if(mode == Mode.LISTENER) {
+				handler.post(new Runnable() {
+					@Override
+					public void run() {
+						mStateChangedEventListener.onPadEvent(gpEvent);
+					}
+				});
+			} else {
+				mStateEventQueue.offer(gpEvent);
+			}
 		}
 	}
-
+	
 	public interface InputEventListener {
 		public void onInputEvent(GamePadInputEvent event);
 	}
