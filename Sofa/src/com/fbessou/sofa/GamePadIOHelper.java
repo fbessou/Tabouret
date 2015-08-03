@@ -5,11 +5,11 @@ import android.app.Activity;
 import com.fbessou.sofa.GamePadIOClient.GameMessageListener;
 import com.fbessou.sofa.sensor.Sensor;
 
-public class GamePadIOHandler implements GameMessageListener {
+public class GamePadIOHelper implements GameMessageListener {
 	GamePadIOClient mGameBinder;
 	// TODO ArrayList<Indicator>
 	
-	public GamePadIOHandler() {
+	public GamePadIOHelper() {
 		// TODO something
 	}
 	

@@ -8,9 +8,9 @@ import android.os.Handler;
 import android.util.SparseArray;
 
 import com.fbessou.sofa.GameIOClient.GamePadMessageListener;
-import com.fbessou.sofa.GameIOHandler.GamePadStateChangedEvent.Type;
+import com.fbessou.sofa.GameIOHelper.GamePadStateChangedEvent.Type;
 
-public class GameIOHandler implements GamePadMessageListener {
+public class GameIOHelper implements GamePadMessageListener {
 	GameIOClient mGameIO;
 	
 	/** Array of connected game pad  **/
@@ -33,7 +33,7 @@ public class GameIOHandler implements GamePadMessageListener {
 	private static Handler handler;
 	
 	/** QUEUE MODE: use pollEvent methods **/
-	public GameIOHandler() {
+	public GameIOHelper() {
 		mode = Mode.QUEUE;
 		mInputEventQueue = new LinkedBlockingQueue<>();
 		mStateEventQueue = new LinkedBlockingQueue<>();
@@ -46,7 +46,7 @@ public class GameIOHandler implements GamePadMessageListener {
 	}
 	
 	/** LISTENER MODE: use listener interfaces. methods of listener run in the same thread this constructor is called **/
-	public GameIOHandler(InputEventListener iel, StateChangedEventListener scel) {
+	public GameIOHelper(InputEventListener iel, StateChangedEventListener scel) {
 		mode = Mode.LISTENER;
 		mStateChangedEventListener = scel;
 		mInputEventListener = iel;
