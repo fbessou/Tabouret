@@ -5,6 +5,11 @@ import android.os.Vibrator;
 
 import com.fbessou.sofa.OutputEvent;
 
+/**
+ * Requires the caller to hold the permission android.Manifest.permission.VIBRATE.
+ * @author Proïd
+ *
+ */
 public class FeedbackIndicator extends Indicator {
 	Vibrator mVibrator;
 	
@@ -22,8 +27,20 @@ public class FeedbackIndicator extends Indicator {
 		if(mVibrator != null && mVibrator.hasVibrator()) {
 			// Cancel the last sequence
 			mVibrator.cancel();
-			// Play the sequence
-			mVibrator.vibrate(event.vibrations, -1);
+			
+			switch(event.feedback) {
+			case OutputEvent.VIBRATE_CUSTOM:
+				// Play the sequence
+				mVibrator.vibrate(event.vibrations, -1);
+				break;
+			case OutputEvent.VIBRATE_LONG:
+				mVibrator.vibrate(1000);
+				break;
+			case OutputEvent.VIBRATE_SHORT:
+			default:
+				mVibrator.vibrate(250);
+				break;
+			}
 		}
 	}
 }
