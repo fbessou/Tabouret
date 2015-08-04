@@ -16,6 +16,7 @@ import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.WifiP2pManager.Channel;
 import android.net.wifi.p2p.WifiP2pManager.ConnectionInfoListener;
+import android.os.Handler;
 
 /**
  * Use this class to easily connect to a proxy when you don't know if
@@ -23,14 +24,23 @@ import android.net.wifi.p2p.WifiP2pManager.ConnectionInfoListener;
  * TODO retry connect()
  */
 public class ProxyConnector extends BroadcastReceiver implements ConnectionInfoListener {
+	private boolean mIsWifiP2pConnected = false;
+	private boolean mIsReceiverRegistered = false;
+	/** Set to true if we are currently trying to establish a connection **/
+	private boolean mIsEstablishingConnection = false;
+	
 	private int mPort;
+	private InetAddress mHostAddress;
+	
 	private Context mContext;
 	private WifiP2pManager mWifiManager;
 	private Channel mChannel;
+	
+	private Handler mHandler;
 
 	public interface OnConnectedListener {
 		/**
-		 * When a TCP connection is established, this method is called.
+		 * When a TCP connection is established or failed, this method is called.
 		 * 
 		 * @param socket The distant socket obtained from connection or null if connection can't be established.
 		 */
@@ -42,25 +52,59 @@ public class ProxyConnector extends BroadcastReceiver implements ConnectionInfoL
 	private OnConnectedListener mListener = null;
 
 	/**
-	 * 
+	 * (Must be call in a thread with a Looper - activity or service - or should
+	 * add a looper as a parameter of this constructor)
 	 */
 	public ProxyConnector(Context context, int port, OnConnectedListener listener) {
 		mContext = context.getApplicationContext();
+		
 		mPort = port;
-		mListener = listener;
 		mWifiManager = (WifiP2pManager) mContext.getSystemService(Context.WIFI_P2P_SERVICE);
 		mChannel = mWifiManager.initialize(mContext, mContext.getMainLooper(), null);
+		
+		mListener = listener;
+		mHandler = new Handler(); // Must be call in a thread with a Looper: activity or service
+		
+		registerReceiver();
+		
 		Log.i("ProxyConnector", "initialisation");
 	}
 	
-	public void unregister() {
-		mContext.unregisterReceiver(this);
-	}
-
-	/** Start the process of connection **/
-	public void connect() {
+	private void registerReceiver() {
 		IntentFilter filter = new IntentFilter(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
 		mContext.registerReceiver(this, filter);
+		mIsReceiverRegistered = true;
+		
+		Log.i("ProxyConnector", "Register receiver with filter WIFI_P2P_CONNECTION_CHANGED_ACTION");
+	}
+	/**
+	 * Should be called when the activity / service is destroyed
+	 */
+	public void unregisterReceiver() {
+		mContext.unregisterReceiver(this);
+		mIsReceiverRegistered = false;
+		
+		Log.i("ProxyConnector", "Unregister receiver with filter WIFI_P2P_CONNECTION_CHANGED_ACTION");
+	}
+
+	/** Start the process of connection. The methods of the listener will
+	 * be called when the result is known. You cannot start a new connection
+	 * if a previous connection is not ended. **/
+	public void connect() {
+		if(mIsEstablishingConnection) {
+			Log.w("ProxyConnector", "Cannot start the process of connection. An other process is still running.");
+			return;
+		}
+		
+		mIsEstablishingConnection = true;
+		
+		// Register wifi p2p receiver and wait for group owner informations
+		if(!mIsReceiverRegistered)
+			registerReceiver();
+		// If we already know the host address, connect right now
+		else if(mIsWifiP2pConnected)
+			connectToProxy(mHostAddress, mPort);
+		
 		Log.i("ProxyConnector", "start process of connection, broadcastReceiver.registerReceiver wifi p2p");
 	}
 
@@ -79,8 +123,7 @@ public class ProxyConnector extends BroadcastReceiver implements ConnectionInfoL
 				mWifiManager.requestConnectionInfo(mChannel, this);
 			}
 			else {
-				// FIXME why should we connect to local?
-				// connectToProxy(null, mPort);
+				mIsWifiP2pConnected = false;
 			}
 		}
 	}
@@ -97,16 +140,19 @@ public class ProxyConnector extends BroadcastReceiver implements ConnectionInfoL
 	 **/
 	@Override
 	public void onConnectionInfoAvailable(WifiP2pInfo info) {
+		mIsWifiP2pConnected = true;
+		
+		// Update the address of the group owner
 		if (!info.isGroupOwner) {
-			final InetAddress ip = info.groupOwnerAddress;
-			Log.i("ProxyConnector","The group owner is "+ip.getHostAddress());
-			
-			connectToProxy(ip, mPort);
+			mHostAddress = info.groupOwnerAddress;
+			Log.i("ProxyConnector","The group owner is "+mHostAddress.getHostAddress());
 		} else {
+			mHostAddress = null /* local host */;
 			Log.i("ProxyConnector", "I am the group owner");
-			
-			connectToProxy(null, mPort);
 		}
+		
+		if(mIsEstablishingConnection)
+			connectToProxy(mHostAddress, mPort);
 	}
 
 	/**
@@ -132,19 +178,21 @@ public class ProxyConnector extends BroadcastReceiver implements ConnectionInfoL
 					Log.i("ProxyConnector", "Connected to " + address);
 				} catch (IOException e) {
 					socket = null;
+					
 					Log.w("ProxyConnector", "Connexion attempt to "+address+" failed", e);
 				}
+
+				// Call the callback method in the main looper
+				final Socket finalSocket = socket;
+				mHandler.post(new Runnable() {
+					@Override
+					public void run() {
+						mListener.onConnected(finalSocket);
+					}
+				});
 				
-				
-				// if we failed to connect to the given address, try with localhost
-				// FIXME why ?
-				/*if (hostaddr != null && socket == null){
-					Log.v("ProxyConnector", "Trying to connect locally");
-					connectToProxy(null, mPort);
-				}
-				else*/
-					mListener.onConnected(socket);
-				unregister();
+				// Connection establishment finished
+				mIsEstablishingConnection = false;
 			}
 		}).start();
 	}
