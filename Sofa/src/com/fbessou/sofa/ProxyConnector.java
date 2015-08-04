@@ -65,6 +65,8 @@ public class ProxyConnector extends BroadcastReceiver implements ConnectionInfoL
 		mListener = listener;
 		mHandler = new Handler(); // Must be call in a thread with a Looper: activity or service
 		
+		registerReceiver();
+		
 		Log.i("ProxyConnector", "initialisation");
 	}
 	
