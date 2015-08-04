@@ -5,6 +5,8 @@ package com.fbessou.sofa;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.json.JSONObject;
 
@@ -46,10 +48,13 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 	
 	private GamePadMessageListener mGamePadListener = null;
 	
-	// TODO list of accepted gamepad (whitelist)? Thus, we could filter game
+	ProxyConnector mConnector;
+	Timer mRetryConnectingTimer;
+	
+	// TODO list of accepted game pad (white-list)? Thus, we could filter game
 	// pad messages if the game want to refuse players even if the max game pad
 	// count (GameInformation) is not reached.
-	// Otherwise, we could let the proxy build and use a whitelist according to
+	// Otherwise, we could let the proxy build and use a white-list according to
 	// the GameAcceptMessage that it receives -> DONE!
 	
 	/**
@@ -71,8 +76,9 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 		super.onCreate(savedInstanceState);
 		Log.i("GameIOClient", "Creating fragment, connecting");
 		// connect to proxy
-		ProxyConnector connector = new ProxyConnector(getActivity().getApplicationContext(), GameIOProxy.DefaultGamePort, this);
-		connector.connect();
+		mConnector = new ProxyConnector(getActivity().getApplicationContext(), GameIOProxy.DefaultGamePort, this);
+		mConnector.connect();
+		mRetryConnectingTimer = new Timer();
 	}
 
 	/*
@@ -84,6 +90,9 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 	public void onDestroy() {
 		super.onDestroy();
 		Log.i("GameIOClient", "Destroying fragment");
+		
+		mConnector.unregisterReceiver();
+		mRetryConnectingTimer.cancel();
 		
 		if(mSocket != null) {
 			try {
@@ -205,8 +214,14 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 	@Override
 	public void onConnected(Socket socket) {
 		if(socket == null) {
-			// TODO retry 
-			Log.e("GameIOClient", "Connection failed");
+			// Connection failed, retry in 5 seconds
+			mRetryConnectingTimer.schedule(new TimerTask() {
+				@Override
+				public void run() {
+					mConnector.connect();
+				}
+			}, 5000);
+			Log.e("GameIOClient", "Connection failed, retry in 5 seconds...");
 		}
 		else {
 			Log.i("GameIOClient", "Connection established, start sender and receiver");

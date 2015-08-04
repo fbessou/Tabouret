@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 
 import org.json.JSONObject;
@@ -60,6 +62,9 @@ public class GamePadIOClient extends Fragment implements Sensor.InputEventTrigge
 	private Socket mSocket = null;
 	private StringReceiver mReceiver = null;
 	private StringSender mSender = null;
+	
+	ProxyConnector mConnector;
+	Timer mRetryConnectingTimer;
 
 	/**
 	 * 
@@ -77,8 +82,9 @@ public class GamePadIOClient extends Fragment implements Sensor.InputEventTrigge
 		super.onCreate(savedInstanceState);
 		setRetainInstance(true);
 		Log.i("GameBinder", "Creating fragment, connecting");
-		ProxyConnector connector = new ProxyConnector(this.getActivity().getApplicationContext(), GameIOProxy.DefaultGamePadsPort, this);
-		connector.connect();
+		mConnector = new ProxyConnector(this.getActivity().getApplicationContext(), GameIOProxy.DefaultGamePadsPort, this);
+		mConnector.connect();
+		mRetryConnectingTimer = new Timer();
 		/**
 		 * // Before connecting to this service, we have to wait for the service
 		 * // until we are sure it is running LocalBroadcastManager lbm =
@@ -100,6 +106,10 @@ public class GamePadIOClient extends Fragment implements Sensor.InputEventTrigge
 	@Override
 	public void onDestroy() {
 		Log.i("GameBinder", "destroying fragment");
+		
+		mConnector.unregisterReceiver();
+		mRetryConnectingTimer.cancel();
+		
 		try {
 			if (mSocket != null) {
 				sendMessage(new GamePadLeaveMessage());
@@ -207,8 +217,14 @@ public class GamePadIOClient extends Fragment implements Sensor.InputEventTrigge
 	@Override
 	public void onConnected(Socket socket) {
 		if(socket == null) {
-			// TODO retry 
-			Log.e("GamePadIOClient", "Connection failed");
+			// Connection failed, retry in 5 seconds
+			mRetryConnectingTimer.schedule(new TimerTask() {
+				@Override
+				public void run() {
+					mConnector.connect();
+				}
+			}, 5000);
+			Log.e("GameIOClient", "Connection failed, retry in 5 seconds...");
 		}
 		else {
 			Log.i("GameBinder", "Connection established, start sender and receiver");
