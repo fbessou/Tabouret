@@ -91,12 +91,14 @@ public class GameIOHelper {
 			gpEvent.gamePadId = gamepad;
 			
 			if(mode == Mode.LISTENER) {
-				handler.post(new Runnable() {
-					@Override
-					public void run() {
-						mInputEventListener.onInputEvent(gpEvent);
-					}
-				});
+				if(mInputEventListener != null) {
+					handler.post(new Runnable() {
+						@Override
+						public void run() {
+							mInputEventListener.onInputEvent(gpEvent);
+						}
+					});
+				}
 			} else {
 				mInputEventQueue.offer(gpEvent);
 			}
@@ -110,12 +112,14 @@ public class GameIOHelper {
 			gpEvent.newInformation = mGamePads.get(gamepad).staticInformations;
 			gpEvent.newInformation.setNickname(newNickname);
 			if(mode == Mode.LISTENER) {
-				handler.post(new Runnable() {
-					@Override
-					public void run() {
-						mStateChangedEventListener.onPadEvent(gpEvent);
-					}
-				});
+				if(mStateChangedEventListener != null) {
+					handler.post(new Runnable() {
+						@Override
+						public void run() {
+							mStateChangedEventListener.onPadEvent(gpEvent);
+						}
+					});
+				}
 			} else {
 				mStateEventQueue.offer(gpEvent);
 			}
@@ -129,12 +133,14 @@ public class GameIOHelper {
 			// Remove the game pad from the list
 			mGamePads.delete(gamepad);
 			if(mode == Mode.LISTENER) {
-				handler.post(new Runnable() {
-					@Override
-					public void run() {
-						mStateChangedEventListener.onPadEvent(gpEvent);
-					}
-				});
+				if(mStateChangedEventListener != null) {
+					handler.post(new Runnable() {
+						@Override
+						public void run() {
+							mStateChangedEventListener.onPadEvent(gpEvent);
+						}
+					});
+				}
 			} else {
 				mStateEventQueue.offer(gpEvent);
 			}
@@ -150,12 +156,14 @@ public class GameIOHelper {
 				mGamePads.put(gamepad, new GamePadInGameInformation());
 				mGamePads.get(gamepad).staticInformations = new GamePadInformation(nickName, null);
 				if(mode == Mode.LISTENER) {
-					handler.post(new Runnable() {
-						@Override
-						public void run() {
-							mStateChangedEventListener.onPadEvent(gpEvent);
-						}
-					});
+					if(mStateChangedEventListener != null) {
+						handler.post(new Runnable() {
+							@Override
+							public void run() {
+								mStateChangedEventListener.onPadEvent(gpEvent);
+							}
+						});
+					}
 				} else {
 					mStateEventQueue.offer(gpEvent);
 				}
@@ -173,12 +181,14 @@ public class GameIOHelper {
 			gpEvent.eventType = Type.UNEXPECTEDLY_DISCONNECTED;
 			gpEvent.gamePadId = gamepad;
 			if(mode == Mode.LISTENER) {
-				handler.post(new Runnable() {
-					@Override
-					public void run() {
-						mStateChangedEventListener.onPadEvent(gpEvent);
-					}
+				if(mStateChangedEventListener != null) {
+					handler.post(new Runnable() {
+						@Override
+						public void run() {
+							mStateChangedEventListener.onPadEvent(gpEvent);
+						}
 				});
+				}
 			} else {
 				mStateEventQueue.offer(gpEvent);
 			}
