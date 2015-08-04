@@ -89,7 +89,7 @@ public class StringReceiver extends Thread {
 			Thread.sleep(0, 500*1000);
 			
 			// return null is the socket is no longer connected or if it is shutdown
-			if(!mSocket.isConnected() || mSocket.isInputShutdown())
+			if(!mSocket.isConnected() || mSocket.isInputShutdown() || Thread.currentThread().isInterrupted())
 				return null;
 		}
 		

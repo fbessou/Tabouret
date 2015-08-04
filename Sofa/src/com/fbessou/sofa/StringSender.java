@@ -62,7 +62,7 @@ public class StringSender extends Thread {
 				return s;
 			
 			// return null is the socket is no longer connected or if it is shutdown
-			if(!mSocket.isConnected() || mSocket.isOutputShutdown())
+			if(!mSocket.isConnected() || mSocket.isOutputShutdown() || Thread.currentThread().isInterrupted())
 				return null;
 		}
 	}
