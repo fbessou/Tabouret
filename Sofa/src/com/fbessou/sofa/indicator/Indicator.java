@@ -37,5 +37,5 @@ abstract public class Indicator {
 	}
 	
 	/** Called when a new ouput event is received **/
-	public abstract void onOututEventReceived(OutputEvent event);
+	public abstract void onOutputEventReceived(OutputEvent event);
 }

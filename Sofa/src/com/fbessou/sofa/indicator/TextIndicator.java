@@ -30,7 +30,7 @@ public class TextIndicator extends Indicator {
 	}
 	
 	@Override
-	public void onOututEventReceived(OutputEvent event) {
+	public void onOutputEventReceived(OutputEvent event) {
 		mText = event.text;
 		
 		// Write the text

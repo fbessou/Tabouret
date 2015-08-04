@@ -50,10 +50,10 @@ public class OutputEvent {
 	 * If Feedback effect is CUSTOM, vibrations indicates how the Vibrator should
 	 * vibrate. The values in this array indicates the active and inactive time
 	 * of the vibrator in milliseconds. Ex : [15,10,30,10,20,10,100] means a
-	 * vibration will be made during 15ms before a pause of 10ms, followed by
-	 * another pulse of 30ms...
+	 * pause of 15ms before a vibration during 10ms, followed by
+	 * another pause of 30ms...
 	 */
-	public ArrayList<Integer> vibrations = null;
+	public long[] vibrations = null;
 
 	/**
 	 * Enum containing all the types a OutputEvent can be.
@@ -96,9 +96,9 @@ public class OutputEvent {
 			if(feedback == VIBRATE_CUSTOM){
 				JSONArray vibs = obj.getJSONArray("vibrations");
 				int length = vibs.length();
-				vibrations = new ArrayList<Integer>(length);
+				vibrations = new long[length];
 				for(int i = 0; i < length;i++)
-					vibrations.add(vibs.optInt(i));
+					vibrations[i] = vibs.optLong(i);
 			}
 			break;
 		case TEXT:
@@ -129,8 +129,12 @@ public class OutputEvent {
 		switch (eventType) {
 		case FEEDBACK:
 			obj.put("feedback", feedback);
-			if (feedback == VIBRATE_CUSTOM)
-				obj.put("vibrations", new JSONArray(vibrations));
+			if (feedback == VIBRATE_CUSTOM) {
+				JSONArray array = new JSONArray();
+				for(long v : vibrations)
+					array.put(v);
+				obj.put("vibrations", array);
+			}
 			break;
 		case STATE:
 			obj.put("state", state);
@@ -168,7 +172,9 @@ public class OutputEvent {
 
 	public static OutputEvent createFeedback(ArrayList<Integer> list) {
 		OutputEvent evt = new OutputEvent(Type.FEEDBACK);
-		evt.vibrations = list;
+		evt.vibrations = new long[list.size()];
+		for(int i = 0; i < list.size(); i++)
+			evt.vibrations[i] = list.get(i);
 		return evt;
 	}
 

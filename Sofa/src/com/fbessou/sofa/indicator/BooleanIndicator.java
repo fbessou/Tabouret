@@ -25,7 +25,7 @@ public class BooleanIndicator extends Indicator {
 	}
 	
 	@Override
-	public void onOututEventReceived(OutputEvent event) {
+	public void onOutputEventReceived(OutputEvent event) {
 		mIsOn = (event.state != 0);
 		
 		/** Update the view on the UI thread **/
