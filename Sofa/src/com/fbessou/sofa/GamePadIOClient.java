@@ -63,8 +63,10 @@ public class GamePadIOClient extends Fragment implements Sensor.InputEventTrigge
 	private StringReceiver mReceiver = null;
 	private StringSender mSender = null;
 	
-	ProxyConnector mConnector;
-	Timer mRetryConnectingTimer;
+	private boolean mIsDestroying = false;
+	
+	private ProxyConnector mConnector;
+	private Timer mRetryConnectingTimer;
 
 	/**
 	 * 
@@ -81,21 +83,13 @@ public class GamePadIOClient extends Fragment implements Sensor.InputEventTrigge
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setRetainInstance(true);
+		mIsDestroying = false;
+		
 		Log.i("GameBinder", "Creating fragment, connecting");
+		
 		mConnector = new ProxyConnector(this.getActivity().getApplicationContext(), GameIOProxy.DefaultGamePadsPort, this);
 		mConnector.connect();
 		mRetryConnectingTimer = new Timer();
-		/**
-		 * // Before connecting to this service, we have to wait for the service
-		 * // until we are sure it is running LocalBroadcastManager lbm =
-		 * LocalBroadcastManager
-		 * .getInstance(getActivity().getApplicationContext());
-		 * lbm.registerReceiver(new BroadcastReceiver() {
-		 * 
-		 * @Override public void onReceive(Context context, Intent intent) {
-		 * 
-		 *           } }, new IntentFilter("IO_PROXY_RUNNING"));
-		 **/
 	}
 
 	/*
@@ -106,7 +100,8 @@ public class GamePadIOClient extends Fragment implements Sensor.InputEventTrigge
 	@Override
 	public void onDestroy() {
 		Log.i("GameBinder", "destroying fragment");
-		
+
+		mIsDestroying = true;
 		mConnector.unregisterReceiver();
 		mRetryConnectingTimer.cancel();
 		
@@ -206,8 +201,13 @@ public class GamePadIOClient extends Fragment implements Sensor.InputEventTrigge
 	 */
 	@Override
 	public void onClosed(Socket socket) {
-		// TODO FIXME What could we do? try to reconnect ? But first, check if this service is shuting down ;)
+		// TODO FIXME What could we do? try to reconnect ? But first, check if this service is shutting down ;)
 		Log.i("GameBinder", "disconnected from socket:"+socket);
+		
+		if(!mIsDestroying) {
+			reconnect();
+		}
+		
 		mIsAcceptedByGame = false;
 	}
 
@@ -246,6 +246,14 @@ public class GamePadIOClient extends Fragment implements Sensor.InputEventTrigge
 	 */
 	public boolean isConnected() {
 		return mSocket != null && mSocket.isConnected();
+	}
+	
+	/** Re-established the connection if it is broken **/
+	public void reconnect() {
+		if(!isConnected()) {
+			Log.i("GamePadIOClient", "Reconnect");
+			mConnector.connect();
+		}
 	}
 	
 	public GamePadInformation getGamePadInfo() {

@@ -47,6 +47,8 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 	private StringSender mSender = null;
 	
 	private GamePadMessageListener mGamePadListener = null;
+
+	private boolean mIsDestroying = false;
 	
 	ProxyConnector mConnector;
 	Timer mRetryConnectingTimer;
@@ -75,6 +77,9 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		Log.i("GameIOClient", "Creating fragment, connecting");
+		
+		mIsDestroying = false;
+		
 		// connect to proxy
 		mConnector = new ProxyConnector(getActivity().getApplicationContext(), GameIOProxy.DefaultGamePort, this);
 		mConnector.connect();
@@ -90,7 +95,8 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 	public void onDestroy() {
 		super.onDestroy();
 		Log.i("GameIOClient", "Destroying fragment");
-		
+
+		mIsDestroying = true;
 		mConnector.unregisterReceiver();
 		mRetryConnectingTimer.cancel();
 		
@@ -245,6 +251,10 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 	public void onClosed(Socket socket) {
 		// TODO FIXME What could we do? try to reconnect ? But first, check if this service is shuting down ;)
 		Log.i("GameIOClient","disconnected from socket:"+socket);
+
+		if(!mIsDestroying) {
+			reconnect();
+		}
 	}
 
 	/**
@@ -253,6 +263,14 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 	 */
 	public boolean isConnected() {
 		return mSocket != null && mSocket.isConnected();
+	}
+	
+	/** Re-established the connection if it is broken **/
+	public void reconnect() {
+		if(!isConnected()) {
+			Log.i("GameIOClient", "Reconnect");
+			mConnector.connect();
+		}
 	}
 	
 	/**
