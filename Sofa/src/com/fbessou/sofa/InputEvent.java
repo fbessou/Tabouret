@@ -16,7 +16,6 @@ import org.json.JSONObject;
  */
 public class InputEvent {
 	
-	// FIXME use public Sensor.SensorType instead ? no ! sensor should generate inputeventtype and offer other service like clamp values
 	public enum Type {
 		KEYDOWN, KEYUP, FLOATDOWN, FLOATMOVE, FLOATUP, TEXT;
 
