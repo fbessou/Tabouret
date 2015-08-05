@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    
+    <declare-styleable name="Joystick">
+        
+       <attr name="bound" format="enum">
+           <enum name="circle" value="0"/>
+           <enum name="rect" value="1"/>
+       </attr>
+       
+       <attr name="position" format="enum">
+           <enum name="fixed" value="0"/>
+           <enum name="dynamic" value="1"/>
+           <enum name="follow" value="2"/>
+       </attr>
+       
+       
+       <attr name="centerDrawable" format="reference"/>
+       <attr name="stickDrawable" format="reference"/>
+       
+       <!-- Color ignored if drawable is defined -->
+       <attr name="stickColor" format="color"/>
+       <!-- Color ignored if drawable is defined -->
+       <attr name="centerColor" format="color"/>
+       
+       <attr name="stickRadius" format="dimension"/>
+       
+       <attr name="boundSize" format="dimension"/>
+       
+   </declare-styleable>
+   
+</resources>

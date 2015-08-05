@@ -2,27 +2,36 @@ package com.fbessou.sofa.view;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Vibrator;
+import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.RelativeLayout;
 
+import com.fbessou.sofa.R;
+
 /**
  * 
- * @author Pierre Guglielminotti-Ghermotti
+ * @author Proïd
  *
  */
 public class JoystickView extends View {
 	/** Bitmap image of the stick and the center; width must be equal to height **/
 	private Bitmap mStickBmp, mCenterBmp;
+	/** if bitmap not set, the color is used instead **/
+	private int mStickColor = 0xFF808080;
 	/** Parameters of the bound that define the constraints of the relative stick position **/
 	private BoundShape mBoundShape = BoundShape.CIRCLE;
 	private int mBoundRadius = 150;
 	/** Radius of the stick; Automatically set when setStickImage() is called **/
-	private int mStickRadius=60;
+	private int mStickRadius = 60;
 	/** Type of positioning of the joystick center (see enum Position) **/
 	private Position mCenterPosition = Position.DYNAMIC;
 	/** Listener used when the position of the stick is changed (see onTouchEvent()) **/
@@ -50,12 +59,46 @@ public class JoystickView extends View {
 		mStoredSize[1]=h;
 		centerStick();
 	}
-	/**
-	 * 
-	 */
+	
+
 	public JoystickView(Context context) {
 		super(context);
 		setStickImage(null);
+	}
+	public JoystickView(Context context, AttributeSet attrs) {
+		super(context, attrs);
+		loadAttributes(attrs, 0);
+		setStickImage(null);
+	}
+	public JoystickView(Context context, AttributeSet attrs, int defStyleAttr) {
+		super(context, attrs, defStyleAttr);
+		loadAttributes(attrs, defStyleAttr);
+		setStickImage(null);
+	}
+	
+	private void loadAttributes(AttributeSet attrs, int defStyleAttr) {
+		Context context = getContext();
+		TypedArray a = context.getTheme().obtainStyledAttributes(
+		        attrs,
+		        R.styleable.Joystick,
+		        defStyleAttr, 0);
+		try {
+			mBoundShape = BoundShape.values()[a.getInt(R.styleable.Joystick_bound, BoundShape.CIRCLE.ordinal())];
+			mBoundRadius = a.getDimensionPixelSize(R.styleable.Joystick_boundSize, 150);
+			mStickRadius = a.getDimensionPixelSize(R.styleable.Joystick_stickRadius, 60);
+			mCenterPosition = Position.values()[a.getInt(R.styleable.Joystick_position, Position.FOLLOW.ordinal())];
+			mStickColor = a.getColor(R.styleable.Joystick_stickColor, 0xFF808080);
+			
+			int resId = a.getResourceId(R.styleable.Joystick_stickDrawable, 0);
+			if(resId != 0)
+				mStickBmp = BitmapFactory.decodeResource(getResources(), resId);
+			
+			resId = a.getResourceId(R.styleable.Joystick_centerDrawable, 0);
+			if(resId != 0)
+				mCenterBmp = BitmapFactory.decodeResource(getResources(), resId);
+		} finally {
+			a.recycle();
+		}
 	}
 
 	/**
@@ -210,7 +253,7 @@ public class JoystickView extends View {
 		canvas.drawARGB(0, 0, 0, 0);
 
 		// The default color is grey
-		mPaint.setColor(0xff808080);
+		mPaint.setColor(mStickColor);
 		
 		canvas.save();
 		canvas.translate(mCenterPos[0], mCenterPos[1]);
@@ -220,7 +263,7 @@ public class JoystickView extends View {
 			if(mCenterBmp != null)
 				canvas.drawBitmap(mCenterBmp, -mCenterBmp.getWidth()/2, -mCenterBmp.getHeight()/2, null);
 			else
-				canvas.drawCircle(0,0, 20, mPaint);
+				canvas.drawCircle(0,0, mStickRadius / 4, mPaint);
 		}
 		else {
 			// Reduce opacity of the stick when it is released
