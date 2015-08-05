@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:sofa="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#123" >
+
+    <com.fbessou.sofa.view.JoystickView
+        android:id="@+id/joystickView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_toLeftOf="@+id/buttonsContainer"
+        sofa:position="follow"
+        sofa:bound="circle"
+        sofa:stickRadius="52dp" 
+        sofa:stickColor="#123"/>
+
+    <TextView
+        android:id="@+id/textOutput"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="27dp"
+        android:text="Output Text"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="#EEF"
+        android:textStyle="bold"
+        android:typeface="monospace" />
+
+    <GridLayout
+        android:id="@+id/buttonsContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:columnCount="3"
+        android:columnOrderPreserved="true"
+        android:rowCount="3"
+        android:rowOrderPreserved="true" >
+
+        <Button
+            android:id="@+id/buttonUp"
+            android:layout_column="1"
+            android:layout_gravity="left|top"
+            android:layout_row="0"
+            android:text="#"
+            android:textColor="#EEF"/>
+
+        <Button
+            android:id="@+id/buttonLeft"
+            android:layout_column="0"
+            android:layout_gravity="left"
+            android:layout_row="1"
+            android:text="$"
+            android:textColor="#EEF" />
+
+        <Button
+            android:id="@+id/buttonRight"
+            android:layout_column="2"
+            android:layout_gravity="left"
+            android:layout_row="1"
+            android:text="="
+            android:textColor="#EEF" />
+
+        <Button
+            android:id="@+id/buttonDown"
+            android:layout_column="1"
+            android:layout_gravity="left"
+            android:layout_row="2"
+            android:text="\@"
+            android:textColor="#EEF" />
+    </GridLayout>
+
+</RelativeLayout>
