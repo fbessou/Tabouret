@@ -22,6 +22,8 @@ import com.fbessou.sofa.view.JoystickView;
 public class GamePadActivity extends Activity {
 	GamePadIOHelper easyIO;
 	
+	private static final int UP = 1, LEFT = 2, RIGHT = 3, DOWN = 4;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -36,19 +38,19 @@ public class GamePadActivity extends Activity {
 		stick.attachTo((JoystickView) findViewById(R.id.joystickView));
 		easyIO.attachSensor(stick);
 		
-		KeySensor keyUp = new KeySensor(false, Sensor.KEY_CATEGORY_VALUE + 1);
+		KeySensor keyUp = new KeySensor(false, Sensor.KEY_CATEGORY_VALUE + UP);
 		keyUp.attachTo(findViewById(R.id.buttonUp));
 		easyIO.attachSensor(keyUp);
 		
-		KeySensor keyLeft = new KeySensor(false, Sensor.KEY_CATEGORY_VALUE + 2);
+		KeySensor keyLeft = new KeySensor(false, Sensor.KEY_CATEGORY_VALUE + LEFT);
 		keyLeft.attachTo(findViewById(R.id.buttonLeft));
 		easyIO.attachSensor(keyLeft);
 		
-		KeySensor keyRight = new KeySensor(false, Sensor.KEY_CATEGORY_VALUE + 3);
+		KeySensor keyRight = new KeySensor(false, Sensor.KEY_CATEGORY_VALUE + RIGHT);
 		keyRight.attachTo(findViewById(R.id.buttonRight));
 		easyIO.attachSensor(keyRight);
 		
-		KeySensor keyDown = new KeySensor(false, Sensor.KEY_CATEGORY_VALUE + 4);
+		KeySensor keyDown = new KeySensor(false, Sensor.KEY_CATEGORY_VALUE + DOWN);
 		keyDown.attachTo(findViewById(R.id.buttonDown));
 		easyIO.attachSensor(keyDown);
 		
