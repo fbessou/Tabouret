@@ -5,11 +5,8 @@ package com.fbessou.sofa;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.UUID;
 
 import org.json.JSONObject;
 
@@ -18,40 +15,28 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.os.Bundle;
 
-import com.fbessou.sofa.message.GamePadInputEventMessage;
 import com.fbessou.sofa.message.GamePadJoinMessage;
 import com.fbessou.sofa.message.GamePadLeaveMessage;
 import com.fbessou.sofa.message.GamePadRenameMessage;
 import com.fbessou.sofa.message.Message;
+import com.fbessou.sofa.message.Message.Type;
 import com.fbessou.sofa.message.ProxyGameOutputEventMessage;
 import com.fbessou.sofa.message.ProxyGameRenameMessage;
 import com.fbessou.sofa.message.ProxyMessage;
-import com.fbessou.sofa.message.Message.Type;
-import com.fbessou.sofa.sensor.Sensor;
 
 /**
  * @author Frank Bessou
  *
  * GameBinder used by game pads.
  */
-public class GamePadIOClient extends Fragment implements Sensor.InputEventTriggeredListener, StringReceiver.Listener, ProxyConnector.OnConnectedListener {
+public class GamePadIOClient extends Fragment implements StringReceiver.Listener, ProxyConnector.OnConnectedListener {
 	
 	/**
 	 * 
 	 */
-	GamePadInformation mGamePadInfo;
-	
-	/**
-	 * Stored unique identifier to help recovering
-	 */
-	UUID mUUID;
+	private GamePadInformation mGamePadInfo;
 
-	/**
-	 * FIXME Move to gamePadInfo?
-	 */
-	ArrayList<Sensor> mAvailableSensors = new ArrayList<Sensor>();
-
-	GameMessageListener mGameListener;
+	private GameMessageListener mGameListener;
 	private boolean mIsAcceptedByGame = false;
 	
 	// Communication with proxy
@@ -121,25 +106,11 @@ public class GamePadIOClient extends Fragment implements Sensor.InputEventTrigge
 		super.onDestroy();
 	}
 
-	// ArrayList<Output> mOutputMapping;
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * com.fbessou.sofa.Sensor.Listener#onInputEvent(com.fbessou.sofa.InputEvent
-	 * )
-	 */
-	@Override
-	public void onInputEventTriggered(InputEvent evt) {
-		Log.v("GameBinder", "onInputEventTriggered");
-		sendMessage(new GamePadInputEventMessage(evt));
-	}
-
 	/**
 	 * Sends the given message if we are connected.
 	 * @param m message to send
 	 */
-	private void sendMessage(Message m) {
+	public void sendMessage(Message m) {
 		Log.v("GameBinder", "sendMessage: "+m.toString());
 		if(isConnected()) {
 			if(m.getType() != Type.JOIN && !mIsAcceptedByGame)
@@ -271,30 +242,6 @@ public class GamePadIOClient extends Fragment implements Sensor.InputEventTrigge
 
 		sendMessage(new GamePadRenameMessage(info.getNickname()));
 	}
-
-	public void addSensor(Sensor sensor) {
-		mAvailableSensors.add(sensor);
-		sensor.setListener(this);
-	}
-
-	public void removeSensor(Sensor sensor) {
-		mAvailableSensors.remove(sensor);
-		sensor.setListener(null);
-	}
-
-	public void removeAllSensor() {
-		for(Sensor s : mAvailableSensors)
-			s.setListener(null);
-		
-		mAvailableSensors.clear();
-	}
-	
-	public void addAllSensor(Collection<Sensor> sensors) {
-		for(Sensor s : sensors)
-			s.setListener(this);
-		
-		mAvailableSensors.addAll(sensors);
-	}
 	
 
 	/**
@@ -322,11 +269,7 @@ public class GamePadIOClient extends Fragment implements Sensor.InputEventTrigge
 		mGameListener = listener;
 	}
 	
-	/**
-	 * 
-	 * @author Proïd
-	 *
-	 */
+	
 	public interface GameMessageListener {
 		void onGameOutputReceived(OutputEvent event);
 		void onGameRenamed(String newName);

@@ -5,6 +5,10 @@ import android.os.Handler;
 import com.fbessou.sofa.OutputEvent;
 
 abstract public class Indicator {
+	public static final int BOOLEAN_CATEGORY_VALUE = 1000;
+	public static final int TEXT_CATEGORY_VALUE = 2000;
+	public static final int FEEDBACK_CATEGORY_VALUE = 3000;
+	
 	protected Handler mUIHandler;
 	/** unique identifier **/
 	protected int mId;

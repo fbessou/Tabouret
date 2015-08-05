@@ -11,6 +11,9 @@ import com.fbessou.sofa.InputEvent;
  *
  */
 abstract public class Sensor {
+	public static final int KEY_CATEGORY_VALUE = 1000;
+	public static final int ANALOG_CATEGORY_VALUE = 2000;
+	public static final int WORLD_CATEGORY_VALUE = 3000;
 	
 	/** Listener on input event **/
 	public interface InputEventTriggeredListener{

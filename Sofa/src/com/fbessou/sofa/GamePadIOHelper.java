@@ -1,13 +1,23 @@
 package com.fbessou.sofa;
 
+import java.util.ArrayList;
+
 import android.app.Activity;
+import android.util.SparseArray;
 
 import com.fbessou.sofa.GamePadIOClient.GameMessageListener;
+import com.fbessou.sofa.indicator.Indicator;
+import com.fbessou.sofa.message.GamePadInputEventMessage;
 import com.fbessou.sofa.sensor.Sensor;
+import com.fbessou.sofa.sensor.Sensor.InputEventTriggeredListener;
 
-public class GamePadIOHelper {
+public class GamePadIOHelper implements InputEventTriggeredListener {
 	GamePadIOClient mGamePadIO;
-	// TODO ArrayList<Indicator>
+	
+	/** Indicators attached to this IO helper **/
+	SparseArray<Indicator> mIndicators = new SparseArray<>();
+	/** Sensors attached to this IO helper **/
+	ArrayList<Sensor> mSensors = new ArrayList<>();
 	
 	public GamePadIOHelper() {
 		// TODO something
@@ -19,10 +29,12 @@ public class GamePadIOHelper {
 	}
 	
 	public void attachSensor(Sensor sensor) {
-		if(mGamePadIO != null)
-			mGamePadIO.addSensor(sensor);
-		else
-			throw new RuntimeException("To attach sensor, the method start(activity, info) must be invoked first");
+		sensor.setListener(this);
+		mSensors.add(sensor);
+	}
+	
+	public void attachIndicator(Indicator indicator) {
+		mIndicators.put(indicator.getPadId(), indicator);
 	}
 	
 	public void updateInformation(GamePadInformation info) {
@@ -32,8 +44,14 @@ public class GamePadIOHelper {
 	private class GameMessage implements GameMessageListener {
 		@Override
 		public void onGameOutputReceived(OutputEvent event) {
-			// TODO Auto-generated method stub
-			
+			// Get the associated indicator if existing
+			Indicator target = mIndicators.get(event.outputId);
+			if(target != null) {
+				// Transmit the event
+				target.onOutputEventReceived(event);
+			} else {
+				Log.w("GamePadIOHelper", "Output event received but attached indicator not found");
+			}
 		}
 	
 		@Override
@@ -45,5 +63,11 @@ public class GamePadIOHelper {
 		public void onGameLeft() {
 			// TODO Auto-generated method stub
 		}
+	}
+
+	@Override
+	public void onInputEventTriggered(InputEvent evt) {
+		GamePadInputEventMessage msg = new GamePadInputEventMessage(evt);
+		mGamePadIO.sendMessage(msg);
 	}
 }
