@@ -253,6 +253,8 @@ public class GamePadIOClient extends Fragment implements Sensor.InputEventTrigge
 		if(!isConnected()) {
 			Log.i("GamePadIOClient", "Reconnect");
 			mConnector.connect();
+		} else {
+			Log.i("GamePadIOClient", "Already connected, cannot to reconnect.");
 		}
 	}
 	

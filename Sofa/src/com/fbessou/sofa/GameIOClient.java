@@ -270,6 +270,8 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 		if(!isConnected()) {
 			Log.i("GameIOClient", "Reconnect");
 			mConnector.connect();
+		} else {
+			Log.i("GameIOClient", "Already connected, cannot to reconnect.");
 		}
 	}
 	
