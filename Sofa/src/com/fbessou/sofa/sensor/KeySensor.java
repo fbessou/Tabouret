@@ -23,7 +23,7 @@ public class KeySensor extends Sensor {
 	private boolean mOn;
 	/**
 	 * (with auto generated id)
-	 * @param on initial state of the key (in case of checkbox for example)
+	 * @param on initial state of the key (in case of check box for example)
 	 */
 	public KeySensor(boolean on) {
 		super();
@@ -36,6 +36,20 @@ public class KeySensor extends Sensor {
 	public KeySensor(boolean on, int id) {
 		super(id);
 		mOn = on;
+	}
+	/**
+	 * (with auto generated id)
+	 */
+	public KeySensor() {
+		super();
+		mOn = false;
+	}
+	/**
+	 * 
+	 */
+	public KeySensor(int id) {
+		super(id);
+		mOn = false;
 	}
 	
 	/** Attaches a check box view to this sensor. Each state change (on/off) will trigger an event **/
