@@ -73,7 +73,11 @@ public class KeySensor extends Sensor {
 		view.setOnTouchListener(new OnTouchListener() {
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
-				setValue(v.isPressed());
+				int action = event.getAction();
+				if(action == MotionEvent.ACTION_DOWN)
+					setValue(true);
+				else if(action == MotionEvent.ACTION_CANCEL || action == MotionEvent.ACTION_UP)
+					setValue(false);
 				return false;
 			}
 		});
