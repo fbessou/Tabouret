@@ -181,9 +181,9 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			mGameConnection = new GameConnection(gameSocket);
 
 			Log.i("GameIOProxy", "A game has registered");
-			Vibrator v2 = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+			/*Vibrator v2 = (Vibrator) getSystemService(VIBRATOR_SERVICE);
 			if(v2 != null)
-				v2.vibrate(100);
+				v2.vibrate(100);*/
 		}
 		else
 			Log.w("GameIOProxy", "An other game is already registered");
@@ -224,6 +224,17 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			GamePadConnection gpConnection = mGamePads.valueAt(i);
 			if(gpConnection.isRegistered())
 				gpConnection.unregister();
+		}
+	}
+	/**
+	 * Reject (cancel accept) all the game-pads.
+	 */
+	private void rejectAllTheGamePads() {
+		Log.i("GameIOProxy", "rejecting all the game pads");
+		for(int i = mGamePads.size()-1; i >= 0; i--) {
+			GamePadConnection gpConnection = mGamePads.valueAt(i);
+			if(gpConnection.isAccepted())
+				gpConnection.reject();
 		}
 	}
 	
@@ -392,6 +403,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 					break;
 				case LEAVE:
 					proxyMessage = new ProxyGameLeaveMessage((GameLeaveMessage) message);
+					rejectAllTheGamePads();
 					break;
 				case ACCEPT:
 					proxyMessage = new ProxyGameAcceptMessage((GameAcceptMessage) message);
@@ -649,6 +661,13 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		public void accept() {
 			Log.i("GameIOProxy", "GamePadConnection: id:"+mPadId+" accepted by the game");
 			mIsAcceptedByGame = true;
+		}
+		/**
+		 * Mark this game-pad as not accepted by the game
+		 */
+		public void reject() {
+			Log.i("GameIOProxy", "GamePadConnection: id:"+mPadId+" rejected by the game");
+			mIsAcceptedByGame = false;
 		}
 		
 		public boolean isAccepted() {
