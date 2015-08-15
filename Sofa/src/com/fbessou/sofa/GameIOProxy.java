@@ -404,6 +404,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 				case LEAVE:
 					proxyMessage = new ProxyGameLeaveMessage((GameLeaveMessage) message);
 					rejectAllTheGamePads();
+					close();
 					break;
 				case ACCEPT:
 					proxyMessage = new ProxyGameAcceptMessage((GameAcceptMessage) message);
@@ -418,10 +419,10 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 					proxyMessage = new ProxyGameOutputEventMessage((GameOutputEventMessage) message);
 					recipientID = ((GameOutputEventMessage) message).getGamePadId(); // Unique recipient
 					break;
-				case LOST: // Should not occur
 				case INPUTEVENT:
 					// The game cannot send Input event message, we ignore this message
 					Log.w("GameIOProxy", "GameConnection: "+message.getType()+" received from the game. Message dropped.");
+				case LOST: // Should not occur
 					break;
 				}
 				

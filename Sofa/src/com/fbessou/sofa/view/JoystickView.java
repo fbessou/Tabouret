@@ -85,7 +85,7 @@ public class JoystickView extends View {
 			mBoundRadius = a.getDimensionPixelSize(R.styleable.Joystick_boundSize, 150);
 			mStickRadius = a.getDimensionPixelSize(R.styleable.Joystick_stickRadius, 60);
 			mCenterPosition = Position.values()[a.getInt(R.styleable.Joystick_position, Position.FOLLOW.ordinal())];
-			mStickColor = a.getColor(R.styleable.Joystick_stickColor, 0xFF808080);
+			mStickColor = a.getInt(R.styleable.Joystick_stickColor, 0xFF808080);
 			
 			int resId = a.getResourceId(R.styleable.Joystick_stickDrawable, 0);
 			if(resId != 0)
