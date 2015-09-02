@@ -29,7 +29,7 @@ import com.fbessou.sofa.message.ProxyMessage;
  *
  * GameBinder used by game pads.
  */
-public class GamePadIOClient extends Fragment implements StringReceiver.Listener, ProxyConnector.OnConnectedListener {
+public class GamePadIOClient extends Fragment implements StringReceiver.Listener, ProxyConnector.OnConnectedListener, StringSender.Listener {
 	
 	/**
 	 * 
@@ -202,6 +202,7 @@ public class GamePadIOClient extends Fragment implements StringReceiver.Listener
 			mSocket = socket;
 			mSender = new StringSender(mSocket);
 			mReceiver = new StringReceiver(mSocket);
+			mSender.setListener(this);
 			mReceiver.setListener(this);
 			mSender.start();
 			mReceiver.start();

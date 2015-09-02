@@ -30,7 +30,6 @@ public class StringReceiver extends Thread {
 	 */
 	public interface Listener{
 		void onStringReceived(String s, Socket socket);
-		void onClosed(Socket socket);
 	}
 	
 	/**
@@ -69,9 +68,6 @@ public class StringReceiver extends Thread {
 		} catch (InterruptedException e) {
 			// Exception thrown in readNextLine after shutdown() is called
 		}
-		
-		if(mListener != null) //Obvious FIXME really? it will permit to the gameIOProxy to handle unexpected disconnection!
-			mListener.onClosed(mSocket);
 	}
 	
 	/**

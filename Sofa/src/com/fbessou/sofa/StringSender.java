@@ -18,8 +18,12 @@ import java.util.concurrent.TimeUnit;
  */
 public class StringSender extends Thread {
 	
+	public interface Listener{
+		void onClosed(Socket socket);
+	}
+	
 	private Socket mSocket; // Socket to send data to
-	/** The queue of message to send **/
+	private Listener mListener = null;
 	private LinkedBlockingQueue<String> mStrings = new LinkedBlockingQueue<String>();
 
 	/**
@@ -43,10 +47,14 @@ public class StringSender extends Thread {
 				stream.write((s+"\n").getBytes());
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			// Can be something like "timed out"
+			Log.w("StringSender", "String sender IO exception", e);
 		}  catch (InterruptedException e) {
 			// Exception thrown by LinkedBlockingQueue.pool(delay) after shutdown() is called
 		}
+		
+		if(mListener != null)
+			mListener.onClosed(mSocket);
 	}
 	
 	/**
@@ -95,5 +103,13 @@ public class StringSender extends Thread {
 	 */
 	public void clearBufferedMessage() {
 		mStrings.clear();
+	}
+
+	public void setListener(Listener listener){
+		mListener = listener;
+	}
+	
+	Listener getListener(){
+		return mListener;
 	}
 }

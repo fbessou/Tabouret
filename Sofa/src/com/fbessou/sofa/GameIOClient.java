@@ -32,7 +32,7 @@ import com.fbessou.sofa.message.ProxyMessage;
  * Game
  * @author Frank Bessou
  */
-public class GameIOClient extends Fragment implements StringReceiver.Listener, ProxyConnector.OnConnectedListener {
+public class GameIOClient extends Fragment implements StringReceiver.Listener, ProxyConnector.OnConnectedListener, StringSender.Listener {
 	
 	/**
 	 * Informations of the running game
@@ -235,6 +235,7 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 			mSocket = socket;
 			mSender = new StringSender(socket);
 			mReceiver = new StringReceiver(socket);
+			mSender.setListener(this);
 			mReceiver.setListener(this);
 			mSender.start();
 			mReceiver.start();

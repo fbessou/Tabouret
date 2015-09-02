@@ -354,7 +354,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 	 * @author Frank Bessou
 	 *
 	 */
-	private class GameConnection extends StringSender implements StringReceiver.Listener {
+	private class GameConnection extends StringSender implements StringReceiver.Listener, StringSender.Listener {
 		/**
 		 * The socket used to communicate with the game server
 		 */
@@ -374,6 +374,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			mReceiver = new StringReceiver(socket);
 			mReceiver.setListener(this);
 			this.start();
+			this.setListener(this);
 			mReceiver.start();
 			Log.w("GameIOProxy", "Initialisation. GameConnection: start sender and receiver");
 		}
@@ -459,7 +460,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		}
 	}
 
-	private class GamePadConnection extends StringSender implements StringReceiver.Listener {
+	private class GamePadConnection extends StringSender implements StringReceiver.Listener, StringSender.Listener {
 		/** The id associated to this game-pad. Equals
 		 * to -1 if the game-pad is not registered */
 		private int mPadId = -1;
@@ -487,6 +488,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			mReceiver = new StringReceiver(socket);
 			mReceiver.setListener(this);
 			this.start();
+			this.setListener(this);
 			mReceiver.start();
 			Log.i("GameIOProxy", "Initialisation. GamePadConnection: start sender and receiver");
 		}
