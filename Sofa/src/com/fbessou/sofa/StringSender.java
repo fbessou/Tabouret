@@ -20,11 +20,13 @@ public class StringSender extends Thread {
 	
 	public interface Listener{
 		void onClosed(Socket socket);
+		void onMessageSent(String msg, Socket socket);
 	}
 	
 	private Socket mSocket; // Socket to send data to
 	private Listener mListener = null;
 	private LinkedBlockingQueue<String> mStrings = new LinkedBlockingQueue<String>();
+	private boolean mConcatenateMessages = true;
 
 	/**
 	 * 
@@ -44,7 +46,10 @@ public class StringSender extends Thread {
 				
 				/** do not forget the '\n' character, it is the delimiter
 				 * for <code>com.fbessou.sofa.StringReceiver</code> **/
-				stream.write((s+"\n").getBytes());
+				stream.write((s+'\n').getBytes());
+				
+				if(mListener != null)
+					mListener.onMessageSent(s, mSocket);
 			}
 		} catch (IOException e) {
 			// Can be something like "timed out"
@@ -66,8 +71,16 @@ public class StringSender extends Thread {
 		while(true) {
 			// Wait for a string. Throws InterruptedException.
 			String s = mStrings.poll(500, TimeUnit.MICROSECONDS);
-			if(s != null)
+			if(s != null) {
+				if(mConcatenateMessages) {
+					// Concatenate other messages if present
+					String next = null;
+					while((next = mStrings.poll()) != null) {
+						s += '\n' + next;
+					}
+				}
 				return s;
+			}
 			
 			// return null is the socket is no longer connected or if it is shutdown
 			if(!mSocket.isConnected() || mSocket.isOutputShutdown() || Thread.currentThread().isInterrupted())
@@ -94,7 +107,7 @@ public class StringSender extends Thread {
 		if(isAlive() && !isInterrupted())
 			mStrings.add(string);
 		else {
-			// Log.d("StringSender", "Sender not running, message dropped");
+			Log.v("StringSender", "Sender not running, message dropped");
 		}
 	}
 	
