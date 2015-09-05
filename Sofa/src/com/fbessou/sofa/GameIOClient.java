@@ -3,17 +3,12 @@
  */
 package com.fbessou.sofa;
 
-import java.io.IOException;
 import java.net.Socket;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import org.json.JSONObject;
 
 import android.app.Activity;
-import android.app.Fragment;
 import android.app.FragmentManager;
-import android.os.Bundle;
 
 import com.fbessou.sofa.message.GameAcceptMessage;
 import com.fbessou.sofa.message.GameJoinMessage;
@@ -32,26 +27,15 @@ import com.fbessou.sofa.message.ProxyMessage;
  * Game
  * @author Frank Bessou
  */
-public class GameIOClient extends Fragment implements StringReceiver.Listener, ProxyConnector.OnConnectedListener, StringSender.Listener {
+public class GameIOClient extends IOClient {
 	
 	/**
 	 * Informations of the running game
 	 */
 	GameInformation gameInfo;
-
-	/**
-	 * Socket connecting to a proxy
-	 */
-	private Socket mSocket = null;
-	private StringReceiver mReceiver = null;
-	private StringSender mSender = null;
 	
 	private GamePadMessageListener mGamePadListener = null;
 
-	private boolean mIsDestroying = false;
-	
-	ProxyConnector mConnector;
-	Timer mRetryConnectingTimer;
 	
 	// TODO list of accepted game pad (white-list)? Thus, we could filter game
 	// pad messages if the game want to refuse players even if the max game pad
@@ -63,58 +47,8 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 	 * 
 	 */
 	private GameIOClient(GameInformation gameInfo) {
+		super(GameIOProxy.DefaultGamePort);
 		this.gameInfo = gameInfo;
-		setRetainInstance(true);
-	}
-	
-	
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see android.app.Fragment#onCreate(android.os.Bundle)
-	 */
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		Log.i("GameIOClient", "Creating fragment, connecting");
-		
-		mIsDestroying = false;
-		
-		// connect to proxy
-		mConnector = new ProxyConnector(getActivity().getApplicationContext(), GameIOProxy.DefaultGamePort, this);
-		mConnector.connect();
-		mRetryConnectingTimer = new Timer();
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see android.app.Fragment#onDestroy()
-	 */
-	@Override
-	public void onDestroy() {
-		super.onDestroy();
-		Log.i("GameIOClient", "Destroying fragment");
-
-		mIsDestroying = true;
-		mConnector.unregisterReceiver();
-		mRetryConnectingTimer.cancel();
-		
-		if(mSocket != null) {
-			try {
-				Log.i("GameIOClient", "clearBufferedMessage");
-				mSender.clearBufferedMessage();
-				sendMessage(new GameLeaveMessage());
-				// The sender must send its message before closing socket
-				Thread.sleep(2000);// FIXME find a better way to be sure that the leave message has been sent
-				Log.i("GameIOClient", "close socket:"+mSocket+" after sleeping 2000ms");
-				mSocket.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
 	}
 	
 	/**
@@ -130,19 +64,6 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 	
 	public GameInformation getGameInfo() {
 		return gameInfo;
-	}
-	
-	/**
-	 * Sends the given message if we are connected.
-	 * @param m message to send
-	 */
-	private void sendMessage(Message m) {
-		Log.v("GameIOClient", "send message:"+m.toString());
-		if(isConnected())
-			mSender.send(m.toString());
-		else {
-			Log.w("GameIOClient", "Warning : cannot send message, disconnected from proxy");
-		}
 	}
 	
 	/* (non-Javadoc)
@@ -194,6 +115,10 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 					mGamePadListener.onGamePadUnexpectedlyDisconnected(gamePadId);
 				}
 				break;
+			case PONG:
+				// Response of our "ping" message
+				break;
+			case PING: // Should not occur
 			case OUTPUTEVENT: // Should not occur
 			case ACCEPT: // Should not occur
 				break;
@@ -201,6 +126,35 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 			}
 		} catch (Exception e) {
 			Log.e("GameIOClient", "onStringReceived error", e);
+		}
+	}
+	
+	/** Called when this client is connected to the proxy and messages can be sent and received. **/
+	@Override
+	protected void onCommunicationEnabled() {
+		super.onCommunicationEnabled();
+		// Send Join message
+		sendMessage(new GameJoinMessage());
+	}
+	
+	/** Called before closing the communication. **/
+	protected void beforeCommunicationDisabled() {
+		super.beforeCommunicationDisabled();
+
+		// Send "leave" message
+		sendMessage(new GameLeaveMessage());
+	}
+
+	/**
+	 * Sends the given message if we are connected.
+	 * @param m message to send
+	 */
+	public void sendMessage(Message m) {
+		Log.v("GameIOClient", "send message:"+m.toString());
+		if(isConnected())
+			mSender.send(m.toString());
+		else {
+			Log.w("GameIOClient", "Warning : cannot send message, disconnected from proxy");
 		}
 	}
 
@@ -212,68 +166,6 @@ public class GameIOClient extends Fragment implements StringReceiver.Listener, P
 	public void sendOutputEvent(OutputEvent event, int gamepad) {
 		Log.i("GameIOClient", "sendOutputEvent to game pad id:"+gamepad+" event:"+event.toString());
 		sendMessage(new GameOutputEventMessage(event, gamepad));
-	}
-	
-	/* (non-Javadoc)
-	 * @see com.fbessou.sofa.ProxyConnector.OnConnectedListener#onConnected(java.net.Socket)
-	 */
-	@Override
-	public void onConnected(Socket socket) {
-		if(socket == null) {
-			// Connection failed, retry in 5 seconds
-			mRetryConnectingTimer.schedule(new TimerTask() {
-				@Override
-				public void run() {
-					mConnector.connect();
-				}
-			}, 5000);
-			Log.e("GameIOClient", "Connection failed, retry in 5 seconds...");
-		}
-		else {
-			Log.i("GameIOClient", "Connection established, start sender and receiver");
-			// Start Sender and Receiver
-			mSocket = socket;
-			mSender = new StringSender(socket);
-			mReceiver = new StringReceiver(socket);
-			mSender.setListener(this);
-			mReceiver.setListener(this);
-			mSender.start();
-			mReceiver.start();
-			
-			// Send Join message
-			sendMessage(new GameJoinMessage());
-		}
-	}
-	
-	/* (non-Javadoc)
-	 * @see com.fbessou.sofa.StringReceiver.Listener#onClosed(java.net.Socket)
-	 */
-	@Override
-	public void onClosed(Socket socket) {
-		// TODO FIXME What could we do? try to reconnect ? But first, check if this service is shuting down ;)
-		Log.i("GameIOClient","disconnected from socket:"+socket);
-
-		if(!mIsDestroying) {
-			reconnect();
-		}
-	}
-
-	/**
-	 * Indicates if this gameIOClient is connected to the proxy.
-	 * @return connected or not
-	 */
-	public boolean isConnected() {
-		return mSocket != null && mSocket.isConnected();
-	}
-	
-	/** Re-established the connection if it is broken **/
-	public void reconnect() {
-		if(!isConnected()) {
-			Log.i("GameIOClient", "Reconnect");
-			mConnector.connect();
-		} else {
-			Log.i("GameIOClient", "Already connected, cannot to reconnect.");
-		}
 	}
 	
 	/**

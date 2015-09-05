@@ -42,6 +42,7 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 
 	public IOClient(int port) {
 		mPort = port;
+		setRetainInstance(true);
 	}
 	
 	/*
@@ -52,7 +53,6 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setRetainInstance(true);
 		mIsFragmentDestroying = false;
 		
 		Log.i("IOClient", "Creating fragment and connecting");
