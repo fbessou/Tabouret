@@ -146,6 +146,7 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 	 */
 	@Override
 	public void onClosed(Socket socket) {
+		Log.i("IOClient", "disconnected from socket:"+socket);
 		disableConnectionKeeper();
 		
 		// Try to reconnect. But first, check if this service is shutting down ;)

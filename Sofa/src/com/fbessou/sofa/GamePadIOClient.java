@@ -3,20 +3,16 @@
  */
 package com.fbessou.sofa;
 
-import java.io.IOException;
 import java.net.Socket;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import org.json.JSONObject;
 
 import android.app.Activity;
-import android.app.Fragment;
 import android.app.FragmentManager;
-import android.os.Bundle;
 
 import com.fbessou.sofa.message.GamePadJoinMessage;
 import com.fbessou.sofa.message.GamePadLeaveMessage;
+import com.fbessou.sofa.message.GamePadPingMessage;
 import com.fbessou.sofa.message.GamePadRenameMessage;
 import com.fbessou.sofa.message.Message;
 import com.fbessou.sofa.message.Message.Type;
@@ -29,7 +25,7 @@ import com.fbessou.sofa.message.ProxyMessage;
  *
  * GameBinder used by game pads.
  */
-public class GamePadIOClient extends Fragment implements StringReceiver.Listener, ProxyConnector.OnConnectedListener, StringSender.Listener {
+public class GamePadIOClient extends IOClient {
 	
 	/**
 	 * 
@@ -38,90 +34,25 @@ public class GamePadIOClient extends Fragment implements StringReceiver.Listener
 
 	private GameMessageListener mGameListener;
 	private boolean mIsAcceptedByGame = false;
-	
-	// Communication with proxy
-
-	/**
-	 * Socket connecting to a proxy
-	 */
-	private Socket mSocket = null;
-	private StringReceiver mReceiver = null;
-	private StringSender mSender = null;
-	
-	private boolean mIsDestroying = false;
-	
-	private ProxyConnector mConnector;
-	private Timer mRetryConnectingTimer;
 
 	/**
 	 * 
 	 */
 	public GamePadIOClient(GamePadInformation info) {
+		super(GameIOProxy.DefaultGamePadsPort);
 		mGamePadInfo = info;
 	}
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see android.app.Fragment#onCreate(android.os.Bundle)
-	 */
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setRetainInstance(true);
-		mIsDestroying = false;
-		
-		Log.i("GameBinder", "Creating fragment, connecting");
-		
-		mConnector = new ProxyConnector(this.getActivity().getApplicationContext(), GameIOProxy.DefaultGamePadsPort, this);
-		mConnector.connect();
-		mRetryConnectingTimer = new Timer();
-	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see android.app.Fragment#onDestroy()
-	 */
-	@Override
-	public void onDestroy() {
-		Log.i("GameBinder", "destroying fragment");
-
-		mIsDestroying = true;
-		mConnector.unregisterReceiver();
-		mRetryConnectingTimer.cancel();
-		
-		try {
-			if (mSocket != null) {
-				sendMessage(new GamePadLeaveMessage());
-				Thread.sleep(2000);
-				Log.i("GameBinder", "close socket:"+mSocket+" after sleeping 2000ms");
-				mSocket.close();
-			}
-		} catch (IOException e) {
-			Log.e("GameBinder", "Error closing socket", e);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-
-		super.onDestroy();
-	}
-
-	/**
-	 * Sends the given message if we are connected.
-	 * @param m message to send
-	 */
-	public void sendMessage(Message m) {
-		Log.v("GameBinder", "sendMessage: "+m.toString());
-		if(isConnected()) {
-			if(m.getType() != Type.JOIN && !mIsAcceptedByGame)
-				Log.w("GameBinder", "Try to send "+m.getType()+" but game pad not accepted by game. Cancel.");
-			else
-				mSender.send(m.toString());
-		}
-		else
-			Log.w("GameBinder", "sendMessage error : cannot send message, disconnected from proxy");
-	}
 	
+	/** Called when this client is connected to the proxy and messages can be sent and received. **/
+	@Override
+	protected void onCommunicationEnabled() {
+		super.onCommunicationEnabled();
+		
+		// Send Join message
+		sendMessage(new GamePadJoinMessage(mGamePadInfo.getNickname(), mGamePadInfo.getUUID()));
+	}
+
 	/* (non-Javadoc)
 	 * @see com.fbessou.sofa.StringReceiver.Listener#onStringReceived(java.lang.String)
 	 */
@@ -158,8 +89,13 @@ public class GamePadIOClient extends Fragment implements StringReceiver.Listener
 					mGameListener.onGameRenamed(name);
 				}
 				break;
+			case PONG:
+				// We have received the answer to our "ping" message
+				// TODO Create method pingProxy() and compute delay between ping and pong
+				break;
 			case LOST: // Should not occur
 			case INPUTEVENT: // Should not occur
+			case PING: // Should not occur
 				break;
 			}
 		}catch(Exception e){
@@ -168,66 +104,48 @@ public class GamePadIOClient extends Fragment implements StringReceiver.Listener
 	}
 	
 	/* (non-Javadoc)
-	 * @see com.fbessou.sofa.StringReceiver.Listener#onClosed(java.net.Socket)
+	 * @see com.fbessou.sofa.StringSender.Listener#onClosed(java.net.Socket)
 	 */
 	@Override
 	public void onClosed(Socket socket) {
-		// TODO FIXME What could we do? try to reconnect ? But first, check if this service is shutting down ;)
-		Log.i("GameBinder", "disconnected from socket:"+socket);
-		
-		if(!mIsDestroying) {
-			reconnect();
-		}
+		super.onClosed(socket);
 		
 		mIsAcceptedByGame = false;
 	}
 
-	/* (non-Javadoc)
-	 * @see com.fbessou.sofa.ProxyConnector.OnConnectedListener#onConnected(java.net.Socket)
-	 */
+	/** Called before closing the communication. **/
 	@Override
-	public void onConnected(Socket socket) {
-		if(socket == null) {
-			// Connection failed, retry in 5 seconds
-			mRetryConnectingTimer.schedule(new TimerTask() {
-				@Override
-				public void run() {
-					mConnector.connect();
-				}
-			}, 5000);
-			Log.e("GameIOClient", "Connection failed, retry in 5 seconds...");
-		}
-		else {
-			Log.i("GameBinder", "Connection established, start sender and receiver");
-			mSocket = socket;
-			mSender = new StringSender(mSocket);
-			mReceiver = new StringReceiver(mSocket);
-			mSender.setListener(this);
-			mReceiver.setListener(this);
-			mSender.start();
-			mReceiver.start();
-
-			// Send Join message
-			sendMessage(new GamePadJoinMessage(mGamePadInfo.getNickname(), mGamePadInfo.getUUID()));
-		}
+	protected void beforeCommunicationDisabled() {
+		super.beforeCommunicationDisabled();
+		
+		// Send "leave" message
+		sendMessage(new GamePadLeaveMessage());
 	}
 	
 	/**
-	 * Indicates if this gamePadIOClient is connected to the proxy.
-	 * @return connected or not
+	 * Sends the given message if we are connected.
+	 * @param m message to send
 	 */
-	public boolean isConnected() {
-		return mSocket != null && mSocket.isConnected();
+	@Override
+	public void sendMessage(Message m) {
+		Log.v("GameBinder", "sendMessage: "+m.toString());
+		if(isConnected()) {
+			if(m.getType() != Type.JOIN && !mIsAcceptedByGame)
+				Log.w("GameBinder", "Try to send "+m.getType()+" but game pad not accepted by game. Cancel.");
+			else
+				mSender.send(m.toString());
+		}
+		else
+			Log.w("GameBinder", "sendMessage error : cannot send message, disconnected from proxy");
 	}
 	
-	/** Re-established the connection if it is broken **/
-	public void reconnect() {
-		if(!isConnected()) {
-			Log.i("GamePadIOClient", "Reconnect");
-			mConnector.connect();
-		} else {
-			Log.i("GamePadIOClient", "Already connected, cannot to reconnect.");
-		}
+	/** Called when the maximum duration of silence has been reached. This method should
+	 * send a message to the proxy to keep the connection. **/
+	protected void onConnectionKeeperNotified() {
+		super.onConnectionKeeperNotified();
+		
+		// Send "ping" message
+		sendMessage(new GamePadPingMessage());
 	}
 	
 	public GamePadInformation getGamePadInfo() {
