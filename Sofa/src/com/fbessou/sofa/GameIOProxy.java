@@ -29,7 +29,9 @@ import com.fbessou.sofa.message.GameOutputEventMessage;
 import com.fbessou.sofa.message.GamePadInputEventMessage;
 import com.fbessou.sofa.message.GamePadJoinMessage;
 import com.fbessou.sofa.message.GamePadLeaveMessage;
+import com.fbessou.sofa.message.GamePadPingMessage;
 import com.fbessou.sofa.message.GamePadRenameMessage;
+import com.fbessou.sofa.message.GamePingMessage;
 import com.fbessou.sofa.message.GameRenameMessage;
 import com.fbessou.sofa.message.Message;
 import com.fbessou.sofa.message.ProxyGameAcceptMessage;
@@ -40,7 +42,9 @@ import com.fbessou.sofa.message.ProxyGamePadInputEventMessage;
 import com.fbessou.sofa.message.ProxyGamePadJoinMessage;
 import com.fbessou.sofa.message.ProxyGamePadLeaveMessage;
 import com.fbessou.sofa.message.ProxyGamePadLostMessage;
+import com.fbessou.sofa.message.ProxyGamePadPongMessage;
 import com.fbessou.sofa.message.ProxyGamePadRenameMessage;
+import com.fbessou.sofa.message.ProxyGamePongMessage;
 import com.fbessou.sofa.message.ProxyGameRenameMessage;
 import com.fbessou.sofa.message.ProxyMessage;
 
@@ -423,6 +427,10 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 				case INPUTEVENT:
 					// The game cannot send Input event message, we ignore this message
 					Log.w("GameIOProxy", "GameConnection: "+message.getType()+" received from the game. Message dropped.");
+				case PING:
+					proxyMessage = new ProxyGamePongMessage((GamePingMessage) message);
+					break;
+				case PONG:
 				case LOST: // Should not occur
 					break;
 				}
@@ -457,6 +465,11 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 				Log.i("GameIOProxy", "GameConnection: error closing socket", e);
 				e.printStackTrace();
 			}
+		}
+
+		@Override
+		public void onMessageSent(String msg, Socket socket) {
+			
 		}
 	}
 
@@ -539,6 +552,10 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 					else
 						Log.w("GameIOProxy", "GamePadConnection: Input event received from a non-registered game-pad");
 					break;
+				case PING:
+					proxyMessage = new ProxyGamePadPongMessage((GamePadPingMessage) message);
+					break;
+				case PONG:
 				case OUTPUTEVENT:
 				case ACCEPT:
 				default:
@@ -689,6 +706,11 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			} catch (IOException e) {
 				Log.e("GameIOProxy", "GamePadConnection: error closing socket", e);
 			}
+		}
+
+		@Override
+		public void onMessageSent(String msg, Socket socket) {
+			
 		}
 	}// Class GamePadConnection
 

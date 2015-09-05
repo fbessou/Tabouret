@@ -12,8 +12,8 @@ public class ProxyGamePadPongMessage extends ProxyMessage {
 	/**
 	 * @params message Message to transmit
 	 */
-	public ProxyGamePadPongMessage(GameLeaveMessage message) {
-		super(message);
+	public ProxyGamePadPongMessage(GamePadPingMessage message) {
+		super(Type.PONG);
 	}
 
 	/**
