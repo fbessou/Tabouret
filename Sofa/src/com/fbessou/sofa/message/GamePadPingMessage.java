@@ -13,7 +13,7 @@ public class GamePadPingMessage extends Message {
 	 * 
 	 */
 	public GamePadPingMessage() {
-		super(Type.LEAVE);
+		super(Type.PING);
 	}
 
 	/**

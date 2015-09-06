@@ -58,6 +58,7 @@ public class GamePadIOClient extends IOClient {
 	 */
 	@Override
 	public void onStringReceived(String string, Socket socket) {
+		super.onStringReceived(string, socket);
 		Log.v("GamePadIOClient", "onStringReceived: "+string+" from socket:"+socket);
 		try{
 			Message message = ProxyMessage.gameFromJSON(new JSONObject(string));

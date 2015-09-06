@@ -4,13 +4,13 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import android.app.Fragment;
 import android.os.Bundle;
 
-import com.fbessou.sofa.message.GamePadPingMessage;
 import com.fbessou.sofa.message.Message;
 
 public abstract class IOClient extends Fragment implements StringReceiver.Listener, ProxyConnector.OnConnectedListener, StringSender.Listener {
@@ -134,9 +134,17 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 		// Turn on the connection keeper
 		enableConnectionKeeper();
 	}
+	
+	@Override
+	public void onStringReceived(String string, Socket socket) {
+		/** Make sure we will send an other message next. (to stay active) **/
+		postDelayedConnectionKeeper();
+	}
 
 	@Override
 	public void onMessageSent(String msg, Socket socket) {
+		Log.v("IOClient", "Message successfully sent : "+msg.replace('\n', '$'));
+		
 		/** Make sure we will send an other message next. (to stay active) **/
 		postDelayedConnectionKeeper();
 	}
@@ -196,15 +204,17 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 	/** Initialize the connection keeper. It has to check that this client
 	 * does not keep quiet more than {@code IOClient.MaxMuteDuration} **/
 	private void initConnectionKeeper() {
+		Log.i("IOClient", "Initialize connection keeper");
 		mConnectionKeeperRunnable = new Runnable() {
 			@Override
 			public void run() {
-				sendMessage(new GamePadPingMessage());
+				onConnectionKeeperNotified();
 			}
 		};
 		mConnectionKeeperTimer = new ScheduledThreadPoolExecutor(1);
 		mIsConnectionKeeperEnabled = false;
 	}
+	
 	private void enableConnectionKeeper() {
 		Log.i("IOClient", "Enabling connection keeper");
 		mIsConnectionKeeperEnabled = true;
@@ -213,13 +223,17 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 	private void disableConnectionKeeper() {
 		Log.i("IOClient", "Disabling connection keeper");
 		mIsConnectionKeeperEnabled = false;
-		mConnectionKeeperTimer.remove(mConnectionKeeperRunnable);
+		if(mScheduledPost != null && !mScheduledPost.isDone())
+			mScheduledPost.cancel(true);
 	}
+	ScheduledFuture<?> mScheduledPost;
 	/** Reset the timer of the connection keeper **/
 	private void postDelayedConnectionKeeper() {
 		if(mIsConnectionKeeperEnabled) {
-			mConnectionKeeperTimer.remove(mConnectionKeeperRunnable);
-			mConnectionKeeperTimer.schedule(mConnectionKeeperRunnable, MaxMuteDuration, TimeUnit.MILLISECONDS);
+			Log.v("IOClient", "Post delayed, connection keeper");
+			if(mScheduledPost != null && !mScheduledPost.isDone())
+				mScheduledPost.cancel(true);
+			mScheduledPost = mConnectionKeeperTimer.schedule(mConnectionKeeperRunnable, MaxMuteDuration, TimeUnit.MILLISECONDS);
 		}
 	}
 	
