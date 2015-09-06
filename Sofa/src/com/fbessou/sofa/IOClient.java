@@ -4,16 +4,14 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import android.app.Fragment;
 import android.os.Bundle;
 
+import com.fbessou.sofa.ConnectionKeeper.OnMaxMuteDurationReachedListener;
 import com.fbessou.sofa.message.Message;
 
-public abstract class IOClient extends Fragment implements StringReceiver.Listener, ProxyConnector.OnConnectedListener, StringSender.Listener {
+public abstract class IOClient extends Fragment implements StringReceiver.Listener, ProxyConnector.OnConnectedListener, StringSender.Listener, OnMaxMuteDurationReachedListener {
 
 	/**
 	 * Socket connecting to a proxy
@@ -23,14 +21,11 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 	protected StringSender mSender = null;
 
 	/** Connection keeper **/
+	ConnectionKeeper connectionKeeper;
 	/** Maximum mute duration. If the client does not send any message during this duration,
 	 * the proxy can consider this client as disconnected.
 	 * We need to send message to stay connected to the proxy. **/
 	private static final long MaxMuteDuration = 4000;
-	/** Timer used to send automatically a message if nothing has been sent for a long time. **/ 
-	private ScheduledThreadPoolExecutor mConnectionKeeperTimer;
-	private Runnable mConnectionKeeperRunnable = null;
-	private boolean mIsConnectionKeeperEnabled = false;
 	
 	/** Connector **/
 	private ProxyConnector mConnector;
@@ -61,7 +56,7 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 		mConnector.connect();
 		mRetryConnectingTimer = new Timer();
 		
-		initConnectionKeeper();
+		connectionKeeper = new ConnectionKeeper(MaxMuteDuration, this);
 	}
 
 	/*
@@ -82,24 +77,19 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 		mRetryConnectingTimer.purge();
 		
 		// Disabling connection keeper
-		disableConnectionKeeper();
+		connectionKeeper.disable();
 		
 		if(mSocket != null) {
 			try {
 				beforeCommunicationDisabled();
-				
 				// The sender must send its message before closing socket
 				Thread.sleep(2000);// FIXME find a better way to be sure that the leave message has been sent
-				
-				Log.i("IOClient", "Close socket: "+mSocket+" after sleeping 2000ms");
-				mSocket.close();
-				
-			} catch (IOException e) {
-				e.printStackTrace();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
+		
+		disconnect();
 	}
 
 	@Override
@@ -132,21 +122,19 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 	 * This method should be override to add features like sending join message **/
 	protected void onCommunicationEnabled() {
 		// Turn on the connection keeper
-		enableConnectionKeeper();
+		connectionKeeper.enable();
 	}
 	
 	@Override
 	public void onStringReceived(String string, Socket socket) {
 		/** Make sure we will send an other message next. (to stay active) **/
-		postDelayedConnectionKeeper();
+		connectionKeeper.notifyTimer();
 	}
 
 	@Override
 	public void onMessageSent(String msg, Socket socket) {
-		Log.v("IOClient", "Message successfully sent : "+msg.replace('\n', '$'));
-		
 		/** Make sure we will send an other message next. (to stay active) **/
-		postDelayedConnectionKeeper();
+		connectionKeeper.notifyTimer();
 	}
 	
 	/* (non-Javadoc)
@@ -155,12 +143,14 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 	@Override
 	public void onClosed(Socket socket) {
 		Log.i("IOClient", "disconnected from socket:"+socket);
-		disableConnectionKeeper();
+		connectionKeeper.disable();
 		
-		// Try to reconnect. But first, check if this service is shutting down ;)
-		if(!mIsFragmentDestroying) {
+		// Fully disconnect
+		disconnect();
+		
+		// Try to reconnect. But first, check if this service is not shutting down ;)
+		if(!mIsFragmentDestroying)
 			reconnect();
-		}
 	}
 	
 	/** Called before closing the communication.
@@ -195,46 +185,29 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 		}
 	}
 	
+	/** Close the socket and the IO threads **/
+	public void disconnect() {
+		if(mSocket != null) {
+			Log.i("IOClient", "Disconnecting from: " + mSocket);
+			try {
+				mSocket.shutdownInput();
+				mSocket.shutdownOutput();
+				mSocket.close();
+			} catch (IOException e) {
+				Log.w("IOClient", "Error while disconnecting from:" +mSocket, e);
+			}
+			mSocket = null;
+		}
+		if(mSender != null)
+			mSender.interrupt();
+		if(mReceiver != null)
+			mReceiver.interrupt();
+	}
+	
 	/** Called when the maximum duration of silence has been reached. This method should
 	 * send a message to the proxy to keep the connection. **/
-	protected void onConnectionKeeperNotified() {
+	public void onMaxMuteDurationReached() {
 		Log.i("IOClient", "Warning: Max silence duration reached");
-	}
-	
-	/** Initialize the connection keeper. It has to check that this client
-	 * does not keep quiet more than {@code IOClient.MaxMuteDuration} **/
-	private void initConnectionKeeper() {
-		Log.i("IOClient", "Initialize connection keeper");
-		mConnectionKeeperRunnable = new Runnable() {
-			@Override
-			public void run() {
-				onConnectionKeeperNotified();
-			}
-		};
-		mConnectionKeeperTimer = new ScheduledThreadPoolExecutor(1);
-		mIsConnectionKeeperEnabled = false;
-	}
-	
-	private void enableConnectionKeeper() {
-		Log.i("IOClient", "Enabling connection keeper");
-		mIsConnectionKeeperEnabled = true;
-		postDelayedConnectionKeeper();
-	}
-	private void disableConnectionKeeper() {
-		Log.i("IOClient", "Disabling connection keeper");
-		mIsConnectionKeeperEnabled = false;
-		if(mScheduledPost != null && !mScheduledPost.isDone())
-			mScheduledPost.cancel(true);
-	}
-	ScheduledFuture<?> mScheduledPost;
-	/** Reset the timer of the connection keeper **/
-	private void postDelayedConnectionKeeper() {
-		if(mIsConnectionKeeperEnabled) {
-			Log.v("IOClient", "Post delayed, connection keeper");
-			if(mScheduledPost != null && !mScheduledPost.isDone())
-				mScheduledPost.cancel(true);
-			mScheduledPost = mConnectionKeeperTimer.schedule(mConnectionKeeperRunnable, MaxMuteDuration, TimeUnit.MILLISECONDS);
-		}
 	}
 	
 }

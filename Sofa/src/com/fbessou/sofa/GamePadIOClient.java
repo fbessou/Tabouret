@@ -142,8 +142,8 @@ public class GamePadIOClient extends IOClient {
 	
 	/** Called when the maximum duration of silence has been reached. This method should
 	 * send a message to the proxy to keep the connection. **/
-	protected void onConnectionKeeperNotified() {
-		super.onConnectionKeeperNotified();
+	public void onMaxMuteDurationReached() {
+		super.onMaxMuteDurationReached();
 		
 		// Send "ping" message
 		sendMessage(new GamePadPingMessage());

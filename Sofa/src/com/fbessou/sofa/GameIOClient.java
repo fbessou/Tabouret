@@ -14,6 +14,7 @@ import com.fbessou.sofa.message.GameAcceptMessage;
 import com.fbessou.sofa.message.GameJoinMessage;
 import com.fbessou.sofa.message.GameLeaveMessage;
 import com.fbessou.sofa.message.GameOutputEventMessage;
+import com.fbessou.sofa.message.GamePingMessage;
 import com.fbessou.sofa.message.GameRenameMessage;
 import com.fbessou.sofa.message.Message;
 import com.fbessou.sofa.message.ProxyGamePadInputEventMessage;
@@ -130,6 +131,13 @@ public class GameIOClient extends IOClient {
 			Log.e("GameIOClient", "onStringReceived error", e);
 		}
 	}
+	
+	public void onMaxMuteDurationReached() {
+		super.onMaxMuteDurationReached();
+
+		// Send "ping" message
+		sendMessage(new GamePingMessage());
+	};
 	
 	/** Called when this client is connected to the proxy and messages can be sent and received. **/
 	@Override
