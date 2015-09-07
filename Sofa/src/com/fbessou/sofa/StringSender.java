@@ -20,7 +20,6 @@ public class StringSender extends Thread {
 	
 	public interface Listener{
 		void onClosed(Socket socket);
-		void onMessageSent(String msg, Socket socket);
 	}
 	
 	private Socket mSocket; // Socket to send data to
@@ -47,9 +46,6 @@ public class StringSender extends Thread {
 				/** do not forget the '\n' character, it is the delimiter
 				 * for <code>com.fbessou.sofa.StringReceiver</code> **/
 				stream.write((s+'\n').getBytes());
-				
-				if(mListener != null)
-					mListener.onMessageSent(s, mSocket);
 			}
 		} catch (IOException e) {
 			// Can be something like "timed out"
