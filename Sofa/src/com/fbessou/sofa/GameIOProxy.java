@@ -466,11 +466,6 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 				e.printStackTrace();
 			}
 		}
-
-		@Override
-		public void onMessageSent(String msg, Socket socket) {
-			
-		}
 	}
 
 	private class GamePadConnection extends StringSender implements StringReceiver.Listener, StringSender.Listener {
@@ -706,11 +701,6 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			} catch (IOException e) {
 				Log.e("GameIOProxy", "GamePadConnection: error closing socket", e);
 			}
-		}
-
-		@Override
-		public void onMessageSent(String msg, Socket socket) {
-			
 		}
 	}// Class GamePadConnection
 

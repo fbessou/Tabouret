@@ -140,10 +140,10 @@ public class GamePadIOClient extends IOClient {
 			Log.w("GameBinder", "sendMessage error : cannot send message, disconnected from proxy");
 	}
 	
-	/** Called when the maximum duration of silence has been reached. This method should
+	/** Called when the alert duration of silence has been reached. This method should
 	 * send a message to the proxy to keep the connection. **/
-	public void onMaxMuteDurationReached() {
-		super.onMaxMuteDurationReached();
+	public void onAlertDelayPassed() {
+		super.onAlertDelayPassed();
 		
 		// Send "ping" message
 		sendMessage(new GamePadPingMessage());

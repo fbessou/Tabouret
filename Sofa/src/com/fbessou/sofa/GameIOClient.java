@@ -131,9 +131,12 @@ public class GameIOClient extends IOClient {
 			Log.e("GameIOClient", "onStringReceived error", e);
 		}
 	}
-	
-	public void onMaxMuteDurationReached() {
-		super.onMaxMuteDurationReached();
+
+	/** Called when the alert duration of silence has been reached. This method should
+	 * send a message to the proxy to keep the connection. **/
+	@Override
+	public void onAlertDelayPassed() {
+		super.onAlertDelayPassed();
 
 		// Send "ping" message
 		sendMessage(new GamePingMessage());

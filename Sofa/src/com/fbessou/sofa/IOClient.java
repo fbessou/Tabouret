@@ -211,7 +211,7 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 		reconnect();
 	}
 
-	/** Called when the maximum duration of silence has been reached. This method should
+	/** Called when the alert duration of silence has been reached. This method should
 	 * send a message to the proxy to keep the connection. **/
 	@Override
 	public void onAlertDelayPassed() {
