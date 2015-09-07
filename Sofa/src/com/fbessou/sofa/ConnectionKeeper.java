@@ -4,25 +4,49 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Call the methods from the given listener when the delay are passed after the
+ * last call of notifyTimer(). 
+ */
 public class ConnectionKeeper {
-	private long mMaxMuteDuration;
+	private long mMaxDuration, mAlertDuration;
 	private ScheduledThreadPoolExecutor mTimer;
-	private Runnable mRunnable = null;
+	private Runnable mRunnableAlert, mRunnableMax;
 	private boolean mIsEnabled = false;
 	
 	private ScheduledFuture<?> mScheduledPost;
-	private OnMaxMuteDurationReachedListener mListener;
+	private OnDelayPassedListener mListener;
 	
-	public ConnectionKeeper(long maxMuteDuration, OnMaxMuteDurationReachedListener listener) {
-		mMaxMuteDuration = maxMuteDuration;
+	/**
+	 * Call the methods from the given listener when the delay are passed after the
+	 * last call of notifyTimer().
+	 * 
+	 * @param alertDelay Delay before call the first method: onAlertDelayPassed()
+	 * @param maxDelay Delay before call the last method: onMaxDelayPassed()
+	 * @param listener Interface of methods to call when delay are passed
+	 */
+	public ConnectionKeeper(long alertDelay, long maxDelay, OnDelayPassedListener listener) {
+		mMaxDuration = maxDelay;
+		mAlertDuration = alertDelay;
 		mListener = listener;
 		mTimer = new ScheduledThreadPoolExecutor(1);
 		
-		mRunnable = new Runnable() {
+		mRunnableAlert = new Runnable() {
+			@Override
+			public void run() {
+				// Post the next runnable
+				mScheduledPost = mTimer.schedule(mRunnableMax, mMaxDuration - mAlertDuration, TimeUnit.MILLISECONDS);
+				
+				if(mListener != null)
+					mListener.onAlertDelayPassed();
+			}
+		};
+		
+		mRunnableMax = new Runnable() {
 			@Override
 			public void run() {
 				if(mListener != null)
-					mListener.onMaxMuteDurationReached();
+					mListener.onMaxDelayPassed();
 			}
 		};
 	}
@@ -46,11 +70,12 @@ public class ConnectionKeeper {
 			if(mScheduledPost != null && !mScheduledPost.isDone())
 				mScheduledPost.cancel(true);
 			
-			mScheduledPost = mTimer.schedule(mRunnable, mMaxMuteDuration, TimeUnit.MILLISECONDS);
+			mScheduledPost = mTimer.schedule(mRunnableAlert, mAlertDuration, TimeUnit.MILLISECONDS);
 		}
 	}
 	
-	public interface OnMaxMuteDurationReachedListener {
-		public void onMaxMuteDurationReached();
+	public interface OnDelayPassedListener {
+		public void onAlertDelayPassed();
+		public void onMaxDelayPassed();
 	}
 }
