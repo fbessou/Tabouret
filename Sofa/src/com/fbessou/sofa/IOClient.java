@@ -10,7 +10,7 @@ import android.os.Bundle;
 
 import com.fbessou.sofa.message.Message;
 
-public abstract class IOClient extends Fragment implements StringReceiver.Listener, ProxyConnector.OnConnectedListener, StringSender.Listener, ConnectionKeeper.OnDelayPassedListener {
+public abstract class IOClient extends Fragment implements StringReceiver.Listener, ProxyConnector.OnConnectedListener, StringSender.Listener, ConnectionWatcher.OnDelayPassedListener {
 
 	/**
 	 * Socket connecting to a proxy
@@ -20,7 +20,7 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 	protected StringSender mSender = null;
 
 	/** Connection keeper **/
-	ConnectionKeeper connectionKeeper;
+	ConnectionWatcher mConnectionWatcher;
 	/** Maximum mute duration. If the client does not send any message during this duration,
 	 * the proxy can consider this client as disconnected.
 	 * We need to send message to stay connected to the proxy. **/
@@ -55,7 +55,7 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 		mConnector.connect();
 		mRetryConnectingTimer = new Timer();
 		
-		connectionKeeper = new ConnectionKeeper(AlertMuteDuration, MaxMuteDuration, this);
+		mConnectionWatcher = new ConnectionWatcher(AlertMuteDuration, MaxMuteDuration, this);
 	}
 
 	/*
@@ -76,7 +76,7 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 		mRetryConnectingTimer.purge();
 		
 		// Disabling connection keeper
-		connectionKeeper.disable();
+		mConnectionWatcher.disable();
 		
 		if(mSocket != null) {
 			try {
@@ -121,13 +121,13 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 	 * This method should be override to add features like sending join message **/
 	protected void onCommunicationEnabled() {
 		// Turn on the connection keeper
-		connectionKeeper.enable();
+		mConnectionWatcher.enable();
 	}
 	
 	@Override
 	public void onStringReceived(String string, Socket socket) {
 		/** Make sure we will send an other message next. (to stay active) **/
-		connectionKeeper.notifyTimer();
+		mConnectionWatcher.notifyTimer();
 	}
 
 	/* (non-Javadoc)
@@ -136,7 +136,7 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 	@Override
 	public void onClosed(Socket socket) {
 		Log.i("IOClient", "disconnected from socket:"+socket);
-		connectionKeeper.disable();
+		mConnectionWatcher.disable();
 		
 		// Fully disconnect
 		disconnect();
@@ -195,7 +195,7 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 			mSender.interrupt();
 		if(mReceiver != null)
 			mReceiver.interrupt();
-		connectionKeeper.disable();
+		mConnectionWatcher.disable();
 	}
 
 	/** Called when the maximum duration of silence has been reached. When this
