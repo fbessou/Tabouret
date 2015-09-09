@@ -183,8 +183,6 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 		if(mSocket != null) {
 			Log.i("IOClient", "Disconnecting from: " + mSocket);
 			try {
-				mSocket.shutdownInput();
-				mSocket.shutdownOutput();
 				mSocket.close();
 			} catch (IOException e) {
 				Log.w("IOClient", "Error while disconnecting from:" +mSocket, e);
