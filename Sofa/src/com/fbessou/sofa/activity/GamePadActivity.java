@@ -34,28 +34,22 @@ public class GamePadActivity extends Activity {
 		UUID uuid = getUUIDFromPreferences();
 		easyIO.start(this, new GamePadInformation("Game pad's name", uuid));
 		
-		Analog2DSensor stick = new Analog2DSensor(Sensor.ANALOG_CATEGORY_VALUE + 1);
-		stick.attachTo((JoystickView) findViewById(R.id.joystickView));
+		Analog2DSensor stick = new Analog2DSensor(Sensor.ANALOG_CATEGORY_VALUE + 1, (JoystickView) findViewById(R.id.joystickView));
 		easyIO.attachSensor(stick);
 		
-		KeySensor keyUp = new KeySensor(false, Sensor.KEY_CATEGORY_VALUE + UP);
-		keyUp.attachTo(findViewById(R.id.buttonUp));
+		KeySensor keyUp = new KeySensor(Sensor.KEY_CATEGORY_VALUE + UP, findViewById(R.id.buttonUp));
 		easyIO.attachSensor(keyUp);
 		
-		KeySensor keyLeft = new KeySensor(false, Sensor.KEY_CATEGORY_VALUE + LEFT);
-		keyLeft.attachTo(findViewById(R.id.buttonLeft));
+		KeySensor keyLeft = new KeySensor(Sensor.KEY_CATEGORY_VALUE + LEFT, findViewById(R.id.buttonLeft));
 		easyIO.attachSensor(keyLeft);
 		
-		KeySensor keyRight = new KeySensor(false, Sensor.KEY_CATEGORY_VALUE + RIGHT);
-		keyRight.attachTo(findViewById(R.id.buttonRight));
+		KeySensor keyRight = new KeySensor(Sensor.KEY_CATEGORY_VALUE + RIGHT, findViewById(R.id.buttonRight));
 		easyIO.attachSensor(keyRight);
 		
-		KeySensor keyDown = new KeySensor(false, Sensor.KEY_CATEGORY_VALUE + DOWN);
-		keyDown.attachTo(findViewById(R.id.buttonDown));
+		KeySensor keyDown = new KeySensor(Sensor.KEY_CATEGORY_VALUE + DOWN, findViewById(R.id.buttonDown));
 		easyIO.attachSensor(keyDown);
 		
-		TextIndicator text = new TextIndicator(Indicator.TEXT_CATEGORY_VALUE + 1);
-		text.attachTo((TextView)findViewById(R.id.textOutput), WriteMode.REPLACE);
+		TextIndicator text = new TextIndicator(Indicator.TEXT_CATEGORY_VALUE + 1, (TextView)findViewById(R.id.textOutput), WriteMode.REPLACE);
 		easyIO.attachIndicator(text);
 		
 		// easyIO.updateInformation(info);

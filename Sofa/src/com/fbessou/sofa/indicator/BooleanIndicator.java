@@ -16,6 +16,16 @@ public class BooleanIndicator extends Indicator {
 	public BooleanIndicator(int id) {
 		super(id);
 	}
+	/**
+	 * Create an indicator and attach it to a compound button (ie: CheckBox,
+	 * Switch, ToggleButton, and others two state view). 
+	 * @param id
+	 * @param view
+	 */
+	public BooleanIndicator(int id, CompoundButton view) {
+		super(id);
+		attachTo(view);
+	}
 	
 	/** Attaches this indicator to a compound button (ie: CheckBox, Switch,
 	 * ToggleButton, and others two state view). Each output event received

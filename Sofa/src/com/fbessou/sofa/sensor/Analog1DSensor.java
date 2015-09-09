@@ -24,6 +24,16 @@ public class Analog1DSensor extends Sensor {
 		super(id);
 	}
 	
+	/**
+	 * Create an analog 1D sensor and attach it to a seek bar view
+	 * @param id
+	 * @param seekBarView
+	 */
+	public Analog1DSensor(int id, SeekBar seekBarView) {
+		super(id);
+		attachTo(seekBarView);
+	}
+	
 	/** Attaches a seek bar to this sensor. Each action will trigger an event. **/
 	public void attachTo(SeekBar seekBarView) {
 		seekBarView.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {

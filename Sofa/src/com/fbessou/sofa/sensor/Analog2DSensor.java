@@ -26,6 +26,16 @@ public class Analog2DSensor extends Sensor {
 		super(id);
 	}
 	
+	/**
+	 * Create an analog 2D sensor and attach it to a joystick view
+	 * @param id
+	 * @param joystickView
+	 */
+	public Analog2DSensor(int id, JoystickView joystickView) {
+		super(id);
+		attachTo(joystickView);
+	}
+	
 	/** Attaches a joystick view to this sensor. Each action will trigger an event.**/
 	public void attachTo(JoystickView joystickView) {
 		joystickView.setOnPositionChangedListener(new OnPositionChangedListener() {

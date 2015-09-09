@@ -51,6 +51,24 @@ public class KeySensor extends Sensor {
 		super(id);
 		mOn = false;
 	}
+	/**
+	 * Create a key sensor and attach it to a check box view
+	 * @param id
+	 * @param checkboxView
+	 */
+	public KeySensor(int id, CheckBox checkboxView) {
+		super(id);
+		attachTo(checkboxView);
+	}
+	/**
+	 * Create a key sensor and attach it to a view
+	 * @param id
+	 * @param view
+	 */
+	public KeySensor(int id, View view) {
+		super(id);
+		attachTo(view);
+	}
 	
 	/** Attaches a check box view to this sensor. Each state change (on/off) will trigger an event **/
 	public void attachTo(CheckBox checkboxView) {

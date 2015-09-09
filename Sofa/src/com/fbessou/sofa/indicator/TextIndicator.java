@@ -18,6 +18,17 @@ public class TextIndicator extends Indicator {
 	public TextIndicator(int id) {
 		super(id);
 	}
+	/**
+	 * Create an indicator and attach it to a text view.
+	 * NB: A button is also a TextView
+	 * @param id
+	 * @param textView
+	 * @param mode
+	 */
+	public TextIndicator(int id, TextView textView, WriteMode mode) {
+		super(id);
+		attachTo(textView, mode);
+	}
 	
 	/** Attaches this indicator to a text view. Each output text will be display in this view.
 	 * NB: A button is also a TextView ;) **/
