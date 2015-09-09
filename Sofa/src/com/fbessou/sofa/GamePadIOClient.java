@@ -13,6 +13,7 @@ import android.app.FragmentManager;
 import com.fbessou.sofa.message.GamePadJoinMessage;
 import com.fbessou.sofa.message.GamePadLeaveMessage;
 import com.fbessou.sofa.message.GamePadPingMessage;
+import com.fbessou.sofa.message.GamePadPongMessage;
 import com.fbessou.sofa.message.GamePadRenameMessage;
 import com.fbessou.sofa.message.Message;
 import com.fbessou.sofa.message.Message.Type;
@@ -23,7 +24,7 @@ import com.fbessou.sofa.message.ProxyMessage;
 /**
  * @author Frank Bessou
  *
- * GameBinder used by game pads.
+ * GamePadIOClient used by game pads.
  */
 public class GamePadIOClient extends IOClient {
 	
@@ -66,7 +67,7 @@ public class GamePadIOClient extends IOClient {
 			case ACCEPT:
 				// We are now officially connected to the game! Congratulation!
 				mIsAcceptedByGame = true;
-				Log.i("GameBinder", "Accepted by the game");
+				Log.i("GamePadIOClient", "Accepted by the game");
 				break;
 			case JOIN:
 				// Game is ready, join the game
@@ -90,17 +91,20 @@ public class GamePadIOClient extends IOClient {
 					mGameListener.onGameRenamed(name);
 				}
 				break;
+			case PING:
+				// Send the response : "pong"
+				sendMessage(new GamePadPongMessage());
+				break;
 			case PONG:
 				// We have received the answer to our "ping" message
 				// TODO Create method pingProxy() and compute delay between ping and pong
 				break;
 			case LOST: // Should not occur
 			case INPUTEVENT: // Should not occur
-			case PING: // Should not occur
 				break;
 			}
 		}catch(Exception e){
-			Log.e("GameBinder", "onStringReceived error ", e);
+			Log.e("GamePadIOClient", "onStringReceived error ", e);
 		}
 	}
 	
@@ -129,21 +133,22 @@ public class GamePadIOClient extends IOClient {
 	 */
 	@Override
 	public void sendMessage(Message m) {
-		Log.v("GameBinder", "sendMessage: "+m.toString());
+		Log.v("GamePadIOClient", "sendMessage: "+m.toString());
 		if(isConnected()) {
-			if(m.getType() != Type.JOIN && !mIsAcceptedByGame)
-				Log.w("GameBinder", "Try to send "+m.getType()+" but game pad not accepted by game. Cancel.");
+			if(m.getType() != Type.JOIN && m.getType() != Type.PING  && m.getType() != Type.PONG && !mIsAcceptedByGame)
+				Log.w("GamePadIOClient", "Try to send "+m.getType()+" but game pad not accepted by game. Cancel.");
 			else
 				mSender.send(m.toString());
 		}
 		else
-			Log.w("GameBinder", "sendMessage error : cannot send message, disconnected from proxy");
+			Log.w("GamePadIOClient", "sendMessage error : cannot send message, disconnected from proxy");
 	}
 	
-	/** Called when the maximum duration of silence has been reached. This method should
+	/** Called when the alert duration of silence has been reached. This method should
 	 * send a message to the proxy to keep the connection. **/
-	public void onMaxMuteDurationReached() {
-		super.onMaxMuteDurationReached();
+	@Override
+	public void onAlertDelayPassed() {
+		super.onAlertDelayPassed();
 		
 		// Send "ping" message
 		sendMessage(new GamePadPingMessage());
@@ -158,7 +163,7 @@ public class GamePadIOClient extends IOClient {
 	 */
 	public void updateGamePadInfo(GamePadInformation info) {
 		mGamePadInfo = info;
-		Log.i("GameBinder", "updateGamePadInfo");
+		Log.i("GamePadIOClient", "updateGamePadInfo");
 
 		sendMessage(new GamePadRenameMessage(info.getNickname()));
 	}
@@ -174,13 +179,13 @@ public class GamePadIOClient extends IOClient {
 	@SuppressWarnings("deprecation")
 	public static GamePadIOClient getGamePadIOClient(Activity activity, GamePadInformation info) {
 		FragmentManager fm = activity.getFragmentManager();
-		GamePadIOClient gameBinder = (GamePadIOClient) fm.findFragmentByTag("GameBinder");
+		GamePadIOClient gameBinder = (GamePadIOClient) fm.findFragmentByTag("GamePadIOClient");
 		if(gameBinder == null) {
 			if(info == null)
 				info = GamePadInformation.getDefault();
 			
 			gameBinder = new GamePadIOClient(info);
-			fm.beginTransaction().add(gameBinder, "GameBinder").commit();
+			fm.beginTransaction().add(gameBinder, "GamePadIOClient").commit();
 		}
 		return gameBinder;
 	}

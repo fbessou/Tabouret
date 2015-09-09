@@ -8,10 +8,9 @@ import java.util.TimerTask;
 import android.app.Fragment;
 import android.os.Bundle;
 
-import com.fbessou.sofa.ConnectionKeeper.OnMaxMuteDurationReachedListener;
 import com.fbessou.sofa.message.Message;
 
-public abstract class IOClient extends Fragment implements StringReceiver.Listener, ProxyConnector.OnConnectedListener, StringSender.Listener, OnMaxMuteDurationReachedListener {
+public abstract class IOClient extends Fragment implements StringReceiver.Listener, ProxyConnector.OnConnectedListener, StringSender.Listener, ConnectionWatcher.OnDelayPassedListener {
 
 	/**
 	 * Socket connecting to a proxy
@@ -21,11 +20,11 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 	protected StringSender mSender = null;
 
 	/** Connection keeper **/
-	ConnectionKeeper connectionKeeper;
+	ConnectionWatcher mConnectionWatcher;
 	/** Maximum mute duration. If the client does not send any message during this duration,
 	 * the proxy can consider this client as disconnected.
 	 * We need to send message to stay connected to the proxy. **/
-	private static final long MaxMuteDuration = 4000;
+	private static final long MaxMuteDuration = 4000, AlertMuteDuration = 3000;
 	
 	/** Connector **/
 	private ProxyConnector mConnector;
@@ -56,7 +55,7 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 		mConnector.connect();
 		mRetryConnectingTimer = new Timer();
 		
-		connectionKeeper = new ConnectionKeeper(MaxMuteDuration, this);
+		mConnectionWatcher = new ConnectionWatcher(AlertMuteDuration, MaxMuteDuration, this);
 	}
 
 	/*
@@ -77,7 +76,7 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 		mRetryConnectingTimer.purge();
 		
 		// Disabling connection keeper
-		connectionKeeper.disable();
+		mConnectionWatcher.disable();
 		
 		if(mSocket != null) {
 			try {
@@ -122,28 +121,22 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 	 * This method should be override to add features like sending join message **/
 	protected void onCommunicationEnabled() {
 		// Turn on the connection keeper
-		connectionKeeper.enable();
+		mConnectionWatcher.enable();
 	}
 	
 	@Override
 	public void onStringReceived(String string, Socket socket) {
 		/** Make sure we will send an other message next. (to stay active) **/
-		connectionKeeper.notifyTimer();
+		mConnectionWatcher.notifyTimer();
 	}
 
-	@Override
-	public void onMessageSent(String msg, Socket socket) {
-		/** Make sure we will send an other message next. (to stay active) **/
-		connectionKeeper.notifyTimer();
-	}
-	
 	/* (non-Javadoc)
 	 * @see com.fbessou.sofa.StringSender.Listener#onClosed(java.net.Socket)
 	 */
 	@Override
 	public void onClosed(Socket socket) {
 		Log.i("IOClient", "disconnected from socket:"+socket);
-		connectionKeeper.disable();
+		mConnectionWatcher.disable();
 		
 		// Fully disconnect
 		disconnect();
@@ -190,8 +183,6 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 		if(mSocket != null) {
 			Log.i("IOClient", "Disconnecting from: " + mSocket);
 			try {
-				mSocket.shutdownInput();
-				mSocket.shutdownOutput();
 				mSocket.close();
 			} catch (IOException e) {
 				Log.w("IOClient", "Error while disconnecting from:" +mSocket, e);
@@ -202,12 +193,27 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 			mSender.interrupt();
 		if(mReceiver != null)
 			mReceiver.interrupt();
+		mConnectionWatcher.disable();
 	}
-	
-	/** Called when the maximum duration of silence has been reached. This method should
-	 * send a message to the proxy to keep the connection. **/
-	public void onMaxMuteDurationReached() {
+
+	/** Called when the maximum duration of silence has been reached. When this
+	 * method is called this client should be considered as disconnected from the
+	 * proxy. **/
+	@Override
+	public void onMaxDelayPassed() {
 		Log.i("IOClient", "Warning: Max silence duration reached");
+		
+		// Fully disconnect
+		disconnect();
+		// and try to reconnect
+		reconnect();
+	}
+
+	/** Called when the alert duration of silence has been reached. This method should
+	 * send a message to the proxy to keep the connection. **/
+	@Override
+	public void onAlertDelayPassed() {
+		Log.i("IOClient", "Warning: Alert silence duration reached");
 	}
 	
 }

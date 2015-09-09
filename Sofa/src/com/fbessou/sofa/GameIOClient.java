@@ -15,6 +15,7 @@ import com.fbessou.sofa.message.GameJoinMessage;
 import com.fbessou.sofa.message.GameLeaveMessage;
 import com.fbessou.sofa.message.GameOutputEventMessage;
 import com.fbessou.sofa.message.GamePingMessage;
+import com.fbessou.sofa.message.GamePongMessage;
 import com.fbessou.sofa.message.GameRenameMessage;
 import com.fbessou.sofa.message.Message;
 import com.fbessou.sofa.message.ProxyGamePadInputEventMessage;
@@ -121,7 +122,10 @@ public class GameIOClient extends IOClient {
 			case PONG:
 				// Response of our "ping" message
 				break;
-			case PING: // Should not occur
+			case PING:
+				// Send the response: "pong"
+				sendMessage(new GamePongMessage());
+				break;
 			case OUTPUTEVENT: // Should not occur
 			case ACCEPT: // Should not occur
 				break;
@@ -131,9 +135,12 @@ public class GameIOClient extends IOClient {
 			Log.e("GameIOClient", "onStringReceived error", e);
 		}
 	}
-	
-	public void onMaxMuteDurationReached() {
-		super.onMaxMuteDurationReached();
+
+	/** Called when the alert duration of silence has been reached. This method should
+	 * send a message to the proxy to keep the connection. **/
+	@Override
+	public void onAlertDelayPassed() {
+		super.onAlertDelayPassed();
 
 		// Send "ping" message
 		sendMessage(new GamePingMessage());

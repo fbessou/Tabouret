@@ -22,6 +22,7 @@ import android.os.Vibrator;
 import android.util.SparseArray;
 
 import com.fbessou.sofa.ClientAccepter.OnClientAcceptedListener;
+import com.fbessou.sofa.ConnectionWatcher.OnDelayPassedListener;
 import com.fbessou.sofa.message.GameAcceptMessage;
 import com.fbessou.sofa.message.GameJoinMessage;
 import com.fbessou.sofa.message.GameLeaveMessage;
@@ -42,8 +43,10 @@ import com.fbessou.sofa.message.ProxyGamePadInputEventMessage;
 import com.fbessou.sofa.message.ProxyGamePadJoinMessage;
 import com.fbessou.sofa.message.ProxyGamePadLeaveMessage;
 import com.fbessou.sofa.message.ProxyGamePadLostMessage;
+import com.fbessou.sofa.message.ProxyGamePadPingMessage;
 import com.fbessou.sofa.message.ProxyGamePadPongMessage;
 import com.fbessou.sofa.message.ProxyGamePadRenameMessage;
+import com.fbessou.sofa.message.ProxyGamePingMessage;
 import com.fbessou.sofa.message.ProxyGamePongMessage;
 import com.fbessou.sofa.message.ProxyGameRenameMessage;
 import com.fbessou.sofa.message.ProxyMessage;
@@ -65,6 +68,9 @@ import com.fbessou.sofa.message.ProxyMessage;
  *
  */
 public class GameIOProxy extends Service implements OnClientAcceptedListener {
+	
+	private static final long MaxMuteDuration = 4500, AlertMuteDuration = 3500;
+	
 	/**
 	 * List containing all the blocked GamePads. A game-pad is blocked if the
 	 * following cases: - There is no game connected to this proxy - The game
@@ -279,7 +285,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		// Close game connection
 		if(mGameConnection != null) {
 			Log.i("GameIOProxy", "Close game socket");
-			mGameConnection.close();
+			mGameConnection.disconnect();
 		}
 		
 		// Close unregistered game-pad socket
@@ -297,7 +303,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		//Close registered game-pad connection
 		for(int i = mGamePads.size() - 1; i >= 0; i--) {
 			GamePadConnection gpConnection = mGamePads.valueAt(i);
-			gpConnection.close();
+			gpConnection.disconnect();
 		}
 		
 		// Disable Auto stop when the wifi is turned off
@@ -358,7 +364,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 	 * @author Frank Bessou
 	 *
 	 */
-	private class GameConnection extends StringSender implements StringReceiver.Listener, StringSender.Listener {
+	private class GameConnection extends StringSender implements StringReceiver.Listener, StringSender.Listener, OnDelayPassedListener {
 		/**
 		 * The socket used to communicate with the game server
 		 */
@@ -368,6 +374,8 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		 * 
 		 */
 		private StringReceiver mReceiver;
+		
+		private ConnectionWatcher mConnectionWatcher;
 
 		/**
 		 * @param socket
@@ -375,11 +383,16 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		public GameConnection(Socket socket) {
 			super(socket);
 			mSocket = socket;
+			
 			mReceiver = new StringReceiver(socket);
 			mReceiver.setListener(this);
-			this.start();
 			this.setListener(this);
 			mReceiver.start();
+			this.start();
+			
+			mConnectionWatcher = new ConnectionWatcher(AlertMuteDuration, MaxMuteDuration, this);
+			mConnectionWatcher.enable();
+			
 			Log.w("GameIOProxy", "Initialisation. GameConnection: start sender and receiver");
 		}
 
@@ -392,6 +405,8 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		@Override
 		public void onStringReceived(String string, Socket socket) {
 			Log.v("GameIOProxy", "GameConnection.onStringReceived: "+string+ " from socket:"+socket);
+			mConnectionWatcher.notifyTimer();
+			
 			// Interpret and redirect the message
 			try {
 				// Read the message
@@ -408,8 +423,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 					break;
 				case LEAVE:
 					proxyMessage = new ProxyGameLeaveMessage((GameLeaveMessage) message);
-					rejectAllTheGamePads();
-					close();
+					disconnect();
 					break;
 				case ACCEPT:
 					proxyMessage = new ProxyGameAcceptMessage((GameAcceptMessage) message);
@@ -428,7 +442,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 					// The game cannot send Input event message, we ignore this message
 					Log.w("GameIOProxy", "GameConnection: "+message.getType()+" received from the game. Message dropped.");
 				case PING:
-					proxyMessage = new ProxyGamePongMessage((GamePingMessage) message);
+					sendToGame(new ProxyGamePongMessage((GamePingMessage) message));
 					break;
 				case PONG:
 				case LOST: // Should not occur
@@ -451,34 +465,56 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		@Override
 		public void onClosed(Socket socket) {
 			Log.i("GameIOProxy", "GameConnection.onClosed (from stringReceiver)");
-			mGameConnection = null;
+			disconnect();
 		}
 
 		/**
 		 * Closes this connection. Shutdowns the associated StringSender and StringReceiver.
 		 */
-		public void close() {
-			Log.i("GameIOProxy", "GameConnection: close socket");
-			try {
-				mSocket.close();
-			} catch (IOException e) {
-				Log.i("GameIOProxy", "GameConnection: error closing socket", e);
-				e.printStackTrace();
+		public void disconnect() {
+			Log.i("GameIOProxy", "GameConnection: disconnect");
+			
+			mConnectionWatcher.disable();
+			
+			if(mSocket != null) {
+				try {
+					mSocket.close();
+				} catch (IOException e) {
+					Log.i("GameIOProxy", "GameConnection: error closing socket", e);
+					e.printStackTrace();
+				}
+				mSocket = null;
 			}
+			
+			this.interrupt();
+			mReceiver.interrupt();
+			
+			rejectAllTheGamePads();
 		}
 
 		@Override
-		public void onMessageSent(String msg, Socket socket) {
+		public void onAlertDelayPassed() {
+			Log.i("GameIOProxy", "GameConnection: Warning! Alert delay passed");
 			
+			// Send ping to game pad
+			sendToGame(new ProxyGamePingMessage());
+		}
+
+		@Override
+		public void onMaxDelayPassed() {
+			Log.i("GameIOProxy", "GameConnection: Max delay passed");
+			disconnect();
 		}
 	}
 
-	private class GamePadConnection extends StringSender implements StringReceiver.Listener, StringSender.Listener {
+	private class GamePadConnection extends StringSender implements StringReceiver.Listener, StringSender.Listener, OnDelayPassedListener {
 		/** The id associated to this game-pad. Equals
 		 * to -1 if the game-pad is not registered */
 		private int mPadId = -1;
 		
 		private Socket mSocket;
+		
+		private ConnectionWatcher mConnectionWatcher;
 		
 		// FIXME why is the receiver an attribute? Meanwhile the sender is extended... 
 		private StringReceiver mReceiver;
@@ -498,11 +534,16 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			// Initialize the Sender
 			super(socket);
 			mSocket = socket;
+			
 			mReceiver = new StringReceiver(socket);
 			mReceiver.setListener(this);
-			this.start();
 			this.setListener(this);
 			mReceiver.start();
+			this.start();
+			
+			mConnectionWatcher = new ConnectionWatcher(AlertMuteDuration, MaxMuteDuration, this);
+			mConnectionWatcher.enable();
+			
 			Log.i("GameIOProxy", "Initialisation. GamePadConnection: start sender and receiver");
 		}
 		
@@ -516,6 +557,9 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		@Override
 		public void onStringReceived(String string, Socket socket) {
 			Log.v("GameIOProxy", "GamePadConnection.onStringReceived: "+string+" from socket:"+socket);
+			
+			mConnectionWatcher.notifyTimer();
+			
 			try {
 				// Read the message
 				Message message = Message.gamePadFromJSON(new JSONObject(string));
@@ -553,9 +597,10 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 						Log.w("GameIOProxy", "GamePadConnection: Input event received from a non-registered game-pad");
 					break;
 				case PING:
-					proxyMessage = new ProxyGamePadPongMessage((GamePadPingMessage) message);
+					sendToGamePad(new ProxyGamePadPongMessage((GamePadPingMessage) message), mPadId);
 					break;
 				case PONG:
+					break;
 				case OUTPUTEVENT:
 				case ACCEPT:
 				default:
@@ -635,10 +680,9 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		 * Removes the game-pad from the registered game-pad lists.<br>
 		 * We do not remove the pad id from the hash map {@code mUUIDToPadId}.
 		 * It may be used to recover later.
-		 * @param padId Game-pad id to unregister
 		 */
 		void unregister() {
-			Log.i("GameIOProxy", "GamePadConnection: unregister game apd id:" + mPadId);
+			Log.i("GameIOProxy", "GamePadConnection: unregister game pad id:" + mPadId);
 			// Remove from the list of registered game-pads
 			mGamePads.remove(mPadId);
 			mPadIdToUUID[mPadId] = null;
@@ -670,9 +714,10 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			// if the game-pad is still registered, it means that the
 			// game-pad has disconnected unexpectedly
 			if(isRegistered()) {
-				unregister();
 				sendToGame(new ProxyGamePadLostMessage(mPadId));
+				unregister();
 			}
+			disconnect();
 		}
 
 		/**
@@ -699,18 +744,41 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		 * {@code unregister()} before this, otherwise it will be considered as
 		 * an unexpected disconnection.
 		 */
-		public void close() {
+		public void disconnect() {
 			Log.i("GameIOProxy", "GamePadConnection: closing socket");
-			try {
-				mSocket.close();
-			} catch (IOException e) {
-				Log.e("GameIOProxy", "GamePadConnection: error closing socket", e);
+			mConnectionWatcher.disable();
+			
+			if(mSocket != null) {
+				try {
+					mSocket.close();
+				} catch (IOException e) {
+					Log.e("GameIOProxy", "GamePadConnection: error closing socket", e);
+				}
 			}
+			
+			mSocket = null;
+			
+			this.interrupt();
+			mReceiver.interrupt();
+		}
+
+
+		@Override
+		public void onAlertDelayPassed() {
+			Log.i("GameIOProxy", "GamePadConnection: Warning! Alert delay passed");
+			
+			// Send ping to game pad
+			sendToGamePad(new ProxyGamePadPingMessage(), mPadId);
 		}
 
 		@Override
-		public void onMessageSent(String msg, Socket socket) {
-			
+		public void onMaxDelayPassed() {
+			Log.i("GameIOProxy", "GamePadConnection: Max delay passed");
+			if(isRegistered()) {
+				sendToGame(new ProxyGamePadLostMessage(mPadId));
+				unregister();
+			}
+			disconnect();
 		}
 	}// Class GamePadConnection
 
