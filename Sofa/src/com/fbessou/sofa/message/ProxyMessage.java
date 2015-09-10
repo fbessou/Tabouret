@@ -50,9 +50,12 @@ public class ProxyMessage extends Message {
 			return new ProxyGameOutputEventMessage(json);
 		case PONG:
 			return new ProxyGamePongMessage(json);
+		case PING:
+			return new ProxyGamePingMessage(json);
+		case REJECT:
+			return new ProxyGameRejectMessage(json);
 		case INPUTEVENT: // Should not occur
 		case LOST: // Should not occur
-		case PING: // Should not occur
 			return msg;
 		}
 		return msg;
@@ -81,9 +84,11 @@ public class ProxyMessage extends Message {
 			return new ProxyGamePadLostMessage(json);
 		case PONG:
 			return new ProxyGamePadPongMessage(json);
+		case PING:
+			return new ProxyGamePadPongMessage(json);
+		case REJECT: // Should not occur
 		case OUTPUTEVENT: // Should not occur
 		case ACCEPT: // Should not occur
-		case PING: // Should not occur
 			return msg;
 		}
 		return msg;

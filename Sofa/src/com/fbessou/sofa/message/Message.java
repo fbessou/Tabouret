@@ -14,7 +14,7 @@ public class Message {
 	 * Type of message. Use toString() to get the name in lower case.
 	 **/
 	public enum Type {
-		JOIN, RENAME, LEAVE, INPUTEVENT, OUTPUTEVENT, ACCEPT, LOST, PING, PONG;
+		JOIN, RENAME, LEAVE, INPUTEVENT, OUTPUTEVENT, ACCEPT, REJECT, LOST, PING, PONG;
 		
 		public String toString() {
 			return super.toString().toLowerCase(Locale.ENGLISH);
@@ -86,11 +86,14 @@ public class Message {
 			return new GameRenameMessage(json);
 		case OUTPUTEVENT:
 			return new GameOutputEventMessage(json);
+		case PONG:
+			return new GamePongMessage(json);
 		case PING:
 			return new GamePingMessage(json);
+		case REJECT:
+			return new GameRejectMessage(json);
 		case LOST: // Should not occur
 		case INPUTEVENT: // Should not occur
-		case PONG: // Should not occur
 			return msg;
 		}
 		return msg;
@@ -115,12 +118,14 @@ public class Message {
 			return new GamePadRenameMessage(json);
 		case INPUTEVENT:
 			return new GamePadInputEventMessage(json);
+		case PONG:
+			return new GamePadPongMessage(json);
 		case PING:
 			return new GamePadPingMessage(json);
 		case OUTPUTEVENT: // Should not occur
 		case ACCEPT: // Should not occur
 		case LOST: // Should not occur
-		case PONG: // Should not occur
+		case REJECT: // Should not occur
 			return msg;
 		}
 		return msg;
