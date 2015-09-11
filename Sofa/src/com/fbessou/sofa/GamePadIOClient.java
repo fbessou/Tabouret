@@ -101,6 +101,7 @@ public class GamePadIOClient extends IOClient {
 				break;
 			case LOST: // Should not occur
 			case INPUTEVENT: // Should not occur
+			case REJECT: // Should not occur
 				break;
 			}
 		}catch(Exception e){

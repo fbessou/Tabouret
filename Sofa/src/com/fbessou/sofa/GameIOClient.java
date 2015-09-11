@@ -126,6 +126,7 @@ public class GameIOClient extends IOClient {
 				// Send the response: "pong"
 				sendMessage(new GamePongMessage());
 				break;
+			case REJECT: // Should not occur
 			case OUTPUTEVENT: // Should not occur
 			case ACCEPT: // Should not occur
 				break;

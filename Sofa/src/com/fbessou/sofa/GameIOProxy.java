@@ -445,6 +445,8 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 					sendToGame(new ProxyGamePongMessage((GamePingMessage) message));
 					break;
 				case PONG:
+					break;
+				case REJECT: // Should not occur
 				case LOST: // Should not occur
 					break;
 				}
@@ -601,11 +603,10 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 					break;
 				case PONG:
 					break;
-				case OUTPUTEVENT:
-				case ACCEPT:
-				default:
-					// The game-pad cannot send neither Output event nor accept message, we ignore this message
-					Log.w("GameIOProxy", "GamePadConnection: OutputEvent/Accept received from a game-pad. Message dropped.");
+				case REJECT: // Should not occur
+				case OUTPUTEVENT: // Should not occur
+				case ACCEPT: // Should not occur
+				case LOST: // Should not occur
 					break;
 				}
 
