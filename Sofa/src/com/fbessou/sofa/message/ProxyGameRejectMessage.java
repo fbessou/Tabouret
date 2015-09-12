@@ -24,6 +24,10 @@ public class ProxyGameRejectMessage extends ProxyMessage {
 		super(json);
 	}
 	
+	public ProxyGameRejectMessage() {
+		super(Type.REJECT);
+	}
+
 	@Override
 	protected JSONObject toJSON() throws JSONException {
 		JSONObject json = super.toJSON();

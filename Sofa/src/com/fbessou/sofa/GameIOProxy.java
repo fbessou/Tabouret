@@ -33,6 +33,7 @@ import com.fbessou.sofa.message.GamePadLeaveMessage;
 import com.fbessou.sofa.message.GamePadPingMessage;
 import com.fbessou.sofa.message.GamePadRenameMessage;
 import com.fbessou.sofa.message.GamePingMessage;
+import com.fbessou.sofa.message.GameRejectMessage;
 import com.fbessou.sofa.message.GameRenameMessage;
 import com.fbessou.sofa.message.Message;
 import com.fbessou.sofa.message.ProxyGameAcceptMessage;
@@ -48,6 +49,7 @@ import com.fbessou.sofa.message.ProxyGamePadPongMessage;
 import com.fbessou.sofa.message.ProxyGamePadRenameMessage;
 import com.fbessou.sofa.message.ProxyGamePingMessage;
 import com.fbessou.sofa.message.ProxyGamePongMessage;
+import com.fbessou.sofa.message.ProxyGameRejectMessage;
 import com.fbessou.sofa.message.ProxyGameRenameMessage;
 import com.fbessou.sofa.message.ProxyMessage;
 
@@ -243,8 +245,10 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 		Log.i("GameIOProxy", "rejecting all the game pads");
 		for(int i = mGamePads.size()-1; i >= 0; i--) {
 			GamePadConnection gpConnection = mGamePads.valueAt(i);
-			if(gpConnection.isAccepted())
+			if(gpConnection.isAccepted()) {
+				sendToGamePad(new ProxyGameRejectMessage(), gpConnection.mPadId);
 				gpConnection.reject();
+			}
 		}
 	}
 	
@@ -446,7 +450,10 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 					break;
 				case PONG:
 					break;
-				case REJECT: // Should not occur
+				case REJECT:
+					proxyMessage = new ProxyGameRejectMessage((GameRejectMessage) message);
+					recipientID = ((GameRejectMessage) message).getGamePadId();
+					break;
 				case LOST: // Should not occur
 					break;
 				}

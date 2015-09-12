@@ -9,6 +9,7 @@ import android.util.SparseArray;
 
 import com.fbessou.sofa.GameIOClient.GamePadMessageListener;
 import com.fbessou.sofa.GameIOHelper.GamePadStateChangedEvent.Type;
+import com.fbessou.sofa.message.GameRejectMessage;
 
 public class GameIOHelper {
 	GameIOClient mGameIO;
@@ -58,9 +59,11 @@ public class GameIOHelper {
 		mGameIO.setGamePadMessageListener(new GamePadMessage());
 	}
 
+	/** Send the same output event to every connected game pad **/
 	public void sendOutputEventBroadcast(OutputEvent event) {
 		sendOutputEvent(event, -1);
 	}
+	/** Send an output event to the game pad **/
 	public void sendOutputEvent(OutputEvent event, int gamepadId) {
 		if(gamepadId != -1 && mGamePads.get(gamepadId) == null) {
 			//Log.w("GameIOHandler", "Cannot send output event: game pad id "+gamepadId+" unknown");
@@ -68,8 +71,17 @@ public class GameIOHelper {
 		}
 		mGameIO.sendOutputEvent(event, gamepadId);
 	}
+	/** Update the game informations and share them **/
 	public void updateGameInformation(GameInformation info) {
 		mGameIO.updateGameInfo(info);
+	}
+	/** Reject the game pad. It will not be accessible anymore. **/
+	public void rejectGamePad(int gamepadId) {
+		if(gamepadId != -1 && mGamePads.get(gamepadId) == null) {
+			//Log.w("GameIOHandler", "Cannot reject: game pad id "+gamepadId+" unknown");
+			return;
+		}
+		mGameIO.sendMessage(new GameRejectMessage(gamepadId));
 	}
 	
 	public int getGamePadCount() {

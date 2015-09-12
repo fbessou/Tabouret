@@ -99,9 +99,11 @@ public class GamePadIOClient extends IOClient {
 				// We have received the answer to our "ping" message
 				// TODO Create method pingProxy() and compute delay between ping and pong
 				break;
+			case REJECT:
+				mIsAcceptedByGame = false;
+				break;
 			case LOST: // Should not occur
 			case INPUTEVENT: // Should not occur
-			case REJECT: // Should not occur
 				break;
 			}
 		}catch(Exception e){

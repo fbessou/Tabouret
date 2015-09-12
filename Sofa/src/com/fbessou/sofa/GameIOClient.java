@@ -16,6 +16,7 @@ import com.fbessou.sofa.message.GameLeaveMessage;
 import com.fbessou.sofa.message.GameOutputEventMessage;
 import com.fbessou.sofa.message.GamePingMessage;
 import com.fbessou.sofa.message.GamePongMessage;
+import com.fbessou.sofa.message.GameRejectMessage;
 import com.fbessou.sofa.message.GameRenameMessage;
 import com.fbessou.sofa.message.Message;
 import com.fbessou.sofa.message.ProxyGamePadInputEventMessage;
@@ -93,7 +94,8 @@ public class GameIOClient extends IOClient {
 					if(!mGamePadListener.onGamePadJoined(((ProxyGamePadJoinMessage)message).getNickname(), gamePadId)) {
 						// if we do not send the GameAcceptMessage, the proxy will block messages coming from this game-pad
 						Log.i("GameIOClient", "Game pad "+gamePadId+" refused");
-						break;// TODO send refused message
+						sendMessage(new GameRejectMessage(gamePadId));
+						break;
 					}
 				}
 				Log.i("GameIOClient", "Game pad "+gamePadId+" accepted");
