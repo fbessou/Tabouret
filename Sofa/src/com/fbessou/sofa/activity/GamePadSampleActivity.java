@@ -26,7 +26,7 @@ import com.fbessou.sofa.sensor.KeySensor;
 import com.fbessou.sofa.sensor.Sensor;
 import com.fbessou.sofa.view.JoystickView;
 
-public class GamePadActivity extends Activity {
+public class GamePadSampleActivity extends Activity {
 	GamePadIOHelper easyIO;
 	GamePadInformation infos;
 	

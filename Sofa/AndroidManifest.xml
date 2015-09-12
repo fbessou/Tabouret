@@ -14,7 +14,7 @@
         
         <service android:name="com.fbessou.sofa.GameIOProxy"/>
         
-        <activity android:name=".activity.GamePadActivity"
+        <activity android:name=".activity.GamePadSampleActivity"
             android:screenOrientation="landscape"/>
         
     </application>
