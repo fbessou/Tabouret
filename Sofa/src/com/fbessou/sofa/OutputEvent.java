@@ -89,7 +89,9 @@ public class OutputEvent {
 	 * Construct an InputEvent from a JSONObject
 	 */
 	public OutputEvent(JSONObject obj) throws Exception {
-		eventType = Type.valueOf(obj.getString("type"));
+		eventType = Type.get(obj.getString("type"));
+		outputId = obj.getInt("outputId");
+		
 		switch (eventType) {
 		case FEEDBACK:
 			feedback = obj.getInt("feedback");
@@ -102,14 +104,12 @@ public class OutputEvent {
 			}
 			break;
 		case TEXT:
-			outputId = obj.getInt("output");
 			text = obj.getString("text");
 			break;
 		case SOUND:
 			sound = obj.getInt("sound");
 			break;
 		case STATE:
-			outputId = obj.getInt("output");
 			state = obj.getInt("state");
 			break;
 		default:
@@ -126,6 +126,7 @@ public class OutputEvent {
 	public JSONObject toJSON() throws JSONException{
 		JSONObject obj = new JSONObject();
 		obj.put("type", eventType.toString());
+		obj.put("outputId", outputId);
 		switch (eventType) {
 		case FEEDBACK:
 			obj.put("feedback", feedback);
@@ -138,13 +139,11 @@ public class OutputEvent {
 			break;
 		case STATE:
 			obj.put("state", state);
-			obj.put("output", outputId);
 			break;
 		case SOUND:
 			obj.put("sound", sound);
 		case TEXT:
 			obj.put("text", text);
-			obj.put("output", outputId);
 			break;
 		default:
 			break;

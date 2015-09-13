@@ -18,6 +18,7 @@ import android.widget.TextView;
 import com.fbessou.sofa.GamePadIOHelper;
 import com.fbessou.sofa.GamePadInformation;
 import com.fbessou.sofa.R;
+import com.fbessou.sofa.indicator.FeedbackIndicator;
 import com.fbessou.sofa.indicator.Indicator;
 import com.fbessou.sofa.indicator.TextIndicator;
 import com.fbessou.sofa.indicator.TextIndicator.WriteMode;
@@ -63,6 +64,8 @@ public class GamePadSampleActivity extends Activity {
 		TextIndicator text = new TextIndicator(Indicator.TEXT_CATEGORY_VALUE + 1, (TextView)findViewById(R.id.textOutput), WriteMode.REPLACE);
 		easyIO.attachIndicator(text);
 		
+		FeedbackIndicator feedback = new FeedbackIndicator(this, Indicator.FEEDBACK_CATEGORY_VALUE + 1);
+		easyIO.attachIndicator(feedback);
 		// easyIO.updateInformation(info);
 	}
 	

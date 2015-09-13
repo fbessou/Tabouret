@@ -3,7 +3,6 @@
     xmlns:sofa="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFF"
     android:gravity="center_horizontal"
     android:orientation="vertical" >
 
@@ -28,143 +27,132 @@
             <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="true"
                 android:text="-1 - Broadcast" />
 
             <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="false"
                 android:text="1 - Name - LastEventReceived/State"
                 android:visibility="gone" />
 
             <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="false"
                 android:text="1 - Name - LastEventReceived/State"
                 android:visibility="gone" />
 
             <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="false"
                 android:text="1 - Name - LastEventReceived/State"
                 android:visibility="gone" />
 
             <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="false"
                 android:text="1 - Name - LastEventReceived/State"
                 android:visibility="gone" />
 
             <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="false"
                 android:text="1 - Name - LastEventReceived/State"
                 android:visibility="gone" />
 
             <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="false"
                 android:text="1 - Name - LastEventReceived/State"
                 android:visibility="gone" />
 
             <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="false"
                 android:text="1 - Name - LastEventReceived/State"
                 android:visibility="gone" />
 
             <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="false"
                 android:text="1 - Name - LastEventReceived/State"
                 android:visibility="gone" />
 
             <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="false"
                 android:text="1 - Name - LastEventReceived/State"
                 android:visibility="gone" />
 
             <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="false"
                 android:text="1 - Name - LastEventReceived/State"
                 android:visibility="gone" />
 
             <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="false"
                 android:text="1 - Name - LastEventReceived/State"
                 android:visibility="gone" />
 
             <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="false"
                 android:text="1 - Name - LastEventReceived/State"
                 android:visibility="gone" />
 
             <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="false"
                 android:text="1 - Name - LastEventReceived/State"
                 android:visibility="gone" />
 
             <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="false"
                 android:text="1 - Name - LastEventReceived/State"
                 android:visibility="gone" />
 
             <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="false"
                 android:text="1 - Name - LastEventReceived/State"
                 android:visibility="gone" />
 
             <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="false"
                 android:text="1 - Name - LastEventReceived/State"
                 android:visibility="gone" />
         </RadioGroup>
 
     </ScrollView>
 
+    <Button
+        android:id="@+id/send_feedback"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Send a feedback" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content" >
 
-        <AutoCompleteTextView
+        <EditText
             android:id="@+id/send_text"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_weight="0.4"
             android:ems="10"
             android:hint="Send a text"
-            android:imeOptions="actionSend" />
+            android:imeOptions="actionDone" />
 
         <Button
-            android:id="@+id/send_feedback"
-            android:layout_width="match_parent"
+            android:id="@+id/button_send"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Send a feedback" />
+            android:layout_weight="0.6"
+            android:text="Send" />
 
     </LinearLayout>
 

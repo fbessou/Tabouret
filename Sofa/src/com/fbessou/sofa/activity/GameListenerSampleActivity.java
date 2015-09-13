@@ -2,15 +2,11 @@ package com.fbessou.sofa.activity;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-import android.widget.TextView;
-import android.widget.TextView.OnEditorActionListener;
 
 import com.fbessou.sofa.GameIOHelper;
 import com.fbessou.sofa.GameIOHelper.GamePadInputEvent;
@@ -21,6 +17,7 @@ import com.fbessou.sofa.GameInformation;
 import com.fbessou.sofa.InputEvent;
 import com.fbessou.sofa.OutputEvent;
 import com.fbessou.sofa.R;
+import com.fbessou.sofa.indicator.Indicator;
 import com.fbessou.sofa.sensor.Sensor;
 
 public class GameListenerSampleActivity extends Activity implements StateChangedEventListener, InputEventListener {
@@ -37,9 +34,10 @@ public class GameListenerSampleActivity extends Activity implements StateChanged
 		
 		// Initialize the list
 		list = (RadioGroup) findViewById(R.id.radioGroup1);
-		// Let each id of the list's views equal to each game pad id and -1 for broadcast
+		// Let each id of the list's views equal to each game pad id +1, and 0 for broadcast
 		for(int i = 0; i < list.getChildCount(); i++)
-			list.getChildAt(i).setId(i-1);
+			list.getChildAt(i).setId(i);
+		list.check(0);
 		
 		// Button to send feedback
 		findViewById(R.id.send_feedback).setOnClickListener(new OnClickListener() {
@@ -47,21 +45,22 @@ public class GameListenerSampleActivity extends Activity implements StateChanged
 			public void onClick(View v) {
 				// Create a feedback event
 				OutputEvent feedbackEvent = new OutputEvent(OutputEvent.Type.FEEDBACK);
+				feedbackEvent.outputId = Indicator.FEEDBACK_CATEGORY_VALUE + 1;
+				feedbackEvent.feedback = OutputEvent.VIBRATE_SHORT;
 				// And send it to the game pad selected in the list
-				easyIO.sendOutputEvent(feedbackEvent, list.getCheckedRadioButtonId());
+				easyIO.sendOutputEvent(feedbackEvent, list.getCheckedRadioButtonId()-1);
 			}
 		});
 		// Text to send
-		((EditText)findViewById(R.id.textOutput)).setOnEditorActionListener(new OnEditorActionListener() {
+		(findViewById(R.id.button_send)).setOnClickListener(new OnClickListener() {
 			@Override
-			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-				if(actionId == EditorInfo.IME_ACTION_SEND) {
-					// Create a text event
-					OutputEvent textEvent = new OutputEvent(OutputEvent.Type.TEXT);
-					// And send it to the game pad selected in the list
-					easyIO.sendOutputEvent(textEvent, list.getCheckedRadioButtonId());
-				}
-				return false;
+			public void onClick(View v) {
+				// Create a text event
+				OutputEvent textEvent = new OutputEvent(OutputEvent.Type.TEXT);
+				textEvent.outputId = Indicator.TEXT_CATEGORY_VALUE + 1;
+				textEvent.text = ((EditText)findViewById(R.id.send_text)).getText().toString();
+				// And send it to the game pad selected in the list
+				easyIO.sendOutputEvent(textEvent, list.getCheckedRadioButtonId()-1);
 			}
 		});
 		
@@ -138,8 +137,10 @@ public class GameListenerSampleActivity extends Activity implements StateChanged
 		description += event.gamePadId;
 		description += " - ";
 		// Name of the player
-		description += easyIO.getGamePadInformationId(event.gamePadId).staticInformations.getNickname();
-		description += " - ";
+		if(easyIO.getGamePadInformationId(event.gamePadId) != null) {
+			description += easyIO.getGamePadInformationId(event.gamePadId).staticInformations.getNickname();
+			description += " - ";
+		}
 		
 		switch(event.eventType) {
 		case INFORMATION:

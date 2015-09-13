@@ -192,6 +192,8 @@ public class GameIOHelper {
 			final GamePadStateChangedEvent gpEvent = new GamePadStateChangedEvent();
 			gpEvent.eventType = Type.UNEXPECTEDLY_DISCONNECTED;
 			gpEvent.gamePadId = gamepad;
+			// Remove the game pad from the list
+			mGamePads.delete(gamepad);
 			if(mode == Mode.LISTENER) {
 				if(mStateChangedEventListener != null) {
 					handler.post(new Runnable() {
