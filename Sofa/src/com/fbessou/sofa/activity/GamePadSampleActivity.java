@@ -30,7 +30,7 @@ public class GamePadSampleActivity extends Activity {
 	GamePadIOHelper easyIO;
 	GamePadInformation infos;
 	
-	private static final int UP = 1, LEFT = 2, RIGHT = 3, DOWN = 4;
+	public static final int UP = 1, LEFT = 2, RIGHT = 3, DOWN = 4;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {

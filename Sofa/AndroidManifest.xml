@@ -16,6 +16,7 @@
         
         <activity android:name=".activity.GamePadSampleActivity"
             android:screenOrientation="landscape"/>
+        <activity android:name=".activity.GameListenerSampleActivity"/>
         
     </application>
 
