@@ -147,6 +147,9 @@ public class ProxyConnector extends BroadcastReceiver implements ConnectionInfoL
 			mHostAddress = info.groupOwnerAddress;
 			Log.i("ProxyConnector","The group owner is "+mHostAddress.getHostAddress());
 		} else {
+			// Start the proxy service. If the service is already running, this line does nothing
+			mContext.startService(new Intent(mContext, GameIOProxy.class));
+
 			mHostAddress = null /* local host */;
 			Log.i("ProxyConnector", "I am the group owner");
 		}
