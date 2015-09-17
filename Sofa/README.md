@@ -70,7 +70,7 @@ and also the permission to use the vibrate if you want to use game-pad's feedbac
 ### See sample activities
 You can check the sample activities in src/com/fbessou/sofa/activity/:
 * An example of game-pad activity: GamePadSampleActivity.java with its layout res/layout/activity_gamepad_sample.xml.
-* An example of a game (altough it is not really a game) activity using 
+* An example of a game (altough it is not really a game) activity using the listener's methods: GameListerSampleActivity.java
 
 ### Ask for a doc!
 The documentation still does not exist :(
