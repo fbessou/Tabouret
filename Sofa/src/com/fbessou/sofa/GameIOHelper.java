@@ -1,6 +1,7 @@
 package com.fbessou.sofa;
 
 
+import java.util.ArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import android.app.Activity;
@@ -16,6 +17,8 @@ public class GameIOHelper {
 	
 	/** Array of connected game pad  **/
 	private SparseArray<GamePadInGameInformation> mGamePads = new SparseArray<>();
+	/** Array of disconnected game pad (previously connected) **/
+	private SparseArray<GamePadInGameInformation> mDisconnectedGamePads = new SparseArray<>();
 	/** Number max of game pad allowed in the game **/
 	private int maxGamePadCount = 16;
 	
@@ -65,7 +68,7 @@ public class GameIOHelper {
 	}
 	/** Send an output event to the game pad **/
 	public void sendOutputEvent(OutputEvent event, int gamepadId) {
-		if(gamepadId != -1 && mGamePads.get(gamepadId) == null) {
+		if(gamepadId != -1 && isGamePadConnected(gamepadId)) {
 			//Log.w("GameIOHandler", "Cannot send output event: game pad id "+gamepadId+" unknown");
 			return;
 		}
@@ -84,20 +87,40 @@ public class GameIOHelper {
 		mGameIO.sendMessage(new GameRejectMessage(gamepadId));
 	}
 	
+	/** Returns the number of connected game-pads*/
 	public int getGamePadCount() {
 		return mGamePads.size();
 	}
-	public GamePadInGameInformation getGamePadInformation(int index) {
-		return mGamePads.valueAt(index);
+	/** Returns a list of the ID of the connected game-pads*/
+	public ArrayList<Integer> getGamePadIds(int index) {
+		ArrayList<Integer> keys = new ArrayList<Integer>();
+		
+		for(int i = 0; i < mGamePads.size(); i++)
+			keys.add(mGamePads.keyAt(i));
+		
+		return keys;
 	}
+	/** Returns the information of the game-pad. Returns null if the id is unknown. **/
 	public GamePadInGameInformation getGamePadInformationId(int id) {
-		return mGamePads.get(id);
+		if(mGamePads.get(id) != null)
+			return mGamePads.get(id);
+		else if(mDisconnectedGamePads.get(id) != null)
+			return mDisconnectedGamePads.get(id);
+		else
+			return null;
+	}
+	/** Returns true if the given id refers to a connected game-pad **/
+	public boolean isGamePadConnected(int gamepadId) {
+		return mGamePads.get(gamepadId) != null;
 	}
 	
 	/** Interface GamePadMessageListener **/
 	private class GamePadMessage implements GamePadMessageListener {
 		@Override
 		public void onGamePadInputEventReceived(InputEvent event, int gamepad) {
+			if(isGamePadConnected(gamepad))
+				return;
+			
 			final GamePadInputEvent gpEvent = new GamePadInputEvent();
 			gpEvent.event = event;
 			gpEvent.gamePadId = gamepad;
@@ -118,6 +141,9 @@ public class GameIOHelper {
 		/** Interface GamePadMessageListener **/
 		@Override
 		public void onGamePadRenamed(String newNickname, int gamepad) {
+			if(isGamePadConnected(gamepad))
+				return;
+			
 			final GamePadStateChangedEvent gpEvent = new GamePadStateChangedEvent();
 			gpEvent.eventType = Type.INFORMATION;
 			gpEvent.gamePadId = gamepad;
@@ -139,11 +165,17 @@ public class GameIOHelper {
 		/** Interface GamePadMessageListener **/
 		@Override
 		public void onGamePadLeft(int gamepad) {
+			if(isGamePadConnected(gamepad))
+				return;
+			
 			final GamePadStateChangedEvent gpEvent = new GamePadStateChangedEvent();
 			gpEvent.eventType = Type.LEFT;
 			gpEvent.gamePadId = gamepad;
-			// Remove the game pad from the list
+			
+			// Move the game-pad to the list of disconnected game-pads
+			mDisconnectedGamePads.put(gamepad, mGamePads.get(gamepad));
 			mGamePads.delete(gamepad);
+			
 			if(mode == Mode.LISTENER) {
 				if(mStateChangedEventListener != null) {
 					handler.post(new Runnable() {
@@ -167,6 +199,10 @@ public class GameIOHelper {
 				// Add the game pad to the list
 				mGamePads.put(gamepad, new GamePadInGameInformation());
 				mGamePads.get(gamepad).staticInformations = new GamePadInformation(nickName, null);
+				
+				if(mDisconnectedGamePads.get(gamepad) != null)
+					mDisconnectedGamePads.delete(gamepad);
+				
 				if(mode == Mode.LISTENER) {
 					if(mStateChangedEventListener != null) {
 						handler.post(new Runnable() {
@@ -189,11 +225,17 @@ public class GameIOHelper {
 		/** Interface GamePadMessageListener **/
 		@Override
 		public void onGamePadUnexpectedlyDisconnected(int gamepad) {
+			if(isGamePadConnected(gamepad))
+				return;
+			
 			final GamePadStateChangedEvent gpEvent = new GamePadStateChangedEvent();
 			gpEvent.eventType = Type.UNEXPECTEDLY_DISCONNECTED;
 			gpEvent.gamePadId = gamepad;
-			// Remove the game pad from the list
+			
+			// Move the game-pad to the list of disconnected game-pads
+			mDisconnectedGamePads.put(gamepad, mGamePads.get(gamepad));
 			mGamePads.delete(gamepad);
+			
 			if(mode == Mode.LISTENER) {
 				if(mStateChangedEventListener != null) {
 					handler.post(new Runnable() {
