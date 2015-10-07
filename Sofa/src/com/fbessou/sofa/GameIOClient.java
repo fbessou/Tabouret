@@ -39,6 +39,8 @@ public class GameIOClient extends IOClient {
 	
 	private GamePadMessageListener mGamePadListener = null;
 
+	private ConnectionStateChangedListener mConnectionListener;
+
 	
 	// TODO list of accepted game pad (white-list)? Thus, we could filter game
 	// pad messages if the game want to refuse players even if the max game pad
@@ -155,6 +157,16 @@ public class GameIOClient extends IOClient {
 		super.onCommunicationEnabled();
 		// Send Join message
 		sendMessage(new GameJoinMessage());
+
+		if(mConnectionListener == null)
+			mConnectionListener.onConnected();
+	}
+	@Override
+	protected void onCommunicationDisabled() {
+		super.onCommunicationDisabled();
+		
+		if(mConnectionListener == null)
+			mConnectionListener.onDisconnected();
 	}
 	
 	/** Called before closing the communication. **/
@@ -221,8 +233,17 @@ public class GameIOClient extends IOClient {
 		void onGamePadInputEventReceived(InputEvent event, int gamepad);
 		void onGamePadRenamed(String newNickname, int gamepad);
 		void onGamePadLeft(int gamepad);
-		/** @return true if the game pad is accepted **/
+		/** @return true if the game pad must be accepted, false to refuse it **/
 		boolean onGamePadJoined(String nickname, int gamepad);
 		void onGamePadUnexpectedlyDisconnected(int gamepad);
+	}
+	/** Sets a listener **/
+	public void setOnConnectionStateChangedListener(ConnectionStateChangedListener listener) {
+		this.mConnectionListener = listener;
+	}
+	
+	public interface ConnectionStateChangedListener {
+		public void onConnected();
+		public void onDisconnected();
 	}
 }

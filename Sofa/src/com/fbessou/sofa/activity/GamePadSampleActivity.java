@@ -37,14 +37,14 @@ public class GamePadSampleActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_gamepad_sample);
-		
-		easyIO = new GamePadIOHelper();
-		
+
 		UUID uuid = getUUIDFromPreferences();
 		String username = getNameFromPreferences();
 		infos = new GamePadInformation(username, uuid);
 		
-		easyIO.start(this, infos);
+		easyIO = new GamePadIOHelper(this, infos);
+		
+		easyIO.start(null);
 		
 		Analog2DSensor stick = new Analog2DSensor(Sensor.ANALOG_CATEGORY_VALUE + 1, (JoystickView) findViewById(R.id.joystickView));
 		easyIO.attachSensor(stick);

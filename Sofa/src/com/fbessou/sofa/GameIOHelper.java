@@ -9,11 +9,13 @@ import android.os.Handler;
 import android.util.SparseArray;
 
 import com.fbessou.sofa.GameIOClient.GamePadMessageListener;
+import com.fbessou.sofa.GameIOClient.ConnectionStateChangedListener;
 import com.fbessou.sofa.GameIOHelper.GamePadStateChangedEvent.Type;
 import com.fbessou.sofa.message.GameRejectMessage;
 
 public class GameIOHelper {
 	GameIOClient mGameIO;
+	Activity mActivity;
 	
 	/** Array of connected game pad  **/
 	private SparseArray<GamePadInGameInformation> mGamePads = new SparseArray<>();
@@ -21,6 +23,9 @@ public class GameIOHelper {
 	private SparseArray<GamePadInGameInformation> mDisconnectedGamePads = new SparseArray<>();
 	/** Number max of game pad allowed in the game **/
 	private int maxGamePadCount = 16;
+
+	/** Game information **/
+	GameInformation mGameInfo;
 	
 	private enum Mode {QUEUE, LISTENER};
 	private final Mode mode;
@@ -37,7 +42,10 @@ public class GameIOHelper {
 	private static Handler handler;
 	
 	/** QUEUE MODE: use pollEvent methods **/
-	public GameIOHelper() {
+	public GameIOHelper(Activity activity, GameInformation info) {
+		mActivity = activity;
+		mGameInfo = info;
+		
 		mode = Mode.QUEUE;
 		mInputEventQueue = new LinkedBlockingQueue<>();
 		mStateEventQueue = new LinkedBlockingQueue<>();
@@ -48,18 +56,31 @@ public class GameIOHelper {
 	public GamePadStateChangedEvent pollStateChangedEvent() {
 		return mStateEventQueue.poll();
 	}
+
+	/** Handler to post runnable in the main GUI thread **/
+	Handler mGUIHandler;
+	ConnectionStateChangedListener mConnectionListener;
 	
 	/** LISTENER MODE: use listener interfaces. methods of listener run in the same thread this constructor is called **/
-	public GameIOHelper(InputEventListener iel, StateChangedEventListener scel) {
+	public GameIOHelper(Activity activity, GameInformation info, InputEventListener iel, StateChangedEventListener scel) {
+		mActivity = activity;
+		mGameInfo = info;
+		
 		mode = Mode.LISTENER;
 		mStateChangedEventListener = scel;
 		mInputEventListener = iel;
 		handler = new Handler();
 	}
 	
-	public void start(Activity activity, GameInformation info) {
-		mGameIO = GameIOClient.getGameIOClient(activity, info);
+	public void start(ConnectionStateChangedListener connectionListener) {
+		mGameIO = GameIOClient.getGameIOClient(mActivity, mGameInfo);
 		mGameIO.setGamePadMessageListener(new GamePadMessage());
+		mGameIO.setOnConnectionStateChangedListener(new Connection());
+		mGUIHandler = new Handler(mActivity.getMainLooper());
+		mConnectionListener = connectionListener;
+	}
+	public boolean isConnected() {
+		return mGameIO != null && mGameIO.isConnected();
 	}
 
 	/** Send the same output event to every connected game pad **/
@@ -68,6 +89,9 @@ public class GameIOHelper {
 	}
 	/** Send an output event to the game pad **/
 	public void sendOutputEvent(OutputEvent event, int gamepadId) {
+		if(mGameIO == null)
+			return;
+		
 		if(gamepadId != -1 && isGamePadConnected(gamepadId)) {
 			//Log.w("GameIOHandler", "Cannot send output event: game pad id "+gamepadId+" unknown");
 			return;
@@ -76,10 +100,16 @@ public class GameIOHelper {
 	}
 	/** Update the game informations and share them **/
 	public void updateGameInformation(GameInformation info) {
-		mGameIO.updateGameInfo(info);
+		mGameInfo = info;
+		if(mGameIO != null) {
+			mGameIO.updateGameInfo(mGameInfo);
+		}
 	}
 	/** Reject the game pad. It will not be accessible anymore. **/
 	public void rejectGamePad(int gamepadId) {
+		if(mGameIO == null)
+			return;
+		
 		if(gamepadId != -1 && mGamePads.get(gamepadId) == null) {
 			//Log.w("GameIOHandler", "Cannot reject: game pad id "+gamepadId+" unknown");
 			return;
@@ -248,6 +278,30 @@ public class GameIOHelper {
 			} else {
 				mStateEventQueue.offer(gpEvent);
 			}
+		}
+	}
+	
+	/** Interface OnConnectionStateChangedListener **/
+	private class Connection implements ConnectionStateChangedListener {
+		@Override
+		public void onConnected() {
+			mGUIHandler.post(new Runnable() {
+				@Override
+				public void run() {
+					if(mConnectionListener != null)
+						mConnectionListener.onConnected();
+				}
+			});
+		}
+		@Override
+		public void onDisconnected() {
+			mGUIHandler.post(new Runnable() {
+				@Override
+				public void run() {
+					if(mConnectionListener != null)
+						mConnectionListener.onDisconnected();
+				}
+			});
 		}
 	}
 	

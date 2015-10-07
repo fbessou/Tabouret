@@ -36,6 +36,8 @@ public class GamePadIOClient extends IOClient {
 	private GameMessageListener mGameListener;
 	private boolean mIsAcceptedByGame = false;
 
+	private ConnectionStateChangedListener mConnectionListener;
+
 	/**
 	 * 
 	 */
@@ -52,8 +54,18 @@ public class GamePadIOClient extends IOClient {
 		
 		// Send Join message
 		sendMessage(new GamePadJoinMessage(mGamePadInfo.getNickname(), mGamePadInfo.getUUID()));
+		
+		if(mConnectionListener != null)
+			mConnectionListener.onConnectedToProxy();
 	}
-
+	@Override
+	protected void onCommunicationDisabled() {
+		super.onCommunicationDisabled();
+		
+		if(mConnectionListener != null)
+			mConnectionListener.onDisconnectedFromProxy();
+	}
+	
 	/* (non-Javadoc)
 	 * @see com.fbessou.sofa.StringReceiver.Listener#onStringReceived(java.lang.String)
 	 */
@@ -65,9 +77,13 @@ public class GamePadIOClient extends IOClient {
 			Message message = ProxyMessage.gameFromJSON(new JSONObject(string));
 			switch(message.getType()) {
 			case ACCEPT:
-				// We are now officially connected to the game! Congratulation!
-				mIsAcceptedByGame = true;
-				Log.i("GamePadIOClient", "Accepted by the game");
+				if(!mIsAcceptedByGame) {
+					// We are now officially connected to the game! Congratulation!
+					mIsAcceptedByGame = true;
+					if(mConnectionListener != null)
+						mConnectionListener.onConnectedToGame();
+					Log.i("GamePadIOClient", "Accepted by the game");
+				}
 				break;
 			case JOIN:
 				// Game is ready, join the game
@@ -100,7 +116,11 @@ public class GamePadIOClient extends IOClient {
 				// TODO Create method pingProxy() and compute delay between ping and pong
 				break;
 			case REJECT:
-				mIsAcceptedByGame = false;
+				if(mIsAcceptedByGame) {
+					mIsAcceptedByGame = false;
+					if(mConnectionListener != null)
+						mConnectionListener.onDisconnectedFromGame();
+				}
 				break;
 			case LOST: // Should not occur
 			case INPUTEVENT: // Should not occur
@@ -171,6 +191,10 @@ public class GamePadIOClient extends IOClient {
 		sendMessage(new GamePadRenameMessage(info.getNickname()));
 	}
 	
+	/** Indicates if this game pad client has been accepted by the game and joined it **/
+	public boolean isConnectedToGame() {
+		return mIsAcceptedByGame;
+	}
 
 	/**
 	 * Returns a gameBinder retrieved from fragment manager, otherwise a newly created gameBinder.
@@ -192,16 +216,27 @@ public class GamePadIOClient extends IOClient {
 		}
 		return gameBinder;
 	}
-	
+	/** Sets a listener to handle the messages coming form the game */
 	public void setGameMessageListener(GameMessageListener listener) {
 		mGameListener = listener;
 	}
-	
 	
 	public interface GameMessageListener {
 		void onGameOutputReceived(OutputEvent event);
 		void onGameRenamed(String newName);
 		void onGameLeft();
 		//void onGameUnexpectedlyDisconnected();
+	}
+
+	/** Sets a listener to handle the connection changes (connection_to/disconnection_from  proxy/game)**/
+	public void setOnConnectionStateChangedListener(ConnectionStateChangedListener listener) {
+		this.mConnectionListener = listener;
+	}
+	
+	public interface ConnectionStateChangedListener {
+		public void onConnectedToProxy();
+		public void onConnectedToGame();
+		public void onDisconnectedFromGame();
+		public void onDisconnectedFromProxy();
 	}
 }

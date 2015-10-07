@@ -3,9 +3,11 @@ package com.fbessou.sofa;
 import java.util.ArrayList;
 
 import android.app.Activity;
+import android.os.Handler;
 import android.util.SparseArray;
 
 import com.fbessou.sofa.GamePadIOClient.GameMessageListener;
+import com.fbessou.sofa.GamePadIOClient.ConnectionStateChangedListener;
 import com.fbessou.sofa.indicator.Indicator;
 import com.fbessou.sofa.message.GamePadInputEventMessage;
 import com.fbessou.sofa.sensor.Sensor;
@@ -13,19 +15,39 @@ import com.fbessou.sofa.sensor.Sensor.InputEventTriggeredListener;
 
 public class GamePadIOHelper implements InputEventTriggeredListener {
 	GamePadIOClient mGamePadIO;
+	Activity mActivity;
 	
 	/** Indicators attached to this IO helper **/
 	SparseArray<Indicator> mIndicators = new SparseArray<>();
 	/** Sensors attached to this IO helper **/
 	ArrayList<Sensor> mSensors = new ArrayList<>();
 	
-	public GamePadIOHelper() {
-		// TODO something
+	/** Handler to post runnable in the main GUI thread **/
+	Handler mGUIHandler;
+	ConnectionStateChangedListener mConnectionListener;
+	
+	/** Game-pad information **/
+	GamePadInformation mGamePadInfo;
+	
+	public GamePadIOHelper(Activity activity, GamePadInformation info) {
+		mGamePadInfo = info;
+		mActivity = activity;
+		mGUIHandler = new Handler(mActivity.getMainLooper());
 	}
 	
-	public void start(Activity activity, GamePadInformation info) {
-		mGamePadIO = GamePadIOClient.getGamePadIOClient(activity, info);
+	/**
+	 * 
+	 * @param connectionListener can be null (note: the methods of this listener will be called in the main GUI thread)
+	 */
+	public void start(ConnectionStateChangedListener connectionListener) {
+		mGamePadIO = GamePadIOClient.getGamePadIOClient(mActivity, mGamePadInfo);
 		mGamePadIO.setGameMessageListener(new GameMessage());
+		mGamePadIO.setOnConnectionStateChangedListener(new Connection());
+		mConnectionListener = connectionListener;
+	}
+	
+	public boolean isConnected() {
+		return mGamePadIO != null && mGamePadIO.isConnected();
 	}
 	
 	public void attachSensor(Sensor sensor) {
@@ -38,7 +60,9 @@ public class GamePadIOHelper implements InputEventTriggeredListener {
 	}
 	
 	public void updateInformation(GamePadInformation info) {
-		mGamePadIO.updateGamePadInfo(info);
+		mGamePadInfo = info;
+		if(mGamePadIO != null)
+			mGamePadIO.updateGamePadInfo(mGamePadInfo);
 	}
 	
 	private class GameMessage implements GameMessageListener {
@@ -56,12 +80,12 @@ public class GamePadIOHelper implements InputEventTriggeredListener {
 	
 		@Override
 		public void onGameRenamed(String newName) {
-			// TODO Auto-generated method stub
+			// TODO attach that to an indicator
 		}
 	
 		@Override
 		public void onGameLeft() {
-			// TODO Auto-generated method stub
+			// TODO Remove this useless methods? the game-pad should be rejected before receiving this message
 		}
 	}
 
@@ -69,5 +93,51 @@ public class GamePadIOHelper implements InputEventTriggeredListener {
 	public void onInputEventTriggered(InputEvent evt) {
 		GamePadInputEventMessage msg = new GamePadInputEventMessage(evt);
 		mGamePadIO.sendMessage(msg);
+	}
+
+	private class Connection implements ConnectionStateChangedListener {
+		@Override
+		public void onConnectedToProxy() {
+			mGUIHandler.post(new Runnable() {
+				@Override
+				public void run() {
+					if(mConnectionListener != null)
+						mConnectionListener.onConnectedToProxy();
+				}
+			});
+		}
+	
+		@Override
+		public void onConnectedToGame() {
+			mGUIHandler.post(new Runnable() {
+				@Override
+				public void run() {
+					if(mConnectionListener != null)
+						mConnectionListener.onConnectedToGame();
+				}
+			});
+		}
+	
+		@Override
+		public void onDisconnectedFromGame() {
+			mGUIHandler.post(new Runnable() {
+				@Override
+				public void run() {
+					if(mConnectionListener != null)
+						mConnectionListener.onDisconnectedFromGame();
+				}
+			});
+		}
+	
+		@Override
+		public void onDisconnectedFromProxy() {
+			mGUIHandler.post(new Runnable() {
+				@Override
+				public void run() {
+					if(mConnectionListener != null)
+						mConnectionListener.onDisconnectedFromProxy();
+				}
+			});
+		}
 	}
 }

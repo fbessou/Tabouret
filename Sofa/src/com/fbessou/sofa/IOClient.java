@@ -123,6 +123,10 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 		// Turn on the connection keeper
 		mConnectionWatcher.enable();
 	}
+	/** Called when the client is disconnected from the proxy and no message can be sent or received anymore **/
+	protected void onCommunicationDisabled() {
+		mConnectionWatcher.disable();
+	}
 	
 	@Override
 	public void onStringReceived(String string, Socket socket) {
@@ -136,7 +140,6 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 	@Override
 	public void onClosed(Socket socket) {
 		Log.i("IOClient", "disconnected from socket:"+socket);
-		mConnectionWatcher.disable();
 		
 		// Fully disconnect
 		disconnect();
@@ -193,7 +196,8 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 			mSender.interrupt();
 		if(mReceiver != null)
 			mReceiver.interrupt();
-		mConnectionWatcher.disable();
+		
+		onCommunicationDisabled();
 	}
 
 	/** Called when the maximum duration of silence has been reached. When this
