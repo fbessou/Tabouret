@@ -17,7 +17,7 @@ import com.fbessou.sofa.message.GamePadPongMessage;
 import com.fbessou.sofa.message.GamePadRenameMessage;
 import com.fbessou.sofa.message.Message;
 import com.fbessou.sofa.message.Message.Type;
-import com.fbessou.sofa.message.ProxyGameObjectMessage;
+import com.fbessou.sofa.message.ProxyGameCustomMessage;
 import com.fbessou.sofa.message.ProxyGameOutputEventMessage;
 import com.fbessou.sofa.message.ProxyGameRenameMessage;
 import com.fbessou.sofa.message.ProxyMessage;
@@ -123,10 +123,10 @@ public class GamePadIOClient extends IOClient {
 						mConnectionListener.onDisconnectedFromGame();
 				}
 				break;
-			case OBJECT:
+			case CUSTOM:
 				if(mGameListener != null) {
-					String object = ((ProxyGameObjectMessage)message).getStringObject();
-					mGameListener.onCustomMessageReceived(object);
+					String custom = ((ProxyGameCustomMessage)message).getCustomMessage();
+					mGameListener.onCustomMessageReceived(custom);
 				}
 				break;
 			case LOST: // Should not occur

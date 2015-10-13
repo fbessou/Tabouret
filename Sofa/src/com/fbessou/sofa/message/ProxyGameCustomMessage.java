@@ -7,37 +7,37 @@ import org.json.JSONObject;
  * @author Proïd
  *
  */
-public class ProxyGameObjectMessage extends ProxyMessage {
+public class ProxyGameCustomMessage extends ProxyMessage {
 
-	private String mObjectToString;
+	private String mCustomMessage;
 	
 	/**
 	 * @params message Message to transmit
 	 */
-	public ProxyGameObjectMessage(GameObjectMessage message) {
+	public ProxyGameCustomMessage(GameCustomMessage message) {
 		super(message);
-		mObjectToString = message.mObjectToString;
+		mCustomMessage = message.mCustomMessage;
 	}
 
 	/**
 	 * Instantiate a message from a JSON object
 	 * @throws Exception If message cannot be instantiate from the json object for any reasons.
 	 * */
-	public ProxyGameObjectMessage(JSONObject json) throws Exception {
+	public ProxyGameCustomMessage(JSONObject json) throws Exception {
 		super(json);
-		mObjectToString = json.getString("object");
+		mCustomMessage = json.getString("custom");
 	}
 	
 	@Override
 	protected JSONObject toJSON() throws JSONException {
 		JSONObject json = super.toJSON();
-		json.put("object", mObjectToString);
+		json.put("custom", mCustomMessage);
 		
 		return json;
 	}
 	
-	/** Returns the string representation of the object */
-	public String getStringObject() {
-		return mObjectToString;
+	/** Returns the custom message  */
+	public String getCustomMessage() {
+		return mCustomMessage;
 	}
 }
