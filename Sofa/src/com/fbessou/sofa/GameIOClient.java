@@ -19,6 +19,7 @@ import com.fbessou.sofa.message.GamePongMessage;
 import com.fbessou.sofa.message.GameRejectMessage;
 import com.fbessou.sofa.message.GameRenameMessage;
 import com.fbessou.sofa.message.Message;
+import com.fbessou.sofa.message.ProxyGamePadCustomMessage;
 import com.fbessou.sofa.message.ProxyGamePadInputEventMessage;
 import com.fbessou.sofa.message.ProxyGamePadJoinMessage;
 import com.fbessou.sofa.message.ProxyGamePadLeaveMessage;
@@ -121,6 +122,13 @@ public class GameIOClient extends IOClient {
 				if(mGamePadListener != null) {
 					int gamePadId = ((ProxyGamePadLostMessage)message).getGamePadId();
 					mGamePadListener.onGamePadUnexpectedlyDisconnected(gamePadId);
+				}
+				break;
+			case CUSTOM:
+				if(mGamePadListener != null) {
+					int gamePadId = ((ProxyGamePadCustomMessage)message).getGamePadId();
+					String custom = ((ProxyGamePadCustomMessage)message).getCustomMessage();
+					mGamePadListener.onGamePadCustomMessageReceived(custom, gamePadId);
 				}
 				break;
 			case PONG:
@@ -230,6 +238,7 @@ public class GameIOClient extends IOClient {
 	 *
 	 */
 	public interface GamePadMessageListener {
+		void onGamePadCustomMessageReceived(String customMessage, int gamepad);
 		void onGamePadInputEventReceived(InputEvent event, int gamepad);
 		void onGamePadRenamed(String newNickname, int gamepad);
 		void onGamePadLeft(int gamepad);

@@ -10,13 +10,17 @@ import org.json.JSONObject;
 public class ProxyGamePadCustomMessage extends ProxyMessage {
 
 	private String mCustomMessage;
+	/** Id of the game that sends the message **/
+	private final int mGamePadId;
+	
 	
 	/**
 	 * @params message Message to transmit
 	 */
-	public ProxyGamePadCustomMessage(GamePadCustomMessage message) {
+	public ProxyGamePadCustomMessage(GamePadCustomMessage message, int gamepad) {
 		super(message);
 		mCustomMessage = message.mCustomMessage;
+		mGamePadId = gamepad;
 	}
 
 	/**
@@ -26,14 +30,21 @@ public class ProxyGamePadCustomMessage extends ProxyMessage {
 	public ProxyGamePadCustomMessage(JSONObject json) throws Exception {
 		super(json);
 		mCustomMessage = json.getString("custom");
+		mGamePadId = json.getInt("gamepad");
 	}
 	
 	@Override
 	protected JSONObject toJSON() throws JSONException {
 		JSONObject json = super.toJSON();
 		json.put("custom", mCustomMessage);
+		json.put("gamepad", mGamePadId);
 		
 		return json;
+	}
+	
+
+	public int getGamePadId() {
+		return mGamePadId;
 	}
 	
 	/** Returns the custom message  */

@@ -35,10 +35,13 @@ public class GameIOHelper {
 	private LinkedBlockingQueue<GamePadInputEvent> mInputEventQueue;
 	/** Queue of game pad state changed event (Join/Leave) **/
 	private LinkedBlockingQueue<GamePadStateChangedEvent> mStateEventQueue;
+	/** Queue of custom message received from game pad **/
+	private LinkedBlockingQueue<GamePadCustomMessage> mCustomMessageQueue;
 	
 	/** Listeners for mode LISTENER **/
 	private StateChangedEventListener mStateChangedEventListener;
 	private InputEventListener mInputEventListener;
+	private CustomMessageListener mCustomMessageListener;
 	private static Handler handler;
 	
 	/** QUEUE MODE: use pollEvent methods **/
@@ -49,12 +52,37 @@ public class GameIOHelper {
 		mode = Mode.QUEUE;
 		mInputEventQueue = new LinkedBlockingQueue<>();
 		mStateEventQueue = new LinkedBlockingQueue<>();
+		mCustomMessageQueue = new LinkedBlockingQueue<>();
 	}
+	/** Returns the next input event that is in the queue or null if the queue is empty **/
 	public GamePadInputEvent pollInputEvent() {
 		return mInputEventQueue.poll();
 	}
+	/** Returns the next state changed event that is in the queue or null if the queue is empty **/
 	public GamePadStateChangedEvent pollStateChangedEvent() {
 		return mStateEventQueue.poll();
+	}
+	/** Returns the next custom message that is in the queue or null if the queue is empty **/
+	public GamePadCustomMessage pollCustomMessage() {
+		return mCustomMessageQueue.poll();
+	}
+	/** Remove all the pending input events from the queue **/
+	public void flushInputEvent() {
+		mInputEventQueue.clear();
+	}
+	/** Remove all the pending state changed events from the queue **/
+	public void flushStateChangedEvent() {
+		mStateEventQueue.clear();
+	}
+	/** Remove all the pending custom messages from the queue **/
+	public void flushCustomMessage() {
+		mCustomMessageQueue.clear();
+	}
+	/** Remove all the pending input events / state changed events / custom messages from all the queues **/
+	public void flushAll() {
+		mInputEventQueue.clear();
+		mStateEventQueue.clear();
+		mCustomMessageQueue.clear();
 	}
 
 	/** Handler to post runnable in the main GUI thread **/
@@ -62,13 +90,14 @@ public class GameIOHelper {
 	ConnectionStateChangedListener mConnectionListener;
 	
 	/** LISTENER MODE: use listener interfaces. methods of listener run in the same thread this constructor is called **/
-	public GameIOHelper(Activity activity, GameInformation info, InputEventListener iel, StateChangedEventListener scel) {
+	public GameIOHelper(Activity activity, GameInformation info, InputEventListener iel, StateChangedEventListener scel, CustomMessageListener cml) {
 		mActivity = activity;
 		mGameInfo = info;
 		
 		mode = Mode.LISTENER;
 		mStateChangedEventListener = scel;
 		mInputEventListener = iel;
+		mCustomMessageListener = cml;
 		handler = new Handler();
 	}
 	
@@ -279,6 +308,28 @@ public class GameIOHelper {
 				mStateEventQueue.offer(gpEvent);
 			}
 		}
+		@Override
+		public void onGamePadCustomMessageReceived(String customMessage, int gamepad) {
+			if(isGamePadConnected(gamepad))
+				return;
+			
+			final GamePadCustomMessage gpCustom = new GamePadCustomMessage();
+			gpCustom.customMessage = customMessage;
+			gpCustom.gamePadId = gamepad;
+
+			if(mode == Mode.LISTENER) {
+				if(mCustomMessageListener != null) {
+					handler.post(new Runnable() {
+						@Override
+						public void run() {
+							mCustomMessageListener.onCustomMessageReceived(gpCustom);
+						}
+					});
+				}
+			} else {
+				mCustomMessageQueue.offer(gpCustom);
+			}
+		}
 	}
 	
 	/** Interface OnConnectionStateChangedListener **/
@@ -311,9 +362,17 @@ public class GameIOHelper {
 	public interface StateChangedEventListener {
 		public void onPadEvent(GamePadStateChangedEvent event);
 	}
+	public interface CustomMessageListener {
+		public void onCustomMessageReceived(GamePadCustomMessage message);
+	}
 
 	public static class GamePadInputEvent {
 		public InputEvent event;
+		public int gamePadId;
+	}
+	
+	public static class GamePadCustomMessage {
+		public String customMessage;
 		public int gamePadId;
 	}
 	
@@ -321,7 +380,7 @@ public class GameIOHelper {
 		public int gamePadId;
 		public enum Type{JOINED, LEFT, UNEXPECTEDLY_DISCONNECTED, INFORMATION};
 		public Type eventType;
-		/** New information if event type is INFORAMATION **/
+		/** New information if event type is INFORMATION **/
 		public GamePadInformation newInformation;
 	}
 	
