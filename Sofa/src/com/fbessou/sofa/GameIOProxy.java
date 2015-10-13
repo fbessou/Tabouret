@@ -24,9 +24,11 @@ import android.util.SparseArray;
 import com.fbessou.sofa.ClientAccepter.OnClientAcceptedListener;
 import com.fbessou.sofa.ConnectionWatcher.OnDelayPassedListener;
 import com.fbessou.sofa.message.GameAcceptMessage;
+import com.fbessou.sofa.message.GameCustomMessage;
 import com.fbessou.sofa.message.GameJoinMessage;
 import com.fbessou.sofa.message.GameLeaveMessage;
 import com.fbessou.sofa.message.GameOutputEventMessage;
+import com.fbessou.sofa.message.GamePadCustomMessage;
 import com.fbessou.sofa.message.GamePadInputEventMessage;
 import com.fbessou.sofa.message.GamePadJoinMessage;
 import com.fbessou.sofa.message.GamePadLeaveMessage;
@@ -37,9 +39,11 @@ import com.fbessou.sofa.message.GameRejectMessage;
 import com.fbessou.sofa.message.GameRenameMessage;
 import com.fbessou.sofa.message.Message;
 import com.fbessou.sofa.message.ProxyGameAcceptMessage;
+import com.fbessou.sofa.message.ProxyGameCustomMessage;
 import com.fbessou.sofa.message.ProxyGameJoinMessage;
 import com.fbessou.sofa.message.ProxyGameLeaveMessage;
 import com.fbessou.sofa.message.ProxyGameOutputEventMessage;
+import com.fbessou.sofa.message.ProxyGamePadCustomMessage;
 import com.fbessou.sofa.message.ProxyGamePadInputEventMessage;
 import com.fbessou.sofa.message.ProxyGamePadJoinMessage;
 import com.fbessou.sofa.message.ProxyGamePadLeaveMessage;
@@ -450,6 +454,10 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 					break;
 				case PONG:
 					break;
+				case CUSTOM:
+					proxyMessage = new ProxyGameCustomMessage((GameCustomMessage) message);
+					recipientID = ((GameCustomMessage) message).getGamePadId(); // Unique recipient
+					break;
 				case REJECT:
 					proxyMessage = new ProxyGameRejectMessage((GameRejectMessage) message);
 					recipientID = ((GameRejectMessage) message).getGamePadId();
@@ -609,6 +617,12 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 					sendToGamePad(new ProxyGamePadPongMessage((GamePadPingMessage) message), mPadId);
 					break;
 				case PONG:
+					break;
+				case CUSTOM:
+					if(isRegistered() && isAccepted())
+						proxyMessage = new ProxyGamePadCustomMessage((GamePadCustomMessage) message, mPadId);
+					else
+						Log.w("GameIOProxy", "GamePadConnection: Custom message received from a non-registered game-pad");
 					break;
 				case REJECT: // Should not occur
 				case OUTPUTEVENT: // Should not occur
