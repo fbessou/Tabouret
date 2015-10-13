@@ -17,6 +17,7 @@ import com.fbessou.sofa.message.GamePadPongMessage;
 import com.fbessou.sofa.message.GamePadRenameMessage;
 import com.fbessou.sofa.message.Message;
 import com.fbessou.sofa.message.Message.Type;
+import com.fbessou.sofa.message.ProxyGameObjectMessage;
 import com.fbessou.sofa.message.ProxyGameOutputEventMessage;
 import com.fbessou.sofa.message.ProxyGameRenameMessage;
 import com.fbessou.sofa.message.ProxyMessage;
@@ -98,7 +99,7 @@ public class GamePadIOClient extends IOClient {
 			case OUTPUTEVENT:
 				if(mGameListener != null) {
 					OutputEvent event = ((ProxyGameOutputEventMessage)message).getOutputEvent();
-					mGameListener.onGameOutputReceived(event);
+					mGameListener.onOutputReceived(event);
 				}
 				break;
 			case RENAME:
@@ -120,6 +121,12 @@ public class GamePadIOClient extends IOClient {
 					mIsAcceptedByGame = false;
 					if(mConnectionListener != null)
 						mConnectionListener.onDisconnectedFromGame();
+				}
+				break;
+			case OBJECT:
+				if(mGameListener != null) {
+					String object = ((ProxyGameObjectMessage)message).getStringObject();
+					mGameListener.onCustomMessageReceived(object);
 				}
 				break;
 			case LOST: // Should not occur
@@ -222,7 +229,8 @@ public class GamePadIOClient extends IOClient {
 	}
 	
 	public interface GameMessageListener {
-		void onGameOutputReceived(OutputEvent event);
+		void onCustomMessageReceived(String customMessage);
+		void onOutputReceived(OutputEvent event);
 		void onGameRenamed(String newName);
 		void onGameLeft();
 		//void onGameUnexpectedlyDisconnected();

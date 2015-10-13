@@ -25,6 +25,7 @@ public class GamePadIOHelper implements InputEventTriggeredListener {
 	/** Handler to post runnable in the main GUI thread **/
 	Handler mGUIHandler;
 	ConnectionStateChangedListener mConnectionListener;
+	OnCustomMessageReceivedListener mCustomMessageListener;
 	
 	/** Game-pad information **/
 	GamePadInformation mGamePadInfo;
@@ -59,6 +60,10 @@ public class GamePadIOHelper implements InputEventTriggeredListener {
 		mIndicators.put(indicator.getPadId(), indicator);
 	}
 	
+	public void setOnCustomMessageReceivedListener(OnCustomMessageReceivedListener listener) {
+		mCustomMessageListener = listener;
+	}
+	
 	public void updateInformation(GamePadInformation info) {
 		mGamePadInfo = info;
 		if(mGamePadIO != null)
@@ -67,7 +72,7 @@ public class GamePadIOHelper implements InputEventTriggeredListener {
 	
 	private class GameMessage implements GameMessageListener {
 		@Override
-		public void onGameOutputReceived(OutputEvent event) {
+		public void onOutputReceived(OutputEvent event) {
 			// Get the associated indicator if existing
 			Indicator target = mIndicators.get(event.outputId);
 			if(target != null) {
@@ -86,6 +91,13 @@ public class GamePadIOHelper implements InputEventTriggeredListener {
 		@Override
 		public void onGameLeft() {
 			// TODO Remove this useless methods? the game-pad should be rejected before receiving this message
+		}
+
+		
+		@Override
+		public void onCustomMessageReceived(String customMessage) {
+			if(mCustomMessageListener != null)
+				mCustomMessageListener.onCustomMessageReceived(customMessage);
 		}
 	}
 
@@ -139,5 +151,9 @@ public class GamePadIOHelper implements InputEventTriggeredListener {
 				}
 			});
 		}
+	}
+
+	public interface OnCustomMessageReceivedListener {
+		public void onCustomMessageReceived(String customMessage);
 	}
 }
