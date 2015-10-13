@@ -9,7 +9,7 @@ import org.json.JSONObject;
 public class ProxyMessage extends Message {
 
 	/**
-	 * Instatiate the proxy message from an other message.
+	 * Instantiate the proxy message from an other message.
 	 * @param message Message to transmit
 	 */
 	protected ProxyMessage(Message message) {
@@ -20,8 +20,8 @@ public class ProxyMessage extends Message {
 	}
 
 	/**
-	 * Instatiate a message from a JSON object
-	 * @throws Exception If message cannot be instatiate from the json object for any reasons.
+	 * Instantiate a message from a JSON object
+	 * @throws Exception If message cannot be instantiate from the json object for any reasons.
 	 * */
 	ProxyMessage(JSONObject json) throws Exception {
 		super(json);
@@ -54,6 +54,8 @@ public class ProxyMessage extends Message {
 			return new ProxyGamePingMessage(json);
 		case REJECT:
 			return new ProxyGameRejectMessage(json);
+		case OBJECT:
+			return new ProxyGameObjectMessage(json);
 		case INPUTEVENT: // Should not occur
 		case LOST: // Should not occur
 			return msg;
@@ -86,6 +88,8 @@ public class ProxyMessage extends Message {
 			return new ProxyGamePadPongMessage(json);
 		case PING:
 			return new ProxyGamePadPongMessage(json);
+		case OBJECT:
+			return new ProxyGamePadObjectMessage(json);
 		case REJECT: // Should not occur
 		case OUTPUTEVENT: // Should not occur
 		case ACCEPT: // Should not occur

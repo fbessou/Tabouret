@@ -14,7 +14,7 @@ public class Message {
 	 * Type of message. Use toString() to get the name in lower case.
 	 **/
 	public enum Type {
-		JOIN, RENAME, LEAVE, INPUTEVENT, OUTPUTEVENT, ACCEPT, REJECT, LOST, PING, PONG;
+		JOIN, RENAME, LEAVE, INPUTEVENT, OUTPUTEVENT, ACCEPT, REJECT, LOST, PING, PONG, OBJECT;
 		
 		public String toString() {
 			return super.toString().toLowerCase(Locale.ENGLISH);
@@ -35,8 +35,8 @@ public class Message {
 	}
 	
 	/**
-	 * Instatiate a message from a JSON object
-	 * @throws Exception If message cannot be instatiate from the json object for any reasons.
+	 * Instantiate a message from a JSON object
+	 * @throws Exception If message cannot be instantiate from the json object for any reasons.
 	 * */
 	Message(JSONObject json) throws Exception {
 		String type = json.getString("type");
@@ -92,6 +92,8 @@ public class Message {
 			return new GamePingMessage(json);
 		case REJECT:
 			return new GameRejectMessage(json);
+		case OBJECT:
+			return new GameObjectMessage(json);
 		case LOST: // Should not occur
 		case INPUTEVENT: // Should not occur
 			return msg;
@@ -122,6 +124,8 @@ public class Message {
 			return new GamePadPongMessage(json);
 		case PING:
 			return new GamePadPingMessage(json);
+		case OBJECT:
+			return new GamePadObjectMessage(json);
 		case OUTPUTEVENT: // Should not occur
 		case ACCEPT: // Should not occur
 		case LOST: // Should not occur
