@@ -84,7 +84,7 @@ public class GamePadActivity extends Activity implements GameMessageListener {
 
 	
 	@Override
-	public void onGameOutputReceived(OutputEvent event) {
+	public void onOutputReceived(OutputEvent event) {
 		Toast.makeText(this, "Output event received : "+event.toString(), Toast.LENGTH_SHORT).show();
 	}
 
@@ -96,6 +96,12 @@ public class GamePadActivity extends Activity implements GameMessageListener {
 	@Override
 	public void onGameLeft() {
 		Toast.makeText(this, "Game has left", Toast.LENGTH_SHORT).show();
+	}
+
+	@Override
+	public void onCustomMessageReceived(String customMessage) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 
