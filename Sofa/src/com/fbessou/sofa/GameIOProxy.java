@@ -18,7 +18,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.wifi.WifiManager;
 import android.os.IBinder;
-import android.os.Vibrator;
 import android.util.SparseArray;
 
 import com.fbessou.sofa.ClientAccepter.OnClientAcceptedListener;
@@ -197,9 +196,6 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			mGameConnection = new GameConnection(gameSocket);
 
 			Log.i("GameIOProxy", "A game has registered");
-			/*Vibrator v2 = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-			if(v2 != null)
-				v2.vibrate(100);*/
 		}
 		else
 			Log.w("GameIOProxy", "An other game is already registered");
@@ -655,11 +651,6 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			
 			mPadId = padId;
 			setLastGivenId(padId);
-
-			// Vibrate to indicate the game pad has connected
-			Vibrator v1 = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-			v1.vibrate(100);
-			//Toast.makeText(GameIOProxy.this, "Game pad (id:"+mPadId+") is registered", Toast.LENGTH_SHORT).show();
 		}
 
 		/** Register this game-pad and get a new id. If the given UUID has 
@@ -713,11 +704,6 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			
 			mPadId = -1;
 			mIsAcceptedByGame = false;
-			
-			// Vibrate to indicate the game pad has disconnected
-			Vibrator v1 = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-			v1.vibrate(100);
-			//Toast.makeText(GameIOProxy.this, "Game pad (id:"+mPadId+") is disconnected", Toast.LENGTH_SHORT).show();
 		}
 		
 		/**
