@@ -76,6 +76,9 @@ You can check the sample activities in src/com/fbessou/sofa/activity/:
 #### Create your own game-pad indicator
 #### Send a personalized input event (game-pad)
 #### Create and send a personalized output event (game)
+#### Using custom message
+ * With JSON objects
+ * With base64 encoding and decoding (See [Base64 in android developers](https://developer.android.com/reference/android/util/Base64.html))
 
 ### Ask for a doc!
 The documentation still does not exist :(
