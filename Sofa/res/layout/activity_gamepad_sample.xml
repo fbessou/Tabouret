@@ -14,8 +14,10 @@
         android:layout_toLeftOf="@+id/buttonsContainer"
         sofa:position="follow"
         sofa:bound="circle"
-        sofa:stickRadius="52dp" 
-        sofa:stickColor="#123"/>
+        sofa:boundSize="52dp"
+        sofa:stickRadius="42dp" 
+        sofa:stickDrawable="#9ADF"
+        sofa:centerDrawable="#ADF"/>
 
     <TextView
         android:id="@+id/textOutput"

@@ -15,13 +15,8 @@
        </attr>
        
        
-       <attr name="centerDrawable" format="reference"/>
-       <attr name="stickDrawable" format="reference"/>
-       
-       <!-- Color ignored if drawable is defined -->
-       <attr name="stickColor" format="color"/>
-       <!-- Color ignored if drawable is defined -->
-       <attr name="centerColor" format="color"/>
+       <attr name="centerDrawable" format="color|reference"/>
+       <attr name="stickDrawable" format="color|reference"/>
        
        <attr name="stickRadius" format="dimension"/>
        
