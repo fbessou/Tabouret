@@ -72,5 +72,10 @@ You can check the sample activities in src/com/fbessou/sofa/activity/:
 * An example of game-pad activity: GamePadSampleActivity.java with its layout res/layout/activity_gamepad_sample.xml.
 * An example of a game (altough it is not really a game) activity using the listener's methods: GameListerSampleActivity.java
 
+### Other tips
+#### Create your own game-pad indicator
+#### Send a personalized input event (game-pad)
+#### Create and send a personalized output event (game)
+
 ### Ask for a doc!
 The documentation still does not exist :(
