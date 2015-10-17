@@ -127,12 +127,16 @@ In your class:
         int age;
         
         String toString() {
-            JSONObject json = new JSONObject();
-            
-            json.put("name", name);
-            json.put("age", age);
-            
-            return json.toString();
+            try {
+                JSONObject json = new JSONObject();
+                
+                json.put("name", name);
+                json.put("age", age);
+                
+                return json.toString();
+            } catch(JSONException e) {
+                return "";
+            }
         }
         
         static MyData createFromString(String jsonString) throws JSONException {
@@ -178,6 +182,29 @@ To receive the custom message:
 		byte[] binaryData = Base64.decode(customMessage, Base64.DEAFULT);
 		...
 	}
+```
+ * It is sometimes preferable to use both the ways at the same time. In case of you have to exchange different types of binary data, you would need to add further informations about the data with a JSON object. For example:
+```java
+    String toString() {
+        try {
+            JSONObject json = new JSONObject();
+            
+            json.put("data-type", "image");
+            json.put("binary", Base64.encodeToString(binaryImage));
+            
+            return json.toString();
+        } catch(JSONException e) {
+            return "";
+        }
+    }
+    
+    void getFromString(String jsonString) throws JSONException {
+        JSONObject json = new JSONObject(jsonString);
+        
+        if(json.getString("data-type") == "image") {
+            binaryImage = Base64.decode(json.getString("binary", Base64.DEFAULT));
+        }
+    }
 ```
     
 ### Ask for a doc!
