@@ -7,7 +7,7 @@ public class Log {
 	public static int FILTER_LEVEL2 = 0b11001;
 	public static int FILTER_LEVEL3 = 0b10001;
 	public static int FILTER_ALL = 0b00000;
-	private static int filter = FILTER_LEVEL1;
+	private static int filter = FILTER_LEVEL2;
 	private static LogListener listener;
 	
 	/** Sets the filter to define which log message should be shown. Default value: FILTER_LEVEL1  */
