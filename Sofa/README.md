@@ -1,8 +1,8 @@
 # Sofa
-*Android library that establishes and manages communication between an Android game and several game-pads (on other Android devices) using [wifi peer to peer](https://developer.android.com/guide/topics/connectivity/wifip2p.html).*
+*Android library that establishes and manages communication between an Android game and several game-pads (on other Android devices) using [wifi peer to peer](https://developer.android.com/guide/topics/connectivity/wifip2p.html).*  
 **Require Android API level 14 (4.0) minimum**
 
-## Description
+## Overview
 
 ### Features
  * Wifi direct
@@ -19,6 +19,7 @@
 ### How it works
  * Wifi direct (Wifi p2p)
  * Proxy (service)
+ * Game-pad with UUID / id recovering in proxy
  * Clients: game / game-pad (fragment)
  * Exchanging Messages
  * [Sketch? global interaction, states, ]
@@ -36,30 +37,69 @@
 ### Import Sofa into your project (Eclipse)
 
 * Import Sofa project into your workspace
-* In your project, add Sofa to depedencies
+* Add the library in your project (Project > Properties > Android > Add... > Sofa)
 * In your AndroidManifest.xml, add the permissions:
 ```xml
-  <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
-  <uses-permission android:name="android.permission.INTERNET"/>
-  <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
 ```
 and also the permission to use the vibrate if you want to use game-pad's feedback later:
 ```xml
-  <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
 ```
 
 
 ### Create a game-pad activity
  * Create a simple activity (do not forget to declare it into your manifest)
- * Create a layout wich contains the buttons and the other views that you want to have in your game-pad:
- * Instatiate a GamePadIOHelper object:
+ * Create a layout which contains the buttons and the views that you want to display on your game-pad:
  * Define game-pad's informations:
- * Start the game-pad client:
+```java
+    GamePadInformation info = new GamePadInformation("Best game-pad ever");
+```
+Note: The constructor `GamePadInformation(String name)` is deprecated. You should use `GamePadInformation(String name, UUID uuid)` instead. The UUID must ideally stay the same each time the app is launched. Consequently, the UUID should be generated during the first launch and it should be immediately stored in the SharedPreferences in order to be reused for future launches. The first constructor is equivalent to `GamePadInformation(name, UUID.randomUUID())`.
+ * Instatiate a GamePadIOHelper object in the `onCreate()` of the main activity:
+```java
+    GamePadIOHelper easyIO = new GamePadIOHelper(getContext(), info);
+```
+ * Start the game-pad IO client:
+```java
+    // The start method takes a listener in parameter, it can be defined
+    // to be notified for each change of the state of the connection to
+    // the game. It can be set to null if you do not need it
+	easyIO.start(this);
+```
  * Attach the Android views to the GamePadIOHelper:
+Define an input view:
+```java
+    // Get the android view
+    ...
+    // Create a sensor
+    ...
+    // Attach the sensor to the view. All the interactions with the
+    // view will be automatically transmit to the game.
+    ...
+```
+Define an output view:
+```java
+    // Get the android view
+    ...
+    // Create an indicator
+    ...
+    // Attach the indicator to the view. All the output event generated
+    // by the game will be automatically diplayed in this view.
+    ...
+```
 
-### Use Sofa in your game
- * Instantiate a GameIOHelper object:
- * Define game's informations:
+### Integrate Sofa in your game
+ * Define the game's informations (currently you can only define the name of the game):
+```java
+    GameInformation info = new GameInformation("The Game!");
+```
+ * Instantiate a GameIOHelper object in the `onCreate()` of your main activity:
+```java
+    GameIOHelper easyIO = new GameIOHelper(getContext(), info);
+```
  * Start the game client
   * Using the listener's methods (To handle the game-pad events in the GUI Thread):
   * Using the pollEvent methods (To handle the game-pad events from any thread you want):
@@ -74,6 +114,7 @@ You can check the sample activities in src/com/fbessou/sofa/activity/:
 
 ### Other tips
 #### Create your own game-pad indicator
+
 #### Send a personalized input event (game-pad)
 #### Create and send a personalized output event (game)
 #### Using custom message
