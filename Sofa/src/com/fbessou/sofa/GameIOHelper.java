@@ -122,7 +122,7 @@ public class GameIOHelper {
 		if(mGameIO == null)
 			return;
 		
-		if(gamepadId != -1 && isGamePadConnected(gamepadId)) {
+		if(gamepadId != -1 && !isGamePadConnected(gamepadId)) {
 			//Log.w("GameIOHandler", "Cannot send output event: game pad id "+gamepadId+" unknown");
 			return;
 		}
@@ -138,7 +138,7 @@ public class GameIOHelper {
 		if(mGameIO == null)
 			return;
 		
-		if(gamepadId != -1 && isGamePadConnected(gamepadId)) {
+		if(gamepadId != -1 && !isGamePadConnected(gamepadId)) {
 			//Log.w("GameIOHandler", "Cannot send output event: game pad id "+gamepadId+" unknown");
 			return;
 		}
@@ -197,7 +197,7 @@ public class GameIOHelper {
 	private class GamePadMessage implements GamePadMessageListener {
 		@Override
 		public void onGamePadInputEventReceived(InputEvent event, int gamepad) {
-			if(isGamePadConnected(gamepad))
+			if(!isGamePadConnected(gamepad))
 				return;
 			
 			final GamePadInputEvent gpEvent = new GamePadInputEvent();
@@ -220,7 +220,7 @@ public class GameIOHelper {
 		/** Interface GamePadMessageListener **/
 		@Override
 		public void onGamePadRenamed(String newNickname, int gamepad) {
-			if(isGamePadConnected(gamepad))
+			if(!isGamePadConnected(gamepad))
 				return;
 			
 			final GamePadStateChangedEvent gpEvent = new GamePadStateChangedEvent();
@@ -244,7 +244,7 @@ public class GameIOHelper {
 		/** Interface GamePadMessageListener **/
 		@Override
 		public void onGamePadLeft(int gamepad) {
-			if(isGamePadConnected(gamepad))
+			if(!isGamePadConnected(gamepad))
 				return;
 			
 			final GamePadStateChangedEvent gpEvent = new GamePadStateChangedEvent();
@@ -304,7 +304,7 @@ public class GameIOHelper {
 		/** Interface GamePadMessageListener **/
 		@Override
 		public void onGamePadUnexpectedlyDisconnected(int gamepad) {
-			if(isGamePadConnected(gamepad))
+			if(!isGamePadConnected(gamepad))
 				return;
 			
 			final GamePadStateChangedEvent gpEvent = new GamePadStateChangedEvent();
@@ -330,7 +330,7 @@ public class GameIOHelper {
 		}
 		@Override
 		public void onGamePadCustomMessageReceived(String customMessage, int gamepad) {
-			if(isGamePadConnected(gamepad))
+			if(!isGamePadConnected(gamepad))
 				return;
 			
 			final GamePadCustomMessage gpCustom = new GamePadCustomMessage();
