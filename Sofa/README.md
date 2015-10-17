@@ -38,39 +38,41 @@
 
 * Import Sofa project into your workspace
 * Add the library in your project (Project > Properties > Android > Add... > Sofa)
-* In your AndroidManifest.xml, add the permissions:
+* In your AndroidManifest.xml, add the permissions:  
 ```xml
 <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
 <uses-permission android:name="android.permission.INTERNET"/>
 <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
 ```
-and also the permission to use the vibrate if you want to use game-pad's feedback later:
+and also the permission to use the vibrate if you want to use game-pad's feedback later:  
 ```xml
 <uses-permission android:name="android.permission.VIBRATE"/>
 ```
 
 
 ### Create a game-pad activity
- * Create a simple activity (do not forget to declare it into your manifest)
- * Create a layout which contains the buttons and the views that you want to display on your game-pad:
- * Define game-pad's informations:
+##### Create a simple activity (do not forget to declare it into your manifest)
+##### Create a layout which contains the buttons and the views that you want to display on your game-pad:  
+```xml
+```
+##### Define game-pad's informations:  
 ```java
 GamePadInformation info = new GamePadInformation("Best game-pad ever");
 ```
 Note: The constructor `GamePadInformation(String name)` is deprecated. You should use `GamePadInformation(String name, UUID uuid)` instead. The UUID must ideally stay the same each time the app is launched. Consequently, the UUID should be generated during the first launch and it should be immediately stored in the SharedPreferences in order to be reused for future launches. The first constructor is equivalent to `GamePadInformation(name, UUID.randomUUID())`.
- * Instatiate a GamePadIOHelper object in the `onCreate()` of the main activity:
+##### Instatiate a GamePadIOHelper object in the `onCreate()` of the main activity:
 ```java
 GamePadIOHelper easyIO = new GamePadIOHelper(getContext(), info);
 ```
- * Start the game-pad IO client:
+##### Start the game-pad IO client:  
 ```java
 // The start method takes a listener in parameter, it can be defined
 // to be notified for each change of the state of the connection to
 // the game. It can be set to null if you do not need it
 easyIO.start(this);
 ```
- * Attach the Android views to the GamePadIOHelper:  
-Define an input view:
+##### Attach the Android views to the GamePadIOHelper:  
+ * Define an input view:  
 ```java
 // Get the android view
 ...
@@ -80,7 +82,7 @@ Define an input view:
 // view will be automatically transmit to the game.
 ...
 ```
-Define an output view:
+ * Define an output view:  
 ```java
 // Get the android view
 ...
@@ -90,31 +92,38 @@ Define an output view:
 // by the game will be automatically diplayed in this view.
 ...
 ```
+ * Enable feedback:  
+```java
+// Create feedback indicator
+...
+// Attach the indicator
+...
+```
 
 ### Integrate Sofa in your game
- * Define the game's informations (currently you can only define the name of the game):
+##### Define the game's informations (currently you can only define the name of the game):
 ```java
 GameInformation info = new GameInformation("The Game!");
 ```
- * Instantiate a GameIOHelper object in the `onCreate()` of your main activity:
+##### Instantiate a GameIOHelper object in the `onCreate()` of your main activity:
 ```java
 GameIOHelper easyIO = new GameIOHelper(getContext(), info);
 ```
- * Start the game client
+##### Start the game client
   * Using the listener's methods (To handle the game-pad events in the GUI Thread):
   * Using the pollEvent methods (To handle the game-pad events from any thread you want):
 
- * Handle the game-pad events:
+##### Handle the game-pad events:
   * With the listeners:
   * With the pollEvent methods:
 
- * Send an output event:
-The GameIOHelper has two methods to send output events. The method `sendOutputEvent(event, gamepadId)` sends the output event to the game-pad with the given id. And the method `sendOutputEventBroadcast(event)` sends the output event to all the connected game-pads, it is equivalent to `sendOutputEvent(event, -1)`. The output events can be one of these:
-  * Feedback with a long/short vibration:
+##### Send an output event:  
+The GameIOHelper has two methods to send output events. The method `sendOutputEvent(event, gamepadId)` sends the output event to the game-pad with the given id. And the method `sendOutputEventBroadcast(event)` sends the output event to all the connected game-pads, it is equivalent to `sendOutputEvent(event, -1)`. The output events can be one of these:  
+  * **Feedback** with a long/short vibration:  
 ```java
 OutputEvent.createFeedback(OutputEvent.VIBRATE_SHORT);
 ```
-  * Feedback with a custom vibrations:
+  * **Feedback** with a custom vibrations:  
 ```java
 ArrayList<Integer> vibrations = new ArrayList();
 for(int i = 0; i < 3; i++) {
@@ -123,11 +132,11 @@ for(int i = 0; i < 3; i++) {
 }
 OutputEvent.createFeedback(vibrations);
 ```
-  * Text event, the id of the target game-pad's indicator must be specified:
+  * **Text event**, the id of the target game-pad's indicator must be specified:  
 ```java
 OutputEvent.createTextEvent("Text to send", indicatorId);
 ```
-  * State event, the id of the target game-pad's indicator must be specified:
+  * **State event**, the id of the target game-pad's indicator must be specified:  
 ```java
 // The state can be either STATE_TRUE or STATE_FALSE for a two state mode (see boolean indicator)
 // Or any other values otherwise
@@ -135,8 +144,8 @@ OutputEvent.createStateEvent(OutputEvent.STATE_TRUE, indicatorId);
 ```
 ### See sample activities
 You can check the sample activities in src/com/fbessou/sofa/activity/:
-* An example of game-pad activity: GamePadSampleActivity.java with its layout res/layout/activity_gamepad_sample.xml.
-* An example of a game (altough it is not really a game) activity using the listener's methods: GameListerSampleActivity.java
+ * An example of game-pad activity: GamePadSampleActivity.java with its layout res/layout/activity_gamepad_sample.xml.
+ * An example of a game (altough it is not really a game) activity using the listener's methods: GameListerSampleActivity.java
 
 ### Other tips
 #### Create your own game-pad indicator
