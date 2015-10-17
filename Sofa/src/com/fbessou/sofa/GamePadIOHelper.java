@@ -6,9 +6,10 @@ import android.app.Activity;
 import android.os.Handler;
 import android.util.SparseArray;
 
-import com.fbessou.sofa.GamePadIOClient.GameMessageListener;
 import com.fbessou.sofa.GamePadIOClient.ConnectionStateChangedListener;
+import com.fbessou.sofa.GamePadIOClient.GameMessageListener;
 import com.fbessou.sofa.indicator.Indicator;
+import com.fbessou.sofa.message.GamePadCustomMessage;
 import com.fbessou.sofa.message.GamePadInputEventMessage;
 import com.fbessou.sofa.sensor.Sensor;
 import com.fbessou.sofa.sensor.Sensor.InputEventTriggeredListener;
@@ -62,6 +63,13 @@ public class GamePadIOHelper implements InputEventTriggeredListener {
 	
 	public void setOnCustomMessageReceivedListener(OnCustomMessageReceivedListener listener) {
 		mCustomMessageListener = listener;
+	}
+	
+	public void sendCustomMessage(String customMessage) {
+		if(mGamePadIO != null) {
+			GamePadCustomMessage msg = new GamePadCustomMessage(customMessage);
+			mGamePadIO.sendMessage(msg);
+		}
 	}
 	
 	public void updateInformation(GamePadInformation info) {
