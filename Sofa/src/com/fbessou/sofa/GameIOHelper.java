@@ -8,9 +8,10 @@ import android.app.Activity;
 import android.os.Handler;
 import android.util.SparseArray;
 
-import com.fbessou.sofa.GameIOClient.GamePadMessageListener;
 import com.fbessou.sofa.GameIOClient.ConnectionStateChangedListener;
+import com.fbessou.sofa.GameIOClient.GamePadMessageListener;
 import com.fbessou.sofa.GameIOHelper.GamePadStateChangedEvent.Type;
+import com.fbessou.sofa.message.GameCustomMessage;
 import com.fbessou.sofa.message.GameRejectMessage;
 
 public class GameIOHelper {
@@ -112,11 +113,11 @@ public class GameIOHelper {
 		return mGameIO != null && mGameIO.isConnected();
 	}
 
-	/** Send the same output event to every connected game pad **/
+	/** Send the same output event to all the connected game-pads **/
 	public void sendOutputEventBroadcast(OutputEvent event) {
 		sendOutputEvent(event, -1);
 	}
-	/** Send an output event to the game pad **/
+	/** Send an output event to the game-pad **/
 	public void sendOutputEvent(OutputEvent event, int gamepadId) {
 		if(mGameIO == null)
 			return;
@@ -127,6 +128,25 @@ public class GameIOHelper {
 		}
 		mGameIO.sendOutputEvent(event, gamepadId);
 	}
+
+	/** Send a custom message to all the connected game-pads **/
+	public void sendCustomMessageBroadcast(String customMessage) {
+		sendCustomMessage(customMessage, -1);
+	}
+	/** Send a custom message to the game-pad **/
+	public void sendCustomMessage(String customMessage, int gamepadId) {
+		if(mGameIO == null)
+			return;
+		
+		if(gamepadId != -1 && isGamePadConnected(gamepadId)) {
+			//Log.w("GameIOHandler", "Cannot send output event: game pad id "+gamepadId+" unknown");
+			return;
+		}
+		GameCustomMessage msg = new GameCustomMessage(customMessage, gamepadId);
+		mGameIO.sendMessage(msg);
+		
+	}
+	
 	/** Update the game informations and share them **/
 	public void updateGameInformation(GameInformation info) {
 		mGameInfo = info;
