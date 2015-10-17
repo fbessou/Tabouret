@@ -171,7 +171,7 @@ public class GameIOHelper {
 		return mGamePads.size();
 	}
 	/** Returns a list of the ID of the connected game-pads*/
-	public ArrayList<Integer> getGamePadIds(int index) {
+	public ArrayList<Integer> getGamePadIds() {
 		ArrayList<Integer> keys = new ArrayList<Integer>();
 		
 		for(int i = 0; i < mGamePads.size(); i++)
@@ -180,7 +180,7 @@ public class GameIOHelper {
 		return keys;
 	}
 	/** Returns the information of the game-pad. Returns null if the id is unknown. **/
-	public GamePadInGameInformation getGamePadInformationId(int id) {
+	public GamePadInGameInformation getGamePadInformation(int id) {
 		if(mGamePads.get(id) != null)
 			return mGamePads.get(id);
 		else if(mDisconnectedGamePads.get(id) != null)

@@ -78,7 +78,7 @@ public class GameListenerSampleActivity extends Activity implements StateChanged
 		description += event.gamePadId;
 		description += " - ";
 		// Name of the player
-		description += easyIO.getGamePadInformationId(event.gamePadId).staticInformations.getNickname();
+		description += easyIO.getGamePadInformation(event.gamePadId).staticInformations.getNickname();
 		description += " - ";
 		
 		// Event description
@@ -137,8 +137,8 @@ public class GameListenerSampleActivity extends Activity implements StateChanged
 		description += event.gamePadId;
 		description += " - ";
 		// Name of the player
-		if(easyIO.getGamePadInformationId(event.gamePadId) != null) {
-			description += easyIO.getGamePadInformationId(event.gamePadId).staticInformations.getNickname();
+		if(easyIO.getGamePadInformation(event.gamePadId) != null) {
+			description += easyIO.getGamePadInformation(event.gamePadId).staticInformations.getNickname();
 			description += " - ";
 		}
 		
