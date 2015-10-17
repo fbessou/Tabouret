@@ -163,12 +163,19 @@ public class OutputEvent {
 		}
 	}
 
-	public static OutputEvent createFeedback(Integer feedback) {
+	/** Create a feedback output event (vibrate)
+	 * @param feedback either VIBRATE_SHORT or VIBRATE_LONG */
+	public static OutputEvent createFeedback(int feedback) {
 		OutputEvent evt = new OutputEvent(Type.FEEDBACK);
 		evt.feedback = feedback;
 		return evt;
 	}
 
+	/** Create a custom feedback output event (vibrate)
+	 * @param list The values in this array indicates the active and inactive time
+	 * of the vibrator in milliseconds. Ex : [15,10,30,...] means a
+	 * pause of 15ms before a 10ms long vibration, followed by
+	 * another pause of 30ms... */
 	public static OutputEvent createFeedback(ArrayList<Integer> list) {
 		OutputEvent evt = new OutputEvent(Type.FEEDBACK);
 		evt.vibrations = new long[list.size()];
@@ -177,14 +184,24 @@ public class OutputEvent {
 		return evt;
 	}
 
-	public static OutputEvent createTextEvent(String text, Integer outputId) {
+	/**
+	 * Create a text output event
+	 * @param text the text to send
+	 * @param outputId the id of the target game-pad's indicator
+	 */
+	public static OutputEvent createTextEvent(String text, int outputId) {
 		OutputEvent evt = new OutputEvent(Type.TEXT);
 		evt.text = text;
 		evt.outputId = outputId;
 		return evt;
 	}
-	
-	public static OutputEvent createStateEvent(Integer state, Integer outputId) {
+
+	/**
+	 * Create a state output event
+	 * @param state state to send. 0 or 1 for a boolean state, any other values otherwise
+	 * @param outputId the id of the target game-pad's indicator
+	 */
+	public static OutputEvent createStateEvent(int state, int outputId) {
 		OutputEvent evt = new OutputEvent(Type.STATE);
 		evt.state = state;
 		evt.outputId = outputId;
