@@ -69,7 +69,7 @@ Note: The constructor `GamePadInformation(String name)` is deprecated. You shoul
     // the game. It can be set to null if you do not need it
 	easyIO.start(this);
 ```
- * Attach the Android views to the GamePadIOHelper:
+ * Attach the Android views to the GamePadIOHelper:  
 Define an input view:
 ```java
     // Get the android view
@@ -118,8 +118,67 @@ You can check the sample activities in src/com/fbessou/sofa/activity/:
 #### Send a personalized input event (game-pad)
 #### Create and send a personalized output event (game)
 #### Using custom message
- * With JSON objects
- * With base64 encoding and decoding (See [Base64 in android developers](https://developer.android.com/reference/android/util/Base64.html))
-
+You can exchange any data you need between the game-pads and the game by using the custom messages. A custom message must be a string. The two most common ways to deal with the custom messages is to use either JSON objects or base64 encoding.
+ * With [JSON objects](https://developer.android.com/reference/org/json/JSONObject.html), you can easily get both a string from an object and an object from a string.  
+In your class:
+```java
+    class MyData {
+        String name;
+        int age;
+        
+        String toString() {
+            JSONObject json = new JSONObject();
+            
+            json.put("name", name);
+            json.put("age", age);
+            
+            return json.toString();
+        }
+        
+        static MyData createFromString(String jsonString) throws JSONException {
+            JSONObject json = new JSONObject(jsonString);
+            MyData data = new MyData();
+            
+            data.name = json.getString("name");
+            data.age = json.getInt("age");
+            
+            return data;
+        }
+    }
+```
+To send an object with a custom message:
+```java
+    easyIO.sendCustomMessage(myData.toString())
+```
+To receive the custom message:
+```java
+    // In the onCreate() method, define a custom message received listener
+    easyIO.setOnCustomMessageReceivedListener(this);
+    
+    ...
+    
+    // Implement the listener's method
+    @Override
+    public void onCustomMessageReceived(String customMessage) {
+		MyData data = MyData.createFromString(customMessage);
+		...
+	}
+```
+ * With [base64 encoding and decoding](https://developer.android.com/reference/android/util/Base64.html), you can transform any binary data to a string.
+```java
+    /** From binary to String **/
+    byte[] binaryData = ...
+    String encodedBinaryData = Base64.encodeToString(data, Base64.DEFAULT);
+    easyIO.sendCustomMessage(encodedBinaryData);
+    
+    /** From String to binary **/
+    // OnCustomMessageReceivedListener's method
+    @Override
+    public void onCustomMessageReceived(String customMessage) {
+		byte[] binaryData = Base64.decode(customMessage, Base64.DEAFULT);
+		...
+	}
+```
+    
 ### Ask for a doc!
 The documentation still does not exist :(
