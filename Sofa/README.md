@@ -59,58 +59,89 @@
 ##### Create a simple activity (do not forget to declare it into your manifest)
 ##### Create a layout which contains the buttons and the views that you want to display on your game-pad:  
 ```xml
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:sofa="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    orientation>
+    
+    <!-- The sofa's joystick view (need to import xmlns:sofa) -->
+    <com.fbessou.sofa.view.JoystickView
+        android:id="@+id/joystick"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        sofa:position="follow"
+        sofa:bound="circle"/>
+        
+    <!-- Text indicator -->
+    <TextView
+        android:id="@+id/text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"/>
+    
+    <!-- Button -->
+    <Button
+    	android:id="@+id/button"
+    	android:text="ACTION"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"/>
+    	
+</RelativeLayout>
 ```
 ##### Define game-pad's informations:  
 ```java
 GamePadInformation info = new GamePadInformation("Best game-pad ever");
 ```
-Note: The constructor `GamePadInformation(String name)` is deprecated. You should use `GamePadInformation(String name, UUID uuid)` instead. The UUID must ideally stay the same each time the app is launched. Consequently, the UUID should be generated during the first launch and it should be immediately stored in the SharedPreferences in order to be reused for future launches. The first constructor is equivalent to `GamePadInformation(name, UUID.randomUUID())`.
+*Note: The constructor `GamePadInformation(String name)` is deprecated. You should use `GamePadInformation(String name, UUID uuid)` instead. The UUID must ideally stay the same each time the app is launched. Consequently, the UUID should be generated during the first launch and it should be immediately stored in the SharedPreferences in order to be reused for future launches. The first constructor is equivalent to `GamePadInformation(name, UUID.randomUUID())`.*
 ##### Instatiate a GamePadIOHelper object in the `onCreate()` of the main activity:
 ```java
 GamePadIOHelper easyIO = new GamePadIOHelper(getContext(), info);
 ```
 ##### Start the game-pad IO client:  
+The start method takes a listener in parameter, it can be defined to be notified for each change of the state of the connection to the game. It can be set to null if you do not need it:
 ```java
-// The start method takes a listener in parameter, it can be defined
-// to be notified for each change of the state of the connection to
-// the game. It can be set to null if you do not need it
 easyIO.start(this);
 ```
 ##### Attach the Android views to the GamePadIOHelper:  
  * Define an input view:  
 ```java
 // Get the android view
-...
-// Create a sensor
-...
-// Attach the sensor to the view. All the interactions with the
+JoystickView joystick = (JoystickView) findViewById(R.id.joystick);
+// Create a sensor attached to this view
+Analog2DSensor stick = new Analog2DSensor(Sensor.ANALOG_CATEGORY_VALUE + 1, joystick);
+// Attach the sensor to the game-pad. All the interactions with the
 // view will be automatically transmit to the game.
-...
-```
- * Enable a sensor of the device:  
-```java
-// Create a sensor
-...
-// Attach the sensor. All the updates of the sensor's values will
-// be automatically send to the game.
-...
+easyIO.attachSensor(stick);
 ```
  * Define an output view:  
 ```java
 // Get the android view
-...
-// Create an indicator
-...
-// Attach the indicator to the view. All the output event generated
+TextView textview = (TextView) findViewById(R.id.text);
+// Create an indicator attached to this view
+TextIndicator text = new TextIndicator(Indicator.TEXT_CATEGORY_VALUE + 1, textview, WriteMode.REPLACE);
+// Attach the indicator to the game-pad. All the output events generated
 // by the game will be automatically diplayed in this view.
-...
+easyIO.attachIndicator(text);
+```
+##### Attach additional sensors and indicators to the GamePadIOHelper:  
+ * Enable the accelerometer of the device:  
+```java
+// Create a sensor
+AccelerometerSensor accel = new AccelerometerSensor(Sensor.WORLD_CATEGORY_VALUE+1);
+// Attach the sensor. All the updates of the sensor's values will
+// be automatically send to the game.
+easyIO.attachSensor(accel);
 ```
  * Enable feedback:  
 ```java
 // Create feedback indicator
-...
-// Attach the indicator
-...
+FeedbackIndicator feedback = new FeedbackIndicator(this, Indicator.FEEDBACK_CATEGORY_VALUE + 1);
+// Attach the indicator to the game-pad
+easyIO.attachIndicator(feedback);
 ```
 
 ### Integrate Sofa in your game
