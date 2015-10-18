@@ -22,6 +22,7 @@ import com.fbessou.sofa.indicator.FeedbackIndicator;
 import com.fbessou.sofa.indicator.Indicator;
 import com.fbessou.sofa.indicator.TextIndicator;
 import com.fbessou.sofa.indicator.TextIndicator.WriteMode;
+import com.fbessou.sofa.sensor.AccelerometerSensor;
 import com.fbessou.sofa.sensor.Analog2DSensor;
 import com.fbessou.sofa.sensor.KeySensor;
 import com.fbessou.sofa.sensor.Sensor;
@@ -60,6 +61,9 @@ public class GamePadSampleActivity extends Activity {
 		
 		KeySensor keyDown = new KeySensor(Sensor.KEY_CATEGORY_VALUE + DOWN, findViewById(R.id.buttonDown));
 		easyIO.attachSensor(keyDown);
+		
+		AccelerometerSensor accel = new AccelerometerSensor(Sensor.WORLD_CATEGORY_VALUE+1);
+		easyIO.attachSensor(accel);
 		
 		TextIndicator text = new TextIndicator(Indicator.TEXT_CATEGORY_VALUE + 1, (TextView)findViewById(R.id.textOutput), WriteMode.REPLACE);
 		easyIO.attachIndicator(text);
