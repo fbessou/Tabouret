@@ -8,6 +8,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -148,8 +149,10 @@ public class ProxyConnector extends BroadcastReceiver implements ConnectionInfoL
 			Log.i("ProxyConnector","The group owner is "+mHostAddress.getHostAddress());
 		} else {
 			// Start the proxy service. If the service is already running, this line does nothing
-			mContext.startService(new Intent(mContext, GameIOProxy.class));
-
+			ComponentName cn = mContext.getApplicationContext().startService(new Intent(mContext, GameIOProxy.class));
+			if(cn == null)
+				Log.e("ProxyConnector", "Error: You must declare the service \"com.fbessou.sofa.GameIOProxy\" in the manifest");
+			
 			mHostAddress = null /* local host */;
 			Log.i("ProxyConnector", "I am the group owner");
 		}
