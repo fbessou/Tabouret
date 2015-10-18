@@ -38,7 +38,7 @@
 
 * Import Sofa project into your workspace
 * Add the library in your project (Project > Properties > Android > Add... > Sofa)
-* In your AndroidManifest.xml, add the permissions:  
+* In your `AndroidManifest.xml`, add the permissions:  
 ```xml
 <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
 <uses-permission android:name="android.permission.INTERNET"/>
@@ -48,7 +48,12 @@ and also the permission to use the vibrate if you want to use game-pad's feedbac
 ```xml
 <uses-permission android:name="android.permission.VIBRATE"/>
 ```
-
+ * In your `AndroidManifest.xml`, declare the proy service:
+```xml
+<application ... >
+    <service android:name="com.fbessou.sofa.GameIOProxy"/>
+</application>
+```
 
 ### Create a game-pad activity
 ##### Create a simple activity (do not forget to declare it into your manifest)
