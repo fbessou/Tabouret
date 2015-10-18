@@ -44,11 +44,11 @@
 <uses-permission android:name="android.permission.INTERNET"/>
 <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
 ```
-and also the permission to use the vibrate if you want to use game-pad's feedback later:  
+ * (Optional) In your `AndroidManifest.xml`, add the permission to use the vibrate if you want to use the feedbacks later:  
 ```xml
 <uses-permission android:name="android.permission.VIBRATE"/>
 ```
- * In your `AndroidManifest.xml`, declare the proy service:
+ * In your `AndroidManifest.xml`, declare the proxy service:
 ```xml
 <application ... >
     <service android:name="com.fbessou.sofa.GameIOProxy"/>
