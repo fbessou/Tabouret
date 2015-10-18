@@ -82,6 +82,14 @@ easyIO.start(this);
 // view will be automatically transmit to the game.
 ...
 ```
+ * Enable a sensor of the device:  
+```java
+// Create a sensor
+...
+// Attach the sensor. All the updates of the sensor's values will
+// be automatically send to the game.
+...
+```
  * Define an output view:  
 ```java
 // Get the android view
