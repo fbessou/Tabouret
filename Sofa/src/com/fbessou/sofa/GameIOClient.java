@@ -166,14 +166,14 @@ public class GameIOClient extends IOClient {
 		// Send Join message
 		sendMessage(new GameJoinMessage());
 
-		if(mConnectionListener == null)
+		if(mConnectionListener != null)
 			mConnectionListener.onConnected();
 	}
 	@Override
 	protected void onCommunicationDisabled() {
 		super.onCommunicationDisabled();
 		
-		if(mConnectionListener == null)
+		if(mConnectionListener != null)
 			mConnectionListener.onDisconnected();
 	}
 	
