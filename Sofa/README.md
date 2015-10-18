@@ -188,17 +188,17 @@ OutputEvent.createStateEvent(OutputEvent.STATE_TRUE, indicatorId);
 ```
 ### See sample activities
 You can check the sample activities in src/com/fbessou/sofa/activity/:
- * An example of game-pad activity: GamePadSampleActivity.java with its layout res/layout/activity_gamepad_sample.xml.
- * An example of a game (altough it is not really a game) activity using the listener's methods: GameListerSampleActivity.java
+ * An example of game-pad activity: [GamePadSampleActivity.java](https://github.com/fbessou/Tabouret/blob/master/Sofa/src/com/fbessou/sofa/activity/GamePadSampleActivity.java) with its layout [activity_gamepad_sample.xml](https://github.com/fbessou/Tabouret/blob/master/Sofa/res/layout/activity_gamepad_sample.xml).
+ * An example of a game (altough it is not really a game) activity using the listener's methods: [GameListerSampleActivity.java](https://github.com/fbessou/Tabouret/blob/master/Sofa/src/com/fbessou/sofa/activity/GameListenerSampleActivity.java)
 
 ### Other tips
 #### Create your own game-pad indicator
-
+...
 #### Send a personalized input event (game-pad)
-
+...
 
 #### Create and send a personalized output event (game)
-
+...
 
 #### Using custom message
 You can exchange any data you need between the game-pads and the game by using the custom messages. A custom message must be a string. The two most common ways to deal with the custom messages is to use either JSON objects or base64 encoding.
@@ -257,14 +257,13 @@ String encodedBinaryData = Base64.encodeToString(data, Base64.DEFAULT);
 easyIO.sendCustomMessage(encodedBinaryData);
 
 /** From String to binary **/
-// OnCustomMessageReceivedListener's method
 @Override
 public void onCustomMessageReceived(String customMessage) {
-	byte[] binaryData = Base64.decode(customMessage, Base64.DEAFULT);
+	byte[] binaryData = Base64.decode(customMessage, Base64.DEFAULT);
 	...
 }
 ```
- * It is often preferable to use both the ways at the same time. In fact, it is interresting to add further informations to a binary data. In this case, the encoded string will be one of the attribute of the JSON object.
+ * It is often preferable to use both the ways at the same time. For example, it is interresting to add further informations to a binary data. In this case, the encoded string will be one of the attributes of the JSON object.
     
 ### Ask for a doc!
 The documentation still does not exist :(
