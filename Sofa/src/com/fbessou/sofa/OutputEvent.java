@@ -41,6 +41,8 @@ public class OutputEvent {
 	public static final int VIBRATE_LONG = 1;
 	public static final int VIBRATE_CUSTOM = 255;
 	
+	public static final int STATE_TRUE = 1, STATE_FALSE = 0;
+	
 	/**
 	 * Type of haptic feedback effect to be used
 	 */
@@ -198,7 +200,7 @@ public class OutputEvent {
 
 	/**
 	 * Create a state output event
-	 * @param state state to send. 0 or 1 for a boolean state, any other values otherwise
+	 * @param state state to send. Can be either STATE_TRUE or STATE_FALSE (0 or 1) for a boolean state, any other values otherwise
 	 * @param outputId the id of the target game-pad's indicator
 	 */
 	public static OutputEvent createStateEvent(int state, int outputId) {
