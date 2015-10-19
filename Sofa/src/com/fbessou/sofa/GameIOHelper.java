@@ -10,6 +10,7 @@ import android.util.SparseArray;
 
 import com.fbessou.sofa.GameIOClient.ConnectionStateChangedListener;
 import com.fbessou.sofa.GameIOClient.GamePadMessageListener;
+import com.fbessou.sofa.GameIOHelper.GamePadInGameInformation.State;
 import com.fbessou.sofa.GameIOHelper.GamePadStateChangedEvent.Type;
 import com.fbessou.sofa.message.GameCustomMessage;
 import com.fbessou.sofa.message.GameRejectMessage;
@@ -252,6 +253,7 @@ public class GameIOHelper {
 			gpEvent.gamePadId = gamepad;
 			
 			// Move the game-pad to the list of disconnected game-pads
+			mGamePads.get(gamepad).state = State.LEFT;
 			mDisconnectedGamePads.put(gamepad, mGamePads.get(gamepad));
 			mGamePads.delete(gamepad);
 			
@@ -276,7 +278,7 @@ public class GameIOHelper {
 				gpEvent.eventType = Type.JOINED;
 				gpEvent.gamePadId = gamepad;
 				// Add the game pad to the list
-				mGamePads.put(gamepad, new GamePadInGameInformation());
+				mGamePads.put(gamepad, new GamePadInGameInformation(gamepad));
 				mGamePads.get(gamepad).staticInformations = new GamePadInformation(nickName, null);
 				
 				if(mDisconnectedGamePads.get(gamepad) != null)
@@ -312,6 +314,7 @@ public class GameIOHelper {
 			gpEvent.gamePadId = gamepad;
 			
 			// Move the game-pad to the list of disconnected game-pads
+			mGamePads.get(gamepad).state = State.UNEXPECTEDLY_DISCONNECTED;
 			mDisconnectedGamePads.put(gamepad, mGamePads.get(gamepad));
 			mGamePads.delete(gamepad);
 			
@@ -409,5 +412,9 @@ public class GameIOHelper {
 		public GamePadInformation staticInformations;
 		public int gamePadId;
 		public State state;
+		public GamePadInGameInformation(int gamePadId) {
+			this.gamePadId = gamePadId;
+			state = State.JOINED;
+		}
 	}
 }
