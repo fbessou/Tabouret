@@ -78,7 +78,6 @@ public class JoystickView extends View {
 		try {
 			mBoundShape = BoundShape.values()[a.getInt(R.styleable.Joystick_bound, BoundShape.CIRCLE.ordinal())];
 			mBoundRadius = a.getDimensionPixelSize(R.styleable.Joystick_boundSize, 150);
-			mStickRadius = a.getDimensionPixelSize(R.styleable.Joystick_stickRadius, 60);
 			mCenterPosition = Position.values()[a.getInt(R.styleable.Joystick_position, Position.FOLLOW.ordinal())];
 			mStickColor = 0xFF808080;
 			mCenterColor = 0xFF808080;
@@ -90,13 +89,11 @@ public class JoystickView extends View {
 				Drawable drawable = a.getDrawable(R.styleable.Joystick_stickDrawable);
 				if(drawable instanceof ColorDrawable) {
 					mStickColor = ((ColorDrawable)drawable).getColor(); // Should get ResourceTypeName and compare to "color" instead of that
-					setStickImage(null);
+					mStickRadius = a.getDimensionPixelSize(R.styleable.Joystick_stickRadius, 60);
 				}
 				else {
 					setStickImage(drawableToBitmap(drawable));
 				}
-			} else {
-				mStickColor = a.getColor(R.styleable.Joystick_stickDrawable, mStickColor);
 			}
 			
 			resId = a.getResourceId(R.styleable.Joystick_centerDrawable, 0);
@@ -104,14 +101,12 @@ public class JoystickView extends View {
 				Drawable drawable = a.getDrawable(R.styleable.Joystick_centerDrawable);
 				if(drawable instanceof ColorDrawable) {
 					mCenterColor = ((ColorDrawable)drawable).getColor(); // Should get ResourceTypeName and compare to "color" instead of that
-					setCenterImage(null);
 				}
 				else {
 					setCenterImage(drawableToBitmap(drawable));
 				}
-			} else {
-				mCenterColor = a.getColor(R.styleable.Joystick_stickDrawable, mCenterColor);
 			}
+			
 		} finally {
 			a.recycle();
 		}
