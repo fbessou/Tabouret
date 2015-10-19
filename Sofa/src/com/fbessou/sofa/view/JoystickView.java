@@ -367,7 +367,7 @@ public class JoystickView extends View {
 	 * will be displayed
 	 **/
 	public void setCenterImage(Bitmap bitmap) {
-		mStickBmp = bitmap;
+		mCenterBmp = bitmap;
 	}
 	
 	/**
