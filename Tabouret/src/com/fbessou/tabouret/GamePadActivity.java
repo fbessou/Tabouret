@@ -31,7 +31,7 @@ public class GamePadActivity extends Activity implements GameMessageListener {
 		
 		com.fbessou.sofa.Log.setLogFilterMask(com.fbessou.sofa.Log.FILTER_NOTHING);
 		// Initialize or retrieve the GamePadIOClient fragment.
-		mGamePadIOClient = GamePadIOClient.getGamePadIOClient((Activity)this, GamePadInformation.getDefault());
+		mGamePadIOClient = GamePadIOClient.getGamePadIOClient((Activity)this, new GamePadInformation(this));
 		mGamePadIOClient.setGameMessageListener(this);
 		
 		Intent intent = getIntent();
