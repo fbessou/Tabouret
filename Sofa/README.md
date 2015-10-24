@@ -94,9 +94,10 @@
 ```
 ##### Define game-pad's informations:  
 ```java
-GamePadInformation info = new GamePadInformation("Best game-pad ever");
+GamePadInformation info = new GamePadInformation(getContext());
 ```
-*Note: The constructor `GamePadInformation(String name)` is deprecated. You should use `GamePadInformation(String name, UUID uuid)` instead. The UUID must ideally stay the same each time the app is launched. Consequently, the UUID should be generated during the first launch and it should be immediately stored in the SharedPreferences in order to be reused for future launches. The first constructor is equivalent to `GamePadInformation(name, UUID.randomUUID())`.*
+*Note: The object GamePadInformation contains the name of the game-pad. It can be changed by calling `setNickName()`,
+the new name will be automatically saved in a shared preferences file and it will be automatically recovered the next time the constructor will be invocated.*
 ##### Instatiate a GamePadIOHelper object in the `onCreate()` of the main activity:
 ```java
 GamePadIOHelper easyIO = new GamePadIOHelper(getContext(), info);
@@ -147,8 +148,9 @@ easyIO.attachIndicator(feedback);
 ### Integrate Sofa in your game
 ##### Define the game's informations (currently you can only define the name of the game):
 ```java
-GameInformation info = new GameInformation("The Game!");
+GameInformation info = new GameInformation(getContext());
 ```
+*Note: The GameInformation's attributes are automatically saved in a shared preferences file when modified. They will be automatically recovered the next time the constructor is invocated.*
 ##### Instantiate a GameIOHelper object in the `onCreate()` of your main activity:
 ```java
 GameIOHelper easyIO = new GameIOHelper(getContext(), info);
