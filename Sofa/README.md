@@ -43,9 +43,7 @@
 <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
 <uses-permission android:name="android.permission.INTERNET"/>
 <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
-```
- * (Optional) In your `AndroidManifest.xml`, add the permission to use the vibrate if you want to use the feedbacks later:  
-```xml
+<!-- (Optional) permission to use the vibrate if you want to use the feedbacks later -->
 <uses-permission android:name="android.permission.VIBRATE"/>
 ```
  * In your `AndroidManifest.xml`, declare the proxy service:
@@ -165,11 +163,11 @@ GameIOHelper easyIO = new GameIOHelper(getContext(), info);
 
 ##### Send an output event:  
 The GameIOHelper has two methods to send output events. The method `sendOutputEvent(event, gamepadId)` sends the output event to the game-pad with the given id. And the method `sendOutputEventBroadcast(event)` sends the output event to all the connected game-pads, it is equivalent to `sendOutputEvent(event, -1)`. The output events can be one of these:  
-  * **Feedback** with a long/short vibration:  
+  * **Feedback** with a simple vibration:  
 ```java
 OutputEvent.createFeedback(OutputEvent.VIBRATE_SHORT);
 ```
-  * **Feedback** with a custom vibrations:  
+  * **Feedback** with custom vibrations:  
 ```java
 ArrayList<Integer> vibrations = new ArrayList();
 for(int i = 0; i < 3; i++) {
