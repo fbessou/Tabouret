@@ -279,7 +279,7 @@ public class GameIOHelper {
 				gpEvent.gamePadId = gamepad;
 				// Add the game pad to the list
 				mGamePads.put(gamepad, new GamePadInGameInformation(gamepad));
-				mGamePads.get(gamepad).staticInformations = new GamePadInformation(nickName, null);
+				mGamePads.get(gamepad).staticInformations = new GamePadInformation(nickName);
 				
 				if(mDisconnectedGamePads.get(gamepad) != null)
 					mDisconnectedGamePads.delete(gamepad);

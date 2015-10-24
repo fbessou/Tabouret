@@ -64,8 +64,8 @@ public class GameListenerSampleActivity extends Activity implements StateChanged
 			}
 		});
 		
+		info = new GameInformation(this);
 		easyIO = new GameIOHelper(this, info, this, this, null);
-		info = new GameInformation("Name Of This Sample Game");
 		easyIO.start(null);
 	}
 

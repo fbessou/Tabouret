@@ -220,7 +220,7 @@ public class GameIOClient extends IOClient {
 		GameIOClient gameIO = (GameIOClient) fm.findFragmentByTag("gameIOClient");
 		if(gameIO == null) {
 			if(info == null)
-				info = GameInformation.getDefault();
+				throw new NullPointerException("The game pad informations must be defined.");
 			
 			gameIO = new GameIOClient(info);
 			fm.beginTransaction().add(gameIO, "gameIOClient").commit();

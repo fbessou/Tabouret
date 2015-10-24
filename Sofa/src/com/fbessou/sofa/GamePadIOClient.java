@@ -210,13 +210,12 @@ public class GamePadIOClient extends IOClient {
 	 * 				created. Can be null, default values will be used instead.
 	 * @return
 	 */
-	@SuppressWarnings("deprecation")
 	public static GamePadIOClient getGamePadIOClient(Activity activity, GamePadInformation info) {
 		FragmentManager fm = activity.getFragmentManager();
 		GamePadIOClient gameBinder = (GamePadIOClient) fm.findFragmentByTag("GamePadIOClient");
 		if(gameBinder == null) {
 			if(info == null)
-				info = GamePadInformation.getDefault();
+				throw new NullPointerException("The game pad informations must be defined.");
 			
 			gameBinder = new GamePadIOClient(info);
 			fm.beginTransaction().add(gameBinder, "GamePadIOClient").commit();

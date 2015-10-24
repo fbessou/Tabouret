@@ -665,7 +665,7 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			if(mUUIDToPadId.containsKey(inUUID)) {
 				int previousID = mUUIDToPadId.get(inUUID);
 				// Check if this previous id is free
-				if(mPadIdToUUID[previousID] == null) {
+				if(mPadIdToUUID[previousID] == null || mPadIdToUUID[previousID] == inUUID) {
 					// The previous id is free, we can recover
 					Log.i("GameIOProxy", "GamePadConnection: recovering id:"+previousID);
 					associateIdUUID(previousID, inUUID);
