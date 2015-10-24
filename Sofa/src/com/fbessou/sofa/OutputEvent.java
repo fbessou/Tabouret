@@ -39,16 +39,16 @@ public class OutputEvent {
 	public String text;
 
 
-	public static final int VIBRATE_SHORT = 0;
-	public static final int VIBRATE_LONG = 1;
-	public static final int VIBRATE_CUSTOM = 255;
+	public static final int VIBRATE_SHORT = 250;
+	public static final int VIBRATE_LONG = 1000;
+	public static final int VIBRATE_CUSTOM = -1;
 	
 	public static final int STATE_TRUE = 1, STATE_FALSE = 0;
 	
 	/**
 	 * Type of haptic feedback effect to be used
 	 */
-	public int feedback;
+	public int feedbackDuration;
 
 	/**
 	 * If Feedback effect is CUSTOM, vibrations indicates how the Vibrator should
@@ -98,8 +98,8 @@ public class OutputEvent {
 		
 		switch (eventType) {
 		case FEEDBACK:
-			feedback = obj.getInt("feedback");
-			if(feedback == VIBRATE_CUSTOM){
+			feedbackDuration = obj.getInt("feedback");
+			if(feedbackDuration == VIBRATE_CUSTOM){
 				JSONArray vibs = obj.getJSONArray("vibrations");
 				int length = vibs.length();
 				vibrations = new long[length];
@@ -133,8 +133,8 @@ public class OutputEvent {
 		obj.put("outputId", outputId);
 		switch (eventType) {
 		case FEEDBACK:
-			obj.put("feedback", feedback);
-			if (feedback == VIBRATE_CUSTOM) {
+			obj.put("feedback", feedbackDuration);
+			if (feedbackDuration == VIBRATE_CUSTOM) {
 				JSONArray array = new JSONArray();
 				for(long v : vibrations)
 					array.put(v);
@@ -168,10 +168,10 @@ public class OutputEvent {
 	}
 
 	/** Create a feedback output event (vibrate)
-	 * @param feedback either VIBRATE_SHORT or VIBRATE_LONG */
-	public static OutputEvent createFeedback(int feedback) {
+	 * @param feedbackDuration duration in  millisecond, can be VIBRATE_SHORT or VIBRATE_LONG */
+	public static OutputEvent createFeedback(int feedbackDuration) {
 		OutputEvent evt = new OutputEvent(Type.FEEDBACK);
-		evt.feedback = feedback;
+		evt.feedbackDuration = feedbackDuration;
 		evt.outputId = Indicator.FEEDBACK_ID;
 		return evt;
 	}

@@ -24,19 +24,10 @@ public class FeedbackIndicator extends Indicator {
 			// Cancel the last sequence
 			mVibrator.cancel();
 			
-			switch(event.feedback) {
-			case OutputEvent.VIBRATE_CUSTOM:
-				// Play the sequence
+			if(event.feedbackDuration > 0)
+				mVibrator.vibrate(event.feedbackDuration);
+			else
 				mVibrator.vibrate(event.vibrations, -1);
-				break;
-			case OutputEvent.VIBRATE_LONG:
-				mVibrator.vibrate(1000);
-				break;
-			case OutputEvent.VIBRATE_SHORT:
-			default:
-				mVibrator.vibrate(250);
-				break;
-			}
 		}
 	}
 }
