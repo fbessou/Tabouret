@@ -96,7 +96,7 @@
 ```java
 GamePadInformation info = new GamePadInformation(getContext());
 ```
-*Note: The object GamePadInformation contains the name of the game-pad. It can be changed by calling `setNickName()`,
+*Note: The object GamePadInformation contains the name of the game-pad. It can be changed by calling `setNickname()`,
 the new name will be automatically saved in a shared preferences file and it will be automatically recovered the next time the constructor will be invocated.*
 ##### Instatiate a GamePadIOHelper object in the `onCreate()` of the main activity:
 ```java
@@ -140,7 +140,7 @@ easyIO.attachSensor(accel);
  * Enable feedback:  
 ```java
 // Create feedback indicator
-FeedbackIndicator feedback = new FeedbackIndicator(this, Indicator.FEEDBACK_CATEGORY_VALUE + 1);
+FeedbackIndicator feedback = new FeedbackIndicator(this);
 // Attach the indicator to the game-pad
 easyIO.attachIndicator(feedback);
 ```
