@@ -14,11 +14,7 @@ public class FeedbackIndicator extends Indicator {
 	Vibrator mVibrator;
 	
 	public FeedbackIndicator(Context context) {
-		super();
-		mVibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
-	}
-	public FeedbackIndicator(Context context, int id) {
-		super(id);
+		super(FEEDBACK_ID);
 		mVibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
 	}
 	

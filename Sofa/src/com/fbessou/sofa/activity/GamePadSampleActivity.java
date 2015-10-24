@@ -60,7 +60,7 @@ public class GamePadSampleActivity extends Activity {
 		TextIndicator text = new TextIndicator(Indicator.TEXT_CATEGORY_VALUE + 1, (TextView)findViewById(R.id.textOutput), WriteMode.REPLACE);
 		easyIO.attachIndicator(text);
 		
-		FeedbackIndicator feedback = new FeedbackIndicator(this, Indicator.FEEDBACK_CATEGORY_VALUE + 1);
+		FeedbackIndicator feedback = new FeedbackIndicator(this);
 		easyIO.attachIndicator(feedback);
 		// easyIO.updateInformation(info);
 	}

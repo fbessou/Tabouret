@@ -43,12 +43,8 @@ public class GameListenerSampleActivity extends Activity implements StateChanged
 		findViewById(R.id.send_feedback).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				// Create a feedback event
-				OutputEvent feedbackEvent = new OutputEvent(OutputEvent.Type.FEEDBACK);
-				feedbackEvent.outputId = Indicator.FEEDBACK_CATEGORY_VALUE + 1;
-				feedbackEvent.feedback = OutputEvent.VIBRATE_SHORT;
-				// And send it to the game pad selected in the list
-				easyIO.sendOutputEvent(feedbackEvent, list.getCheckedRadioButtonId()-1);
+				// Create and send a feedback event to the game pad selected in the list
+				easyIO.sendOutputEvent(OutputEvent.createFeedback(OutputEvent.VIBRATE_SHORT), list.getCheckedRadioButtonId()-1);
 			}
 		});
 		// Text to send

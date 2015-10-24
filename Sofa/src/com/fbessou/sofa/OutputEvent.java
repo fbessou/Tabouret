@@ -10,6 +10,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.fbessou.sofa.indicator.Indicator;
+
 /**
  * @author Frank Bessou
  *
@@ -167,10 +169,10 @@ public class OutputEvent {
 
 	/** Create a feedback output event (vibrate)
 	 * @param feedback either VIBRATE_SHORT or VIBRATE_LONG */
-	public static OutputEvent createFeedback(int feedback, int outputId) {
+	public static OutputEvent createFeedback(int feedback) {
 		OutputEvent evt = new OutputEvent(Type.FEEDBACK);
 		evt.feedback = feedback;
-		evt.outputId = outputId;
+		evt.outputId = Indicator.FEEDBACK_ID;
 		return evt;
 	}
 
@@ -179,12 +181,12 @@ public class OutputEvent {
 	 * of the vibrator in milliseconds. Ex : [15,10,30,...] means a
 	 * pause of 15ms before a 10ms long vibration, followed by
 	 * another pause of 30ms... */
-	public static OutputEvent createFeedback(ArrayList<Integer> list, int outputId) {
+	public static OutputEvent createFeedback(ArrayList<Integer> list) {
 		OutputEvent evt = new OutputEvent(Type.FEEDBACK);
 		evt.vibrations = new long[list.size()];
 		for(int i = 0; i < list.size(); i++)
 			evt.vibrations[i] = list.get(i);
-		evt.outputId = outputId;
+		evt.outputId = Indicator.FEEDBACK_ID;
 		return evt;
 	}
 
