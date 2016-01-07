@@ -50,7 +50,7 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 		mIsFragmentDestroying = false;
 		
 		Log.i("IOClient", "Creating fragment and connecting");
-		
+
 		mConnector = new ProxyConnector(this.getActivity().getApplicationContext(), mPort, this);
 		mConnector.connect();
 		mRetryConnectingTimer = new Timer();
