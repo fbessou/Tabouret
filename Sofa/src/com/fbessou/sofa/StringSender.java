@@ -5,6 +5,7 @@ package com.fbessou.sofa;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -38,14 +39,14 @@ public class StringSender extends Thread {
 	public void run() {
 		try {
 			OutputStream stream = mSocket.getOutputStream();
+			// Make a writer to handle the output stream with auto-flush when encounter a newline
+			PrintWriter writer = new PrintWriter(stream, true);
 			String s = null;
 			
 			while ((s = takeMessageFromQueue()) != null) {
 				//Log.i("StringSender", "Sending "+s);
 				
-				/** do not forget the '\n' character, it is the delimiter
-				 * for <code>com.fbessou.sofa.StringReceiver</code> **/
-				stream.write((s+'\n').getBytes());
+				writer.println(s);
 			}
 		} catch (IOException e) {
 			// Can be something like "timed out"
