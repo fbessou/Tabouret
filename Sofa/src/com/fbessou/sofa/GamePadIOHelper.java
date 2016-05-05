@@ -80,15 +80,20 @@ public class GamePadIOHelper implements InputEventTriggeredListener {
 	
 	private class GameMessage implements GameMessageListener {
 		@Override
-		public void onOutputReceived(OutputEvent event) {
-			// Get the associated indicator if existing
-			Indicator target = mIndicators.get(event.outputId);
-			if(target != null) {
-				// Transmit the event
-				target.onOutputEventReceived(event);
-			} else {
-				Log.w("GamePadIOHelper", "Output event received but attached indicator not found");
-			}
+		public void onOutputReceived(final OutputEvent event) {
+			mGUIHandler.post(new Runnable() {
+				@Override
+				public void run() {
+					// Get the associated indicator if existing
+					Indicator target = mIndicators.get(event.outputId);
+					if(target != null) {
+						// Transmit the event
+						target.onOutputEventReceived(event);
+					} else {
+						Log.w("GamePadIOHelper", "Output event received but attached indicator not found");
+					}
+				}
+			});
 		}
 	
 		@Override
@@ -103,9 +108,14 @@ public class GamePadIOHelper implements InputEventTriggeredListener {
 
 		
 		@Override
-		public void onCustomMessageReceived(String customMessage) {
-			if(mCustomMessageListener != null)
-				mCustomMessageListener.onCustomMessageReceived(customMessage);
+		public void onCustomMessageReceived(final String customMessage) {
+			mGUIHandler.post(new Runnable() {
+				@Override
+				public void run() {
+					if(mCustomMessageListener != null)
+						mCustomMessageListener.onCustomMessageReceived(customMessage);
+				}
+			});
 		}
 	}
 

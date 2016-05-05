@@ -388,14 +388,14 @@ public class GameIOProxy extends Service implements OnClientAcceptedListener {
 			super(socket);
 			mSocket = socket;
 			
+			mConnectionWatcher = new ConnectionWatcher(AlertMuteDuration, MaxMuteDuration, this);
+			mConnectionWatcher.enable();
+			
 			mReceiver = new StringReceiver(socket);
 			mReceiver.setListener(this);
 			this.setListener(this);
 			mReceiver.start();
 			this.start();
-			
-			mConnectionWatcher = new ConnectionWatcher(AlertMuteDuration, MaxMuteDuration, this);
-			mConnectionWatcher.enable();
 			
 			Log.w("GameIOProxy", "Initialisation. GameConnection: start sender and receiver");
 		}
