@@ -24,7 +24,7 @@ public abstract class IOClient extends Fragment implements StringReceiver.Listen
 	/** Maximum mute duration. If the client does not send any message during this duration,
 	 * the proxy can consider this client as disconnected.
 	 * We need to send message to stay connected to the proxy. **/
-	private static final long MaxMuteDuration = 4000, AlertMuteDuration = 3000;
+	private static final long MaxMuteDuration = 7000, AlertMuteDuration = 6000;
 	
 	/** Connector **/
 	private ProxyConnector mConnector;

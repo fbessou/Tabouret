@@ -74,7 +74,7 @@ import com.fbessou.sofa.message.ProxyMessage;
  */
 public class GameIOProxy extends Service implements OnClientAcceptedListener {
 	
-	private static final long MaxMuteDuration = 4500, AlertMuteDuration = 3500;
+	private static final long MaxMuteDuration = 7500, AlertMuteDuration = 6500;
 	
 	/**
 	 * List containing all the blocked GamePads. A game-pad is blocked if the
